@@ -1,47 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Edit, Plus, Trash2, UserCheck, UserX } from "lucide-react";
+import apiClient from "../../../shared/services/apiClient";
 
-const initialUsers = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+1 234 567 8901",
-    role: "supervisor",
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane@example.com",
-    phone: "+1 234 567 8902",
-    role: "supervisor",
-    status: "active",
-  },
-  {
-    id: "3",
-    name: "Mike Johnson",
-    email: "mike@example.com",
-    phone: "+1 234 567 8903",
-    role: "supervisor",
-    status: "active",
-  },
-  {
-    id: "4",
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    phone: "+1 234 567 8904",
-    role: "admin",
-    status: "inactive",
-  },
-];
+const initialUsers = [];
 
 const roles = ["supervisor", "admin"];
+const roleMap = {
+  1: "admin",
+  2: "supervisor",
+};
 
 function UserManagement() {
   const [users, setUsers] = useState(initialUsers);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -50,6 +24,85 @@ function UserManagement() {
     password: "",
     status: "active",
   });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      setLoadError(null);
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        if (isMounted) {
+          setLoadError("Missing authentication token. Please log in again.");
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const response = await apiClient.post(
+          "/graphql",
+          {
+            query:
+              "query GetUsers { users { id mobileNumber name roleId address email createdOn createdBy modifiedOn modifiedBy } }",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response?.data?.errors?.length) {
+          const apiMessage =
+            response.data.errors[0]?.message || "Unable to load users.";
+          if (isMounted) {
+            setLoadError(apiMessage);
+          }
+          return;
+        }
+
+        const apiUsers = response?.data?.data?.users || [];
+        const normalizedUsers = apiUsers.map((user) => ({
+          id: String(user.id),
+          name: user.name || "Unknown",
+          email: user.email || "",
+          phone: user.mobileNumber || "",
+          role: roleMap[Number(user.roleId)] || "supervisor",
+          status: "active",
+          address: user.address || "",
+          createdOn: user.createdOn,
+          createdBy: user.createdBy,
+          modifiedOn: user.modifiedOn,
+          modifiedBy: user.modifiedBy,
+        }));
+
+        if (isMounted) {
+          setUsers(normalizedUsers);
+        }
+      } catch (error) {
+        const apiMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to load users.";
+        if (isMounted) {
+          setLoadError(apiMessage);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleAddNew = () => {
     setEditingUser(null);
@@ -183,58 +236,90 @@ function UserManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  className="transition-colors hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-10 w-10 items-center justify-center rounded-full text-white"
-                        style={{ backgroundColor: "#FDB71A" }}
-                      >
-                        {user.name.charAt(0)}
-                      </div>
-                      <p className="text-gray-900">{user.name}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">{user.phone}</td>
-                  <td className="px-6 py-4 text-gray-900 capitalize">
-                    {user.role}
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      type="button"
-                      onClick={() => toggleStatus(user.id)}
-                      className={`rounded-full px-3 py-1 text-sm text-white ${
-                        user.status === "active"
-                          ? "bg-green-600"
-                          : "bg-gray-400"
-                      }`}
-                    >
-                      {user.status}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(user)}
-                        className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                      >
-                        <Edit className="h-5 w-5 text-gray-600" />
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-lg p-2 transition-colors hover:bg-red-50"
-                      >
-                        <Trash2 className="h-5 w-5 text-red-600" />
-                      </button>
-                    </div>
+              {isLoading && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-6 text-center text-gray-500"
+                  >
+                    Loading users...
                   </td>
                 </tr>
-              ))}
+              )}
+              {!isLoading && loadError && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-6 text-center text-red-600"
+                  >
+                    {loadError}
+                  </td>
+                </tr>
+              )}
+              {!isLoading && !loadError && users.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-6 text-center text-gray-500"
+                  >
+                    No users found.
+                  </td>
+                </tr>
+              )}
+              {!isLoading &&
+                !loadError &&
+                users.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="transition-colors hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-full text-white"
+                          style={{ backgroundColor: "#FDB71A" }}
+                        >
+                          {user.name.charAt(0)}
+                        </div>
+                        <p className="text-gray-900">{user.name}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-900">{user.phone}</td>
+                    <td className="px-6 py-4 text-gray-900 capitalize">
+                      {user.role}
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(user.id)}
+                        className={`rounded-full px-3 py-1 text-sm text-white ${
+                          user.status === "active"
+                            ? "bg-green-600"
+                            : "bg-gray-400"
+                        }`}
+                      >
+                        {user.status}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(user)}
+                          className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                        >
+                          <Edit className="h-5 w-5 text-gray-600" />
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                        >
+                          <Trash2 className="h-5 w-5 text-red-600" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
