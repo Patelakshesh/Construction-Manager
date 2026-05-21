@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import logoImage from "../../../assets/logo.png";
 import heroImage from "../../../assets/main_image.jpg";
 import apiClient from "../../../shared/services/apiClient";
@@ -7,6 +7,7 @@ import apiClient from "../../../shared/services/apiClient";
 function LoginScreen({ onLogin }) {
   const [mobileNumber, setMobileNumber] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("admin");
   const [rememberMe, setRememberMe] = useState(false);
   const [formErrors, setFormErrors] = useState({});
@@ -42,7 +43,7 @@ function LoginScreen({ onLogin }) {
     try {
       const response = await apiClient.post("/graphql/public", {
         query:
-          "mutation Login($input: LoginInput!) { login(input: $input) { token expiresOn user { id mobileNumber name roleId address email createdOn createdBy modifiedOn modifiedBy } } }",
+          "mutation Login($input: LoginInput!) { login(input: $input) { token expiresOn user { id mobileNumber name roleId address email enable createdOn createdBy modifiedOn modifiedBy } } }",
         variables: {
           input: {
             mobileNumber: trimmedMobileNumber,
@@ -50,6 +51,7 @@ function LoginScreen({ onLogin }) {
           },
         },
       });
+      console.log("Login API response:", response);
 
       if (response?.data?.errors?.length) {
         const apiMessage = response.data.errors[0]?.message || "Login failed.";
@@ -62,6 +64,7 @@ function LoginScreen({ onLogin }) {
         setStatus({ type: "error", message: "Invalid login response." });
         return;
       }
+      console.log("Login successful, payload:", loginPayload);
 
       const roleMap = {
         1: "admin",
@@ -76,18 +79,21 @@ function LoginScreen({ onLogin }) {
         mobileNumber: apiUser.mobileNumber || trimmedMobileNumber,
         email: apiUser.email,
         address: apiUser.address,
+        enable: apiUser.enable,
         createdOn: apiUser.createdOn,
         createdBy: apiUser.createdBy,
         modifiedOn: apiUser.modifiedOn,
         modifiedBy: apiUser.modifiedBy,
       };
 
-     
-        localStorage.setItem("authToken", loginPayload.token);
-        localStorage.setItem("authUser", JSON.stringify(normalizedUser));
-        localStorage.setItem("authExpiresOn", loginPayload.expiresOn || "");
+      localStorage.setItem("authToken", loginPayload.token);
+      localStorage.setItem("authUser", JSON.stringify(normalizedUser));
+      localStorage.setItem("authExpiresOn", loginPayload.expiresOn || "");
 
-      setStatus({ type: "success", message: "Login successful. Redirecting..." });
+      setStatus({
+        type: "success",
+        message: "Login successful. Redirecting...",
+      });
       onLogin(resolvedRole, normalizedUser);
     } catch (error) {
       const apiMessage =
@@ -117,7 +123,10 @@ function LoginScreen({ onLogin }) {
 
   // ── Desktop form
   const desktopForm = (
-    <form onSubmit={handleSubmit} className="space-y-4 xl:space-y-5 2xl:space-y-6">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 xl:space-y-5 2xl:space-y-6"
+    >
       {statusBanner}
       <div>
         <label className="mb-2 block text-sm font-semibold text-[#717579] xl:text-base">
@@ -174,12 +183,24 @@ function LoginScreen({ onLogin }) {
         <div className="flex h-[52px] items-center gap-3 rounded-xl border border-[#DFE0E2] bg-[#F9FAFC] px-4 xl:h-[62px] xl:rounded-2xl xl:px-5 2xl:h-[70px]">
           <Lock className="h-4 w-4 shrink-0 text-[#F09E39] xl:h-5 xl:w-5" />
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter password"
-            className="w-full border-0 bg-transparent p-0 text-sm text-[#1F2937] placeholder:text-[#A5A3A3] focus:outline-none focus:ring-0 xl:text-base"
+            className="flex-1 border-0 bg-transparent p-0 text-sm text-[#1F2937] placeholder:text-[#A5A3A3] focus:outline-none focus:ring-0 xl:text-base"
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="text-[#A5A3A3] transition-colors hover:text-[#6B7280]"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4 xl:h-5 xl:w-5" />
+            ) : (
+              <Eye className="h-4 w-4 xl:h-5 xl:w-5" />
+            )}
+          </button>
         </div>
         {renderFieldError(formErrors.password)}
       </div>
@@ -296,13 +317,25 @@ function LoginScreen({ onLogin }) {
         >
           <Lock className="h-3.5 w-3.5 shrink-0 text-[#F09E39]" />
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter password"
-            className="w-full border-0 bg-transparent p-0 text-[#1F2937] placeholder:text-[#A5A3A3] focus:outline-none focus:ring-0"
+            className="flex-1 border-0 bg-transparent p-0 text-[#1F2937] placeholder:text-[#A5A3A3] focus:outline-none focus:ring-0"
             style={{ fontSize: "clamp(10px, 2.5vw, 13px)" }}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="text-[#A5A3A3] transition-colors hover:text-[#6B7280]"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeOff className="h-3.5 w-3.5" />
+            ) : (
+              <Eye className="h-3.5 w-3.5" />
+            )}
+          </button>
         </div>
         {renderFieldError(formErrors.password)}
       </div>
@@ -351,14 +384,12 @@ function LoginScreen({ onLogin }) {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-white">
-
       {/* ===================== DESKTOP & TABLET — md+ (768px+) ===================== */}
       <div className="hidden h-full md:flex">
-        <div 
+        <div
           className="relative h-full w-1/2 rounded-tr-[40px] rounded-br-[40px] bg-gray-900 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImage})` }}
-        >
-        </div>
+        ></div>
 
         <div className="flex h-full w-1/2 items-center justify-center rounded-bl-[100px] bg-white px-6 py-8 md:px-8 md:py-12 xl:px-10 xl:py-16 2xl:px-14">
           <div className="w-full max-w-[560px] xl:max-w-[650px]">
@@ -385,15 +416,12 @@ function LoginScreen({ onLogin }) {
       </div>
 
       {/* ===================== MOBILE ONLY — below md (<768px) ===================== */}
-      <div
-        className="flex h-full flex-col md:hidden"
-      >
+      <div className="flex h-full flex-col md:hidden">
         {/* Hero Image — 40% of screen height */}
         <div
           className="relative w-full shrink-0 bg-gray-900 bg-cover bg-center bg-no-repeat"
           style={{ height: "40%", backgroundImage: `url(${heroImage})` }}
-        >
-        </div>
+        ></div>
 
         {/* Form panel — exactly fills remaining 60%, overlaps image by 28px */}
         <div
@@ -402,7 +430,8 @@ function LoginScreen({ onLogin }) {
             flex: "1 1 0",
             minHeight: 0,
             marginTop: "-28px",
-            padding: "clamp(14px, 3vh, 24px) clamp(16px, 5vw, 32px) clamp(12px, 2.5vh, 20px)",
+            padding:
+              "clamp(14px, 3vh, 24px) clamp(16px, 5vw, 32px) clamp(12px, 2.5vh, 20px)",
           }}
         >
           {/* Logo + Heading — compact, shrinks on small screens */}
@@ -434,12 +463,9 @@ function LoginScreen({ onLogin }) {
           </div>
 
           {/* Form fills the rest — Login always at bottom */}
-          <div className="flex min-h-0 flex-1 flex-col">
-            {mobileForm}
-          </div>
+          <div className="flex min-h-0 flex-1 flex-col">{mobileForm}</div>
         </div>
       </div>
-
     </div>
   );
 }

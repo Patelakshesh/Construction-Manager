@@ -1,164 +1,432 @@
-import { useEffect, useState } from "react";
-import { Edit, Plus, Trash2, UserCheck, UserX } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Edit, Eye, EyeOff, Plus, UserCheck, UserX } from "lucide-react";
+import toast from "react-hot-toast";
 import apiClient from "../../../shared/services/apiClient";
+import Pagination from "../../../shared/components/Pagination";
 
-const initialUsers = [];
-
-const roles = ["supervisor", "admin"];
-const roleMap = {
-  1: "admin",
-  2: "supervisor",
+const emptyFormData = {
+  name: "",
+  email: "",
+  phone: "",
+  roleId: "",
+  password: "",
+  address: "",
+  enable: true,
 };
 
+const normalizeRoleName = (roleName) => {
+  if (!roleName) {
+    return "unknown";
+  }
+
+  const normalized = roleName.trim().toLowerCase();
+  if (normalized === "supervision") {
+    return "supervisor";
+  }
+
+  return normalized;
+};
+
+const formatRoleName = (roleName) => {
+  const normalized = normalizeRoleName(roleName);
+  if (normalized === "unknown") {
+    return "Unknown";
+  }
+
+  return `${normalized.charAt(0).toUpperCase()}${normalized.slice(1)}`;
+};
+
+const getStatusLabel = (enabled) => (enabled ? "active" : "inactive");
+
 function UserManagement() {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    role: "supervisor",
-    password: "",
-    status: "active",
-  });
+  const [formData, setFormData] = useState(emptyFormData);
+  const [formErrors, setFormErrors] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
 
-  useEffect(() => {
-    let isMounted = true;
+  const roleLookup = useMemo(() => {
+    return roles.reduce((accumulator, role) => {
+      accumulator[role.id] = role;
+      return accumulator;
+    }, {});
+  }, [roles]);
 
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      setLoadError(null);
+  const loadUsers = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
 
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        if (isMounted) {
-          setLoadError("Missing authentication token. Please log in again.");
-          setIsLoading(false);
-        }
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setLoadError("Missing authentication token. Please log in again.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const trimmedSearch = searchQuery.trim();
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query:
+            "query GetUsersAndRoles($pageNumber: Int!, $pageSize: Int!, $search: String) { usersPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id mobileNumber name roleId address email enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } roles { id roleName enable } }",
+          variables: {
+            pageNumber,
+            pageSize,
+            search: trimmedSearch ? trimmedSearch : null,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response?.data?.errors?.length) {
+        const apiMessage =
+          response.data.errors[0]?.message || "Unable to load users.";
+        setLoadError(apiMessage);
         return;
       }
 
-      try {
-        const response = await apiClient.post(
-          "/graphql",
-          {
-            query:
-              "query GetUsers { users { id mobileNumber name roleId address email createdOn createdBy modifiedOn modifiedBy } }",
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+      const apiRoles = response?.data?.data?.roles || [];
+      const userPage = response?.data?.data?.usersPage;
+      const apiUsers = userPage?.items || [];
+      const nextRoleLookup = apiRoles.reduce((accumulator, role) => {
+        accumulator[role.id] = role;
+        return accumulator;
+      }, {});
 
-        if (response?.data?.errors?.length) {
-          const apiMessage =
-            response.data.errors[0]?.message || "Unable to load users.";
-          if (isMounted) {
-            setLoadError(apiMessage);
-          }
-          return;
-        }
-
-        const apiUsers = response?.data?.data?.users || [];
-        const normalizedUsers = apiUsers.map((user) => ({
+      const normalizedUsers = apiUsers.map((user) => {
+        const resolvedRole = nextRoleLookup[user.roleId];
+        return {
           id: String(user.id),
           name: user.name || "Unknown",
           email: user.email || "",
           phone: user.mobileNumber || "",
-          role: roleMap[Number(user.roleId)] || "supervisor",
-          status: "active",
+          roleId: Number(user.roleId),
+          roleName: resolvedRole?.roleName || "",
           address: user.address || "",
+          enable: Boolean(user.enable),
           createdOn: user.createdOn,
           createdBy: user.createdBy,
           modifiedOn: user.modifiedOn,
           modifiedBy: user.modifiedBy,
-        }));
+        };
+      });
 
-        if (isMounted) {
-          setUsers(normalizedUsers);
-        }
-      } catch (error) {
-        const apiMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Unable to load users.";
-        if (isMounted) {
-          setLoadError(apiMessage);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+      setRoles(apiRoles);
+      setUsers(normalizedUsers);
+      setTotalCount(userPage?.totalCount || 0);
+    } catch (error) {
+      const apiMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to load users.";
+      setLoadError(apiMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [pageNumber, pageSize, searchQuery]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  const getActorName = () => {
+    const storedUser = localStorage.getItem("authUser");
+    if (!storedUser) {
+      return "system";
+    }
+
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      return parsedUser?.name || "system";
+    } catch {
+      return "system";
+    }
+  };
+
+  const normalizeApiUser = (user) => {
+    const resolvedRole = roleLookup[user.roleId];
+    return {
+      id: String(user.id),
+      name: user.name || "Unknown",
+      email: user.email || "",
+      phone: user.mobileNumber || "",
+      roleId: Number(user.roleId),
+      roleName: resolvedRole?.roleName || "",
+      address: user.address || "",
+      enable: Boolean(user.enable),
+      createdOn: user.createdOn,
+      createdBy: user.createdBy,
+      modifiedOn: user.modifiedOn,
+      modifiedBy: user.modifiedBy,
     };
-
-    fetchUsers();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  };
 
   const handleAddNew = () => {
+    const defaultRoleId = roles[0]?.id ? String(roles[0].id) : "";
+
     setEditingUser(null);
+    setFormErrors({});
+    setShowPassword(false);
     setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      role: "supervisor",
-      password: "",
-      status: "active",
+      ...emptyFormData,
+      roleId: defaultRoleId,
+      enable: true,
     });
     setIsModalOpen(true);
   };
 
   const handleEdit = (user) => {
     setEditingUser(user);
+    setFormErrors({});
+    setShowPassword(false);
     setFormData({
       name: user.name,
       email: user.email,
       phone: user.phone,
-      role: user.role,
+      roleId: String(user.roleId),
       password: "",
-      status: user.status,
+      address: user.address,
+      enable: user.enable,
     });
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
-    if (editingUser) {
-      setUsers(
-        users.map((user) =>
-          user.id === editingUser.id ? { ...user, ...formData } : user,
-        ),
-      );
-    } else {
-      const newUser = {
-        id: String(users.length + 1),
-        ...formData,
-      };
-      setUsers([...users, newUser]);
+  const validateForm = () => {
+    const trimmedName = formData.name.trim();
+    const trimmedPhone = formData.phone.trim();
+    const trimmedEmail = formData.email.trim();
+    const trimmedPassword = formData.password.trim();
+    const trimmedAddress = formData.address.trim();
+    const errors = {};
+
+    if (!trimmedName) {
+      errors.name = "Full name is required.";
     }
-    setIsModalOpen(false);
+
+    if (!trimmedPhone) {
+      errors.phone = "Phone number is required.";
+    } else if (!/^\d{10}$/.test(trimmedPhone)) {
+      errors.phone = "Enter a valid 10-digit phone number.";
+    }
+
+    if (!formData.roleId) {
+      errors.roleId = "Role is required.";
+    }
+
+    if (!trimmedAddress) {
+      errors.address = "Address is required.";
+    }
+
+    if (!editingUser && !trimmedPassword) {
+      errors.password = "Password is required.";
+    }
+
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      errors.email = "Enter a valid email address.";
+    }
+
+    return {
+      errors,
+      values: {
+        name: trimmedName,
+        phone: trimmedPhone,
+        email: trimmedEmail,
+        password: trimmedPassword,
+        address: trimmedAddress,
+      },
+    };
   };
 
-  const toggleStatus = (userId) => {
-    setUsers(
-      users.map((user) =>
-        user.id === userId
-          ? {
-              ...user,
-              status: user.status === "active" ? "inactive" : "active",
-            }
-          : user,
-      ),
+  const submitMutation = async (query, input) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      throw new Error("Missing authentication token. Please log in again.");
+    }
+
+    const response = await apiClient.post(
+      "/graphql",
+      {
+        query,
+        variables: { input },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
     );
+
+    if (response?.data?.errors?.length) {
+      const apiMessage =
+        response.data.errors[0]?.message || "Unable to save user.";
+      throw new Error(apiMessage);
+    }
+
+    return response?.data?.data?.createUser || response?.data?.data?.updateUser;
   };
+
+  const handleSave = async () => {
+    const { errors, values } = validateForm();
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Please fix the errors below.");
+      return;
+    }
+
+    setFormErrors({});
+    setIsSaving(true);
+
+    try {
+      const roleId = Number(formData.roleId);
+      const actorName = getActorName();
+
+      if (editingUser) {
+        const updateInput = {
+          id: Number(editingUser.id),
+          mobileNumber: values.phone,
+          name: values.name,
+          roleId,
+          address: values.address,
+          email: values.email || null,
+          enable: formData.enable,
+          modifiedBy: actorName,
+        };
+
+        if (values.password) {
+          updateInput.password = values.password;
+        }
+
+        const updatedUser = await submitMutation(
+          "mutation UpdateUser($input: UpdateUserInput!) { updateUser(input: $input) { id mobileNumber name roleId address email enable createdOn createdBy modifiedOn modifiedBy } }",
+          updateInput,
+        );
+
+        if (!updatedUser) {
+          throw new Error("Update failed. Please try again.");
+        }
+
+        const normalizedUser = normalizeApiUser(updatedUser);
+        setUsers((previous) =>
+          previous.map((user) =>
+            user.id === normalizedUser.id ? normalizedUser : user,
+          ),
+        );
+        toast.success("User updated successfully.");
+      } else {
+        const createdUser = await submitMutation(
+          "mutation CreateUser($input: CreateUserInput!) { createUser(input: $input) { id mobileNumber name roleId address email enable createdOn createdBy modifiedOn modifiedBy } }",
+          {
+            mobileNumber: values.phone,
+            name: values.name,
+            password: values.password,
+            roleId,
+            address: values.address,
+            email: values.email || null,
+            enable: formData.enable,
+            createdBy: actorName,
+          },
+        );
+
+        if (!createdUser) {
+          throw new Error("Create failed. Please try again.");
+        }
+
+        const normalizedUser = normalizeApiUser(createdUser);
+        setUsers((previous) => [...previous, normalizedUser]);
+        toast.success("User created successfully.");
+      }
+
+      await loadUsers();
+
+      setIsModalOpen(false);
+      setEditingUser(null);
+      setFormData(emptyFormData);
+    } catch (error) {
+      toast.error(error?.message || "Unable to save user.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleStatus = async (user) => {
+    if (isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const actorName = getActorName();
+      const nextEnabled = !user.enable;
+      const updatedUser = await submitMutation(
+        "mutation UpdateUser($input: UpdateUserInput!) { updateUser(input: $input) { id mobileNumber name roleId address email enable createdOn createdBy modifiedOn modifiedBy } }",
+        {
+          id: Number(user.id),
+          mobileNumber: user.phone,
+          name: user.name,
+          roleId: user.roleId,
+          address: user.address,
+          email: user.email || null,
+          enable: nextEnabled,
+          modifiedBy: actorName,
+        },
+      );
+
+      if (!updatedUser) {
+        throw new Error("Status update failed. Please try again.");
+      }
+
+      const normalizedUser = normalizeApiUser(updatedUser);
+      setUsers((previous) =>
+        previous.map((item) =>
+          item.id === normalizedUser.id ? normalizedUser : item,
+        ),
+      );
+      toast.success(
+        nextEnabled ? "User activated successfully." : "User deactivated.",
+      );
+    } catch (error) {
+      setLoadError(error?.message || "Unable to update user status.");
+      toast.error(error?.message || "Unable to update user status.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const adminCount = users.filter(
+    (user) => normalizeRoleName(user.roleName) === "admin",
+  ).length;
+  const supervisorCount = users.filter(
+    (user) => normalizeRoleName(user.roleName) === "supervisor",
+  ).length;
+
+  const renderFieldError = (message) =>
+    message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
+
+  const getFieldClassName = (hasError) =>
+    `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
+      hasError
+        ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
+        : "border-gray-300 focus:ring-[#FDB71A]"
+    }`;
+
+  const displayStart = totalCount ? (pageNumber - 1) * pageSize + 1 : 0;
+  const displayEnd = Math.min(pageNumber * pageSize, totalCount);
 
   return (
     <div className="p-4 md:p-8">
@@ -172,12 +440,29 @@ function UserManagement() {
         <button
           type="button"
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90"
+          disabled={roles.length === 0}
+          className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           style={{ backgroundColor: "#FDB71A" }}
         >
           <Plus className="h-5 w-5" />
           Add User
         </button>
+      </div>
+
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(event) => {
+            setSearchQuery(event.target.value);
+            setPageNumber(1);
+          }}
+          placeholder="Search by name, mobile, or email"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A] sm:max-w-sm"
+        />
+        <p className="text-sm text-gray-600">
+          Showing {displayStart}-{displayEnd} of {totalCount}
+        </p>
       </div>
 
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
@@ -188,9 +473,7 @@ function UserManagement() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Supervisor</p>
-              <h3 className="text-gray-900">
-                {users.filter((user) => user.role === "supervisor").length}
-              </h3>
+              <h3 className="text-gray-900">{supervisorCount}</h3>
             </div>
           </div>
         </div>
@@ -201,9 +484,7 @@ function UserManagement() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Admin</p>
-              <h3 className="text-gray-900">
-                {users.filter((user) => user.role === "admin").length}
-              </h3>
+              <h3 className="text-gray-900">{adminCount}</h3>
             </div>
           </div>
         </div>
@@ -217,7 +498,7 @@ function UserManagement() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Users</p>
-              <h3 className="text-gray-900">{users.length}</h3>
+              <h3 className="text-gray-900">{totalCount}</h3>
             </div>
           </div>
         </div>
@@ -281,24 +562,27 @@ function UserManagement() {
                         >
                           {user.name.charAt(0)}
                         </div>
-                        <p className="text-gray-900">{user.name}</p>
+                        <div>
+                          <p className="text-gray-900">{user.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {user.email || "No email"}
+                          </p>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-900">{user.phone}</td>
                     <td className="px-6 py-4 text-gray-900 capitalize">
-                      {user.role}
+                      {formatRoleName(user.roleName)}
                     </td>
                     <td className="px-6 py-4">
                       <button
                         type="button"
-                        onClick={() => toggleStatus(user.id)}
-                        className={`rounded-full px-3 py-1 text-sm text-white ${
-                          user.status === "active"
-                            ? "bg-green-600"
-                            : "bg-gray-400"
+                        onClick={() => handleToggleStatus(user)}
+                        className={`rounded-full px-3 py-1 text-sm text-white transition-opacity hover:opacity-90 ${
+                          user.enable ? "bg-green-600" : "bg-gray-400"
                         }`}
                       >
-                        {user.status}
+                        {getStatusLabel(user.enable)}
                       </button>
                     </td>
                     <td className="px-6 py-4">
@@ -310,12 +594,6 @@ function UserManagement() {
                         >
                           <Edit className="h-5 w-5 text-gray-600" />
                         </button>
-                        <button
-                          type="button"
-                          className="rounded-lg p-2 transition-colors hover:bg-red-50"
-                        >
-                          <Trash2 className="h-5 w-5 text-red-600" />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -323,6 +601,15 @@ function UserManagement() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <Pagination
+          pageNumber={pageNumber}
+          pageSize={pageSize}
+          totalCount={totalCount}
+          onPageChange={(nextPage) => setPageNumber(nextPage)}
+        />
       </div>
 
       {isModalOpen && (
@@ -334,74 +621,147 @@ function UserManagement() {
 
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-gray-700">Full Name</label>
+                <label className="mb-2 block text-gray-700">
+                  Full Name<span className="text-[#EC3F3F]">*</span>
+                </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(event) =>
                     setFormData({ ...formData, name: event.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                  className={getFieldClassName(Boolean(formErrors.name))}
                   placeholder="Enter full name"
+                  aria-invalid={Boolean(formErrors.name)}
                 />
+                {renderFieldError(formErrors.name)}
               </div>
 
               <div>
-                <label className="mb-2 block text-gray-700">Phone</label>
+                <label className="mb-2 block text-gray-700">
+                  Phone<span className="text-[#EC3F3F]">*</span>
+                </label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(event) =>
                     setFormData({ ...formData, phone: event.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                  className={getFieldClassName(Boolean(formErrors.phone))}
                   placeholder="Enter phone number"
+                  aria-invalid={Boolean(formErrors.phone)}
                 />
+                {renderFieldError(formErrors.phone)}
               </div>
 
               <div>
-                <label className="mb-2 block text-gray-700">Role</label>
-                <select
-                  value={formData.role}
+                <label className="mb-2 block text-gray-700">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
                   onChange={(event) =>
-                    setFormData({ ...formData, role: event.target.value })
+                    setFormData({ ...formData, email: event.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                  className={getFieldClassName(Boolean(formErrors.email))}
+                  placeholder="Enter email address"
+                  aria-invalid={Boolean(formErrors.email)}
+                />
+                {renderFieldError(formErrors.email)}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-gray-700">
+                  Address<span className="text-[#EC3F3F]">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.address}
+                  onChange={(event) =>
+                    setFormData({ ...formData, address: event.target.value })
+                  }
+                  className={getFieldClassName(Boolean(formErrors.address))}
+                  placeholder="Enter address"
+                  aria-invalid={Boolean(formErrors.address)}
+                />
+                {renderFieldError(formErrors.address)}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-gray-700">
+                  Role<span className="text-[#EC3F3F]">*</span>
+                </label>
+                <select
+                  value={formData.roleId}
+                  onChange={(event) =>
+                    setFormData({ ...formData, roleId: event.target.value })
+                  }
+                  className={getFieldClassName(Boolean(formErrors.roleId))}
+                  aria-invalid={Boolean(formErrors.roleId)}
                 >
+                  <option value="" disabled>
+                    Select role
+                  </option>
                   {roles.map((role) => (
-                    <option key={role} value={role}>
-                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    <option key={role.id} value={role.id}>
+                      {formatRoleName(role.roleName)}
                     </option>
                   ))}
                 </select>
+                {renderFieldError(formErrors.roleId)}
               </div>
 
               <div>
-                <label className="mb-2 block text-gray-700">Password</label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(event) =>
-                    setFormData({ ...formData, password: event.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
-                  placeholder={
-                    editingUser
-                      ? "Leave blank to keep current"
-                      : "Enter password"
-                  }
-                />
+                <label className="mb-2 block text-gray-700">
+                  Password
+                  {!editingUser && <span className="text-[#EC3F3F]">*</span>}
+                  {editingUser && (
+                    <span className="ml-2 text-xs text-gray-500">
+                      (optional)
+                    </span>
+                  )}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(event) =>
+                      setFormData({ ...formData, password: event.target.value })
+                    }
+                    className={`${getFieldClassName(Boolean(formErrors.password))} pr-10`}
+                    placeholder={
+                      editingUser
+                        ? "Leave blank to keep current"
+                        : "Enter password"
+                    }
+                    aria-invalid={Boolean(formErrors.password)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {renderFieldError(formErrors.password)}
               </div>
 
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   id="activeStatus"
-                  checked={formData.status === "active"}
+                  checked={formData.enable}
                   onChange={(event) =>
                     setFormData({
                       ...formData,
-                      status: event.target.checked ? "active" : "inactive",
+                      enable: event.target.checked,
                     })
                   }
                   className="h-5 w-5 rounded border-gray-300"
@@ -416,14 +776,18 @@ function UserManagement() {
               <button
                 type="button"
                 onClick={handleSave}
-                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
+                disabled={isSaving}
+                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
                 style={{ backgroundColor: "#FDB71A" }}
               >
                 {editingUser ? "Update" : "Create"} User
               </button>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setShowPassword(false);
+                }}
                 className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
               >
                 Cancel
