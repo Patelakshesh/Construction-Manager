@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Edit, Eye, EyeOff, Plus, UserCheck, UserX } from "lucide-react";
+import useDebounce from "../../../shared/hooks/useDebounce";
+import { Edit, Eye, EyeOff, Plus, Trash2, UserCheck, UserX } from "lucide-react";
 import toast from "react-hot-toast";
 import apiClient from "../../../shared/services/apiClient";
 import Pagination from "../../../shared/components/Pagination";
+import ConfirmModal from "../../../shared/components/ConfirmModal";
 
 const emptyFormData = {
   name: "",
@@ -47,9 +49,11 @@ function UserManagement() {
   const [loadError, setLoadError] = useState(null);
   const [formData, setFormData] = useState(emptyFormData);
   const [formErrors, setFormErrors] = useState({});
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 400);
   const [pageNumber, setPageNumber] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const pageSize = 10;
@@ -61,8 +65,10 @@ function UserManagement() {
     }, {});
   }, [roles]);
 
-  const loadUsers = useCallback(async () => {
-    setIsLoading(true);
+  const loadUsers = useCallback(async (showLoadingIndicator = true) => {
+    if (showLoadingIndicator) {
+      setIsLoading(true);
+    }
     setLoadError(null);
 
     const token = localStorage.getItem("authToken");
@@ -73,12 +79,12 @@ function UserManagement() {
     }
 
     try {
-      const trimmedSearch = searchQuery.trim();
+      const trimmedSearch = debouncedSearch.trim();
       const response = await apiClient.post(
         "/graphql",
         {
           query:
-            "query GetUsersAndRoles($pageNumber: Int!, $pageSize: Int!, $search: String) { usersPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id mobileNumber name roleId address email enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } roles { id roleName enable } }",
+            "query GetUsersAndRoles($pageNumber: Int!, $pageSize: Int!, $search: String) { usersPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id mobileNumber name roleId address email password enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } roles { id roleName enable } }",
           variables: {
             pageNumber,
             pageSize,
@@ -117,6 +123,7 @@ function UserManagement() {
           roleId: Number(user.roleId),
           roleName: resolvedRole?.roleName || "",
           address: user.address || "",
+          password: user.password || "",
           enable: Boolean(user.enable),
           createdOn: user.createdOn,
           createdBy: user.createdBy,
@@ -137,7 +144,12 @@ function UserManagement() {
     } finally {
       setIsLoading(false);
     }
-  }, [pageNumber, pageSize, searchQuery]);
+  }, [pageNumber, pageSize, debouncedSearch]);
+
+  // Reset to page 1 whenever the debounced search term changes
+  useEffect(() => {
+    setPageNumber(1);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     loadUsers();
@@ -157,6 +169,19 @@ function UserManagement() {
     }
   };
 
+  const getCurrentUserMobile = () => {
+    const storedUser = localStorage.getItem("authUser");
+    if (!storedUser) return null;
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      return parsedUser?.mobileNumber || parsedUser?.mobile || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const currentUserMobile = getCurrentUserMobile();
+
   const normalizeApiUser = (user) => {
     const resolvedRole = roleLookup[user.roleId];
     return {
@@ -167,6 +192,7 @@ function UserManagement() {
       roleId: Number(user.roleId),
       roleName: resolvedRole?.roleName || "",
       address: user.address || "",
+      password: user.password || "",
       enable: Boolean(user.enable),
       createdOn: user.createdOn,
       createdBy: user.createdBy,
@@ -198,7 +224,7 @@ function UserManagement() {
       email: user.email,
       phone: user.phone,
       roleId: String(user.roleId),
-      password: "",
+      password: user.password,
       address: user.address,
       enable: user.enable,
     });
@@ -231,7 +257,7 @@ function UserManagement() {
       errors.address = "Address is required.";
     }
 
-    if (!editingUser && !trimmedPassword) {
+    if (!trimmedPassword) {
       errors.password = "Password is required.";
     }
 
@@ -276,7 +302,26 @@ function UserManagement() {
       throw new Error(apiMessage);
     }
 
-    return response?.data?.data?.createUser || response?.data?.data?.updateUser;
+    return response?.data?.data?.createUser || response?.data?.data?.updateUser || response?.data?.data?.deleteUser;
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    setIsSaving(true);
+    try {
+      await submitMutation(
+        "mutation DeleteUser($input: DeleteUserInput!) { deleteUser(input: $input) { id } }",
+        { id: Number(itemToDelete.id) }
+      );
+      toast.success("User deleted successfully.");
+      await loadUsers(false);
+    } catch (error) {
+      toast.error(error?.message || "Unable to delete user.");
+    } finally {
+      setIsSaving(false);
+      setItemToDelete(null);
+    }
   };
 
   const handleSave = async () => {
@@ -351,7 +396,7 @@ function UserManagement() {
         toast.success("User created successfully.");
       }
 
-      await loadUsers();
+      await loadUsers(false);
 
       setIsModalOpen(false);
       setEditingUser(null);
@@ -400,6 +445,7 @@ function UserManagement() {
       toast.success(
         nextEnabled ? "User activated successfully." : "User deactivated.",
       );
+      await loadUsers(false);
     } catch (error) {
       setLoadError(error?.message || "Unable to update user status.");
       toast.error(error?.message || "Unable to update user status.");
@@ -449,22 +495,6 @@ function UserManagement() {
         </button>
       </div>
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(event) => {
-            setSearchQuery(event.target.value);
-            setPageNumber(1);
-          }}
-          placeholder="Search by name, mobile, or email"
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A] sm:max-w-sm"
-        />
-        <p className="text-sm text-gray-600">
-          Showing {displayStart}-{displayEnd} of {totalCount}
-        </p>
-      </div>
-
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-4">
@@ -504,112 +534,198 @@ function UserManagement() {
         </div>
       </div>
 
+      <div className="mb-6">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Search by name, mobile, or email"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A] sm:max-w-sm"
+        />
+      </div>
+
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px]">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-gray-700">Name</th>
-                <th className="px-6 py-4 text-left text-gray-700">Phone</th>
-                <th className="px-6 py-4 text-left text-gray-700">Role</th>
-                <th className="px-6 py-4 text-left text-gray-700">Status</th>
-                <th className="px-6 py-4 text-left text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {isLoading && (
+          <div className="hidden md:block">
+            <table className="w-full min-w-[760px]">
+              <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-6 text-center text-gray-500"
-                  >
-                    Loading users...
-                  </td>
+                  <th className="px-6 py-4 text-left text-gray-700">Name</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Phone</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Role</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Status</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Actions</th>
                 </tr>
-              )}
-              {!isLoading && loadError && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-6 text-center text-red-600"
-                  >
-                    {loadError}
-                  </td>
-                </tr>
-              )}
-              {!isLoading && !loadError && users.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-6 text-center text-gray-500"
-                  >
-                    No users found.
-                  </td>
-                </tr>
-              )}
-              {!isLoading &&
-                !loadError &&
-                users.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="transition-colors hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-10 w-10 items-center justify-center rounded-full text-white"
-                          style={{ backgroundColor: "#FDB71A" }}
-                        >
-                          {user.name.charAt(0)}
-                        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {isLoading && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-6 py-6 text-center text-gray-500"
+                    >
+                      Loading users...
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && loadError && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-6 py-6 text-center text-red-600"
+                    >
+                      {loadError}
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && !loadError && users.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-6 py-6 text-center text-gray-500"
+                    >
+                      No users found.
+                    </td>
+                  </tr>
+                )}
+                {!isLoading &&
+                  !loadError &&
+                  users.map((user) => (
+                    <tr
+                      key={user.id}
+                      className="transition-colors hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4">
                         <div>
-                          <p className="text-gray-900">{user.name}</p>
+                          <p className="text-gray-900 capitalize">{user.name}</p>
                           <p className="text-xs text-gray-500">
                             {user.email || "No email"}
                           </p>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">{user.phone}</td>
-                    <td className="px-6 py-4 text-gray-900 capitalize">
-                      {formatRoleName(user.roleName)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(user)}
-                        className={`rounded-full px-3 py-1 text-sm text-white transition-opacity hover:opacity-90 ${
-                          user.enable ? "bg-green-600" : "bg-gray-400"
-                        }`}
-                      >
-                        {getStatusLabel(user.enable)}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(user)}
-                          className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                        >
-                          <Edit className="h-5 w-5 text-gray-600" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">{user.phone}</td>
+                      <td className="px-6 py-4 text-gray-900 capitalize">
+                        {formatRoleName(user.roleName)}
+                      </td>
+                      <td className="px-6 py-4">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(user)}
+                            disabled={user.phone === currentUserMobile}
+                            title={user.phone === currentUserMobile ? "Cannot change your own status" : ""}
+                            className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
+                              user.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
+                            }`}
+                          >
+                            <span className={`absolute text-[10px] font-bold text-white ${user.enable ? 'left-2' : 'right-2'}`}>
+                              {user.enable ? "ACTIVE" : "INACTIVE"}
+                            </span>
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                user.enable ? "translate-x-[60px]" : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(user)}
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                          >
+                            <Edit className="h-5 w-5 text-gray-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
 
-      <div className="mt-4 flex justify-end">
-        <Pagination
-          pageNumber={pageNumber}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={(nextPage) => setPageNumber(nextPage)}
-        />
+          <div className="block md:hidden">
+            {isLoading && (
+              <div className="p-6 text-center text-gray-500">
+                Loading users...
+              </div>
+            )}
+            {!isLoading && loadError && (
+              <div className="p-6 text-center text-red-600">
+                {loadError}
+              </div>
+            )}
+            {!isLoading && !loadError && users.length === 0 && (
+              <div className="p-6 text-center text-gray-500">
+                No users found.
+              </div>
+            )}
+            {!isLoading &&
+              !loadError &&
+              users.map((user) => (
+                <div
+                  key={user.id}
+                  className="border-b border-gray-200 p-4 last:border-0 hover:bg-gray-50"
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 capitalize">{user.name}</p>
+                      <p className="text-xs text-gray-500 capitalize">{formatRoleName(user.roleName)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(user)}
+                      disabled={user.phone === currentUserMobile}
+                      title={user.phone === currentUserMobile ? "Cannot change your own status" : ""}
+                      className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
+                        user.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
+                      }`}
+                    >
+                      <span className={`absolute text-[10px] font-bold text-white ${user.enable ? 'left-2' : 'right-2'}`}>
+                        {user.enable ? "ACTIVE" : "INACTIVE"}
+                      </span>
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          user.enable ? "translate-x-[60px]" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  
+                  <div className="mb-4 space-y-2 text-sm text-gray-600">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Phone:</span>
+                      <span>{user.phone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Email:</span>
+                      <span className="truncate ml-4">{user.email || "N/A"}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(user)}
+                      className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+          {/* Pagination */}
+          <div className="border-t border-gray-200 px-6 py-4">
+            <Pagination
+              pageNumber={pageNumber}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={(nextPage) => setPageNumber(nextPage)}
+            />
+          </div>
+        </div>
       </div>
 
       {isModalOpen && (
@@ -712,13 +828,7 @@ function UserManagement() {
 
               <div>
                 <label className="mb-2 block text-gray-700">
-                  Password
-                  {!editingUser && <span className="text-[#EC3F3F]">*</span>}
-                  {editingUser && (
-                    <span className="ml-2 text-xs text-gray-500">
-                      (optional)
-                    </span>
-                  )}
+                  Password<span className="text-[#EC3F3F]">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -728,11 +838,7 @@ function UserManagement() {
                       setFormData({ ...formData, password: event.target.value })
                     }
                     className={`${getFieldClassName(Boolean(formErrors.password))} pr-10`}
-                    placeholder={
-                      editingUser
-                        ? "Leave blank to keep current"
-                        : "Enter password"
-                    }
+                    placeholder="Enter password"
                     aria-invalid={Boolean(formErrors.password)}
                   />
                   <button
@@ -796,6 +902,15 @@ function UserManagement() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        title="Delete User"
+        message={`Are you sure you want to delete the user "${itemToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setItemToDelete(null)}
+      />
     </div>
   );
 }

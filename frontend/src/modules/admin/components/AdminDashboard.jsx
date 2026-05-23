@@ -89,7 +89,7 @@ function AdminDashboard({ user, onLogout }) {
             </button>
           </div>
 
-          <nav className="flex-1 space-y-2 p-4">
+          <nav className="flex-1 overflow-y-auto space-y-2 p-4">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -147,7 +147,7 @@ function AdminDashboard({ user, onLogout }) {
             <Menu className="h-5 w-5" />
           </button>
           <p className="text-sm font-medium text-gray-800">Admin Dashboard</p>
-          <div className="h-9 w-9 rounded-full bg-[#FDB71A]" />
+          <div className="h-9 w-9" />
         </header>
 
         <main className="flex-1 overflow-auto">{renderContent()}</main>

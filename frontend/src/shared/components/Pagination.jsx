@@ -1,97 +1,156 @@
-const buildPageRange = (currentPage, totalPages) => {
-  const maxButtons = 5;
-  let start = Math.max(1, currentPage - 2);
-  let end = Math.min(totalPages, currentPage + 2);
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
-  if (currentPage <= 3) {
-    start = 1;
-    end = Math.min(totalPages, maxButtons);
+// Build the visible page number array with ellipsis markers
+function buildPageItems(currentPage, totalPages) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
 
-  if (currentPage >= totalPages - 2) {
-    start = Math.max(1, totalPages - (maxButtons - 1));
-    end = totalPages;
+  const items = [];
+
+  if (currentPage <= 4) {
+    // Near the start: 1 2 3 4 5 … last
+    for (let i = 1; i <= 5; i++) items.push(i);
+    items.push("...");
+    items.push(totalPages);
+  } else if (currentPage >= totalPages - 3) {
+    // Near the end: first … last-4 last-3 last-2 last-1 last
+    items.push(1);
+    items.push("...");
+    for (let i = totalPages - 4; i <= totalPages; i++) items.push(i);
+  } else {
+    // Middle: first … prev current next … last
+    items.push(1);
+    items.push("...");
+    items.push(currentPage - 1);
+    items.push(currentPage);
+    items.push(currentPage + 1);
+    items.push("...");
+    items.push(totalPages);
   }
 
-  const pages = [];
-  for (let page = start; page <= end; page += 1) {
-    pages.push(page);
-  }
+  return items;
+}
 
-  return {
-    pages,
-    showStartEllipsis: start > 1,
-    showEndEllipsis: end < totalPages,
-  };
-};
-
+/**
+ * Industry-standard pagination bar.
+ *
+ * Props:
+ *  - pageNumber   : current 1-based page
+ *  - pageSize     : items per page
+ *  - totalCount   : total record count
+ *  - onPageChange : (nextPage: number) => void
+ */
 function Pagination({ pageNumber, pageSize, totalCount, onPageChange }) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const { pages, showStartEllipsis, showEndEllipsis } = buildPageRange(
-    pageNumber,
-    totalPages,
-  );
 
-  if (totalPages <= 1) {
-    return null;
-  }
+  if (totalCount === 0) return null;
+
+  const displayStart = (pageNumber - 1) * pageSize + 1;
+  const displayEnd = Math.min(pageNumber * pageSize, totalCount);
+
+  const isFirst = pageNumber === 1;
+  const isLast = pageNumber === totalPages;
+
+  const items = buildPageItems(pageNumber, totalPages);
+
+  const navBtnBase =
+    "inline-flex items-center justify-center h-9 w-9 rounded-lg border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDB71A] focus-visible:ring-offset-1";
+  const navBtnActive =
+    "border-gray-200 bg-white text-gray-600 hover:border-[#FDB71A] hover:bg-[#FFF8E6] hover:text-[#B47B00]";
+  const navBtnDisabled =
+    "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed";
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
-      <button
-        type="button"
-        onClick={() => onPageChange(Math.max(1, pageNumber - 1))}
-        disabled={pageNumber === 1}
-        className="rounded-md border border-gray-300 px-3 py-1.5 text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        Prev
-      </button>
+    <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
+      {/* Record count info */}
+      <p className="text-sm text-gray-500 select-none">
+        Showing{" "}
+        <span className="font-medium text-gray-700">{displayStart}</span>
+        {" – "}
+        <span className="font-medium text-gray-700">{displayEnd}</span>
+        {" of "}
+        <span className="font-medium text-gray-700">{totalCount}</span>
+        {" results"}
+      </p>
 
-      {showStartEllipsis && (
-        <button
-          type="button"
-          onClick={() => onPageChange(1)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 hover:bg-gray-100"
-        >
-          1
-        </button>
+      {/* Page controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center gap-1">
+          {/* First page */}
+          <button
+            type="button"
+            aria-label="First page"
+            onClick={() => onPageChange(1)}
+            disabled={isFirst}
+            className={`${navBtnBase} ${isFirst ? navBtnDisabled : navBtnActive}`}
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </button>
+
+          {/* Previous page */}
+          <button
+            type="button"
+            aria-label="Previous page"
+            onClick={() => onPageChange(pageNumber - 1)}
+            disabled={isFirst}
+            className={`${navBtnBase} ${isFirst ? navBtnDisabled : navBtnActive}`}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          {/* Page numbers */}
+          <div className="flex items-center gap-1">
+            {items.map((item, idx) =>
+              item === "..." ? (
+                <span
+                  key={`ellipsis-${idx}`}
+                  className="inline-flex h-9 w-9 items-center justify-center text-sm text-gray-400 select-none"
+                >
+                  ···
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  type="button"
+                  aria-label={`Page ${item}`}
+                  aria-current={item === pageNumber ? "page" : undefined}
+                  onClick={() => onPageChange(item)}
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDB71A] focus-visible:ring-offset-1 ${
+                    item === pageNumber
+                      ? "border-[#FDB71A] bg-[#FDB71A] text-white shadow-sm"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-[#FDB71A] hover:bg-[#FFF8E6] hover:text-[#B47B00]"
+                  }`}
+                >
+                  {item}
+                </button>
+              ),
+            )}
+          </div>
+
+          {/* Next page */}
+          <button
+            type="button"
+            aria-label="Next page"
+            onClick={() => onPageChange(pageNumber + 1)}
+            disabled={isLast}
+            className={`${navBtnBase} ${isLast ? navBtnDisabled : navBtnActive}`}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
+          {/* Last page */}
+          <button
+            type="button"
+            aria-label="Last page"
+            onClick={() => onPageChange(totalPages)}
+            disabled={isLast}
+            className={`${navBtnBase} ${isLast ? navBtnDisabled : navBtnActive}`}
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </button>
+        </div>
       )}
-      {showStartEllipsis && <span className="px-1">...</span>}
-
-      {pages.map((page) => (
-        <button
-          key={page}
-          type="button"
-          onClick={() => onPageChange(page)}
-          className={`rounded-md border px-3 py-1.5 transition-colors ${
-            page === pageNumber
-              ? "border-[#FDB71A] bg-[#FDB71A10] text-[#8A5200]"
-              : "border-gray-300 text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          {page}
-        </button>
-      ))}
-
-      {showEndEllipsis && <span className="px-1">...</span>}
-      {showEndEllipsis && (
-        <button
-          type="button"
-          onClick={() => onPageChange(totalPages)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 hover:bg-gray-100"
-        >
-          {totalPages}
-        </button>
-      )}
-
-      <button
-        type="button"
-        onClick={() => onPageChange(Math.min(totalPages, pageNumber + 1))}
-        disabled={pageNumber === totalPages}
-        className="rounded-md border border-gray-300 px-3 py-1.5 text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        Next
-      </button>
     </div>
   );
 }

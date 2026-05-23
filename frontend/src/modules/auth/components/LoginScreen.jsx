@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import toast from "react-hot-toast";
 import logoImage from "../../../assets/logo.png";
 import heroImage from "../../../assets/main_image.jpg";
 import apiClient from "../../../shared/services/apiClient";
@@ -11,7 +12,6 @@ function LoginScreen({ onLogin }) {
   const [role, setRole] = useState("admin");
   const [rememberMe, setRememberMe] = useState(false);
   const [formErrors, setFormErrors] = useState({});
-  const [status, setStatus] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event) => {
@@ -32,12 +32,11 @@ function LoginScreen({ onLogin }) {
 
     if (Object.keys(nextErrors).length > 0) {
       setFormErrors(nextErrors);
-      setStatus({ type: "error", message: "Please fix the errors below." });
+      toast.error("Please fix the errors below.");
       return;
     }
 
     setFormErrors({});
-    setStatus(null);
     setIsSubmitting(true);
 
     try {
@@ -55,13 +54,13 @@ function LoginScreen({ onLogin }) {
 
       if (response?.data?.errors?.length) {
         const apiMessage = response.data.errors[0]?.message || "Login failed.";
-        setStatus({ type: "error", message: apiMessage });
+        toast.error(apiMessage);
         return;
       }
 
       const loginPayload = response?.data?.data?.login;
       if (!loginPayload?.token || !loginPayload?.user) {
-        setStatus({ type: "error", message: "Invalid login response." });
+        toast.error("Invalid login response.");
         return;
       }
       console.log("Login successful, payload:", loginPayload);
@@ -90,33 +89,20 @@ function LoginScreen({ onLogin }) {
       localStorage.setItem("authUser", JSON.stringify(normalizedUser));
       localStorage.setItem("authExpiresOn", loginPayload.expiresOn || "");
 
-      setStatus({
-        type: "success",
-        message: "Login successful. Redirecting...",
-      });
+      toast.success("Login successful. Redirecting...");
       onLogin(resolvedRole, normalizedUser);
     } catch (error) {
       const apiMessage =
         error?.response?.data?.message ||
         error?.message ||
         "Unable to login. Please try again.";
-      setStatus({ type: "error", message: apiMessage });
+      toast.error(apiMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const statusBanner = status?.message ? (
-    <div
-      className={`rounded-lg border px-3 py-2 text-sm font-semibold xl:text-base ${
-        status.type === "success"
-          ? "border-[#C7E9D5] bg-[#E7F6EE] text-[#0F6B38]"
-          : "border-[#F4C7C7] bg-[#FDECEC] text-[#A11B1B]"
-      }`}
-    >
-      {status.message}
-    </div>
-  ) : null;
+
 
   const renderFieldError = (message) =>
     message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
@@ -127,7 +113,6 @@ function LoginScreen({ onLogin }) {
       onSubmit={handleSubmit}
       className="space-y-4 xl:space-y-5 2xl:space-y-6"
     >
-      {statusBanner}
       <div>
         <label className="mb-2 block text-sm font-semibold text-[#717579] xl:text-base">
           Role
@@ -238,7 +223,6 @@ function LoginScreen({ onLogin }) {
       className="flex flex-1 flex-col"
       style={{ gap: "clamp(8px, 2vh, 14px)" }}
     >
-      {statusBanner}
       {/* Role */}
       <div className="shrink-0">
         <label
@@ -398,7 +382,7 @@ function LoginScreen({ onLogin }) {
                 <img
                   src={logoImage}
                   alt="HRI logo"
-                  className="h-[60px] w-auto object-contain xl:h-[82px] xl:w-[188px] 2xl:h-[99px] 2xl:w-[218px]"
+                  className="h-[120px] w-auto object-contain xl:h-[120px] xl:w-[188px] 2xl:h-[99px] 2xl:w-[218px]"
                 />
                 <div className="space-y-2 text-center xl:space-y-3">
                   <h1 className="text-[32px] font-semibold text-[#1F2937] xl:text-[42px] 2xl:text-5xl">
