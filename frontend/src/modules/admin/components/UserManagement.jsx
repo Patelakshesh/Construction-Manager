@@ -56,6 +56,8 @@ function UserManagement() {
   const debouncedSearch = useDebounce(searchQuery, 400);
   const [pageNumber, setPageNumber] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [overallAdminCount, setOverallAdminCount] = useState(0);
+  const [overallSupervisorCount, setOverallSupervisorCount] = useState(0);
   const pageSize = 10;
 
   const roleLookup = useMemo(() => {
@@ -84,7 +86,7 @@ function UserManagement() {
         "/graphql",
         {
           query:
-            "query GetUsersAndRoles($pageNumber: Int!, $pageSize: Int!, $search: String) { usersPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id mobileNumber name roleId address email password enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } roles { id roleName enable } }",
+            "query GetUsersAndRoles($pageNumber: Int!, $pageSize: Int!, $search: String) { usersPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id mobileNumber name roleId address email password enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } roles { id roleName enable } allUsers: users { id name mobileNumber email roleId enable } }",
           variables: {
             pageNumber,
             pageSize,
@@ -135,6 +137,32 @@ function UserManagement() {
       setRoles(apiRoles);
       setUsers(normalizedUsers);
       setTotalCount(userPage?.totalCount || 0);
+
+      if (response?.data?.data?.allUsers) {
+        let allU = response.data.data.allUsers;
+        const searchLower = trimmedSearch.toLowerCase();
+        if (searchLower) {
+          allU = allU.filter(u => 
+            (u.name?.toLowerCase().includes(searchLower)) ||
+            (u.email?.toLowerCase().includes(searchLower)) ||
+            (u.mobileNumber?.toLowerCase().includes(searchLower))
+          );
+        }
+        
+        let overallAdmins = 0;
+        let overallSupervisors = 0;
+        
+        allU.forEach(u => {
+          if (!u.enable) return;
+          const roleName = nextRoleLookup[u.roleId]?.roleName || "";
+          const normName = normalizeRoleName(roleName);
+          if (normName === "admin") overallAdmins++;
+          if (normName === "supervisor") overallSupervisors++;
+        });
+        
+        setOverallAdminCount(overallAdmins);
+        setOverallSupervisorCount(overallSupervisors);
+      }
     } catch (error) {
       const apiMessage =
         error?.response?.data?.message ||
@@ -454,12 +482,6 @@ function UserManagement() {
     }
   };
 
-  const adminCount = users.filter(
-    (user) => normalizeRoleName(user.roleName) === "admin",
-  ).length;
-  const supervisorCount = users.filter(
-    (user) => normalizeRoleName(user.roleName) === "supervisor",
-  ).length;
 
   const renderFieldError = (message) =>
     message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
@@ -503,7 +525,7 @@ function UserManagement() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Supervisor</p>
-              <h3 className="text-gray-900">{supervisorCount}</h3>
+              <h3 className="text-gray-900">{overallSupervisorCount}</h3>
             </div>
           </div>
         </div>
@@ -514,7 +536,7 @@ function UserManagement() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Admin</p>
-              <h3 className="text-gray-900">{adminCount}</h3>
+              <h3 className="text-gray-900">{overallAdminCount}</h3>
             </div>
           </div>
         </div>
@@ -707,10 +729,9 @@ function UserManagement() {
                     <button
                       type="button"
                       onClick={() => handleEdit(user)}
-                      className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100"
+                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
                     >
-                      <Edit className="h-4 w-4" />
-                      Edit
+                      <Edit className="h-5 w-5 text-gray-600" />
                     </button>
                   </div>
                 </div>

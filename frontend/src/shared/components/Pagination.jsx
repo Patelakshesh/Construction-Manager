@@ -55,7 +55,7 @@ function Pagination({ pageNumber, pageSize, totalCount, onPageChange }) {
   const items = buildPageItems(pageNumber, totalPages);
 
   const navBtnBase =
-    "inline-flex items-center justify-center h-9 w-9 rounded-lg border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDB71A] focus-visible:ring-offset-1";
+    "inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-lg border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDB71A] focus-visible:ring-offset-1";
   const navBtnActive =
     "border-gray-200 bg-white text-gray-600 hover:border-[#FDB71A] hover:bg-[#FFF8E6] hover:text-[#B47B00]";
   const navBtnDisabled =
@@ -76,7 +76,7 @@ function Pagination({ pageNumber, pageSize, totalCount, onPageChange }) {
 
       {/* Page controls */}
       {totalPages > 1 && (
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
           {/* First page */}
           <button
             type="button"
@@ -100,12 +100,12 @@ function Pagination({ pageNumber, pageSize, totalCount, onPageChange }) {
           </button>
 
           {/* Page numbers */}
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center justify-center gap-1">
             {items.map((item, idx) =>
               item === "..." ? (
                 <span
                   key={`ellipsis-${idx}`}
-                  className="inline-flex h-9 w-9 items-center justify-center text-sm text-gray-400 select-none"
+                  className="inline-flex h-8 w-8 items-center justify-center text-xs text-gray-400 select-none sm:h-9 sm:w-9 sm:text-sm"
                 >
                   ···
                 </span>
@@ -116,7 +116,7 @@ function Pagination({ pageNumber, pageSize, totalCount, onPageChange }) {
                   aria-label={`Page ${item}`}
                   aria-current={item === pageNumber ? "page" : undefined}
                   onClick={() => onPageChange(item)}
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDB71A] focus-visible:ring-offset-1 ${
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDB71A] focus-visible:ring-offset-1 sm:h-9 sm:w-9 sm:text-sm ${
                     item === pageNumber
                       ? "border-[#FDB71A] bg-[#FDB71A] text-white shadow-sm"
                       : "border-gray-200 bg-white text-gray-600 hover:border-[#FDB71A] hover:bg-[#FFF8E6] hover:text-[#B47B00]"

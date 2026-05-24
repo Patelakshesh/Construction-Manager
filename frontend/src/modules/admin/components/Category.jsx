@@ -24,6 +24,11 @@ const LOAD_CATEGORIES_QUERY = `
       pageSize
       totalPages
     }
+    allCategories: categories {
+      enable
+      name
+      description
+    }
   }
 `;
 
@@ -52,6 +57,7 @@ const DELETE_CATEGORY_MUTATION = `
 function Category() {
   const [categories, setCategories] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [overallActiveCount, setOverallActiveCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
@@ -108,6 +114,19 @@ function Category() {
       const page = response.data.data.categoriesPage;
       setCategories(page.items);
       setTotalCount(page.totalCount);
+
+      if (response.data?.data?.allCategories) {
+        const all = response.data.data.allCategories;
+        const searchLower = debouncedSearch.toLowerCase().trim();
+        const filteredAll = searchLower 
+          ? all.filter(c => 
+              (c.name?.toLowerCase().includes(searchLower)) ||
+              (c.description?.toLowerCase().includes(searchLower))
+            )
+          : all;
+        
+        setOverallActiveCount(filteredAll.filter(c => c.enable).length);
+      }
     } catch (err) {
       setLoadError(err.message || "Failed to load categories.");
       toast.error(err.message || "Failed to load categories.");
@@ -275,7 +294,6 @@ function Category() {
     }
   };
 
-  const activeCount = categories.filter((c) => c.enable).length;
 
   const renderFieldError = (message) =>
     message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
@@ -302,7 +320,7 @@ function Category() {
         </button>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
@@ -320,26 +338,13 @@ function Category() {
               <Tag className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Active (This Page)</p>
-              <h3 className="text-gray-900">{activeCount}</h3>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#FDB71A20" }}
-            >
-              <Shapes className="h-6 w-6" style={{ color: "#FDB71A" }} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Categories (This Page)</p>
-              <h3 className="text-gray-900">{categories.length}</h3>
+              <p className="text-sm text-gray-500">Total Active</p>
+              <h3 className="text-gray-900">{overallActiveCount}</h3>
             </div>
           </div>
         </div>
       </div>
+
 
       <div className="mb-6">
         <input
@@ -485,10 +490,16 @@ function Category() {
                   <button
                     type="button"
                     onClick={() => handleEdit(category)}
-                    className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100"
+                    className="rounded-lg p-2 transition-colors hover:bg-gray-100"
                   >
-                    <Edit className="h-4 w-4" />
-                    Edit
+                    <Edit className="h-5 w-5 text-gray-600" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setItemToDelete(category)}
+                    className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                  >
+                    <Trash2 className="h-5 w-5 text-red-600" />
                   </button>
                 </div>
               </div>

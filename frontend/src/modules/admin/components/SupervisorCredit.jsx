@@ -29,6 +29,13 @@ const LOAD_CREDITS_QUERY = `
       pageSize
       totalPages
     }
+    allCredits: supervisorCredits {
+      amount
+      supervisorName
+      paymentMode
+      comment
+      transactionId
+    }
   }
 `;
 
@@ -79,13 +86,12 @@ function SupervisorCredit() {
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
-
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(10);
   
   const [selectedSupervisor, setSelectedSupervisor] = useState("all");
   const [selectedPaymentMode, setSelectedPaymentMode] = useState("all");
-  
+  const [overallTotalAmount, setOverallTotalAmount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 400);
 
@@ -175,6 +181,25 @@ function SupervisorCredit() {
       const page = creditsRes.data.data.supervisorCreditsPage;
       setCredits(page.items);
       setTotalCount(page.totalCount);
+
+      if (creditsRes.data?.data?.allCredits) {
+        let all = creditsRes.data.data.allCredits;
+        if (selectedSupervisor !== "all") {
+          all = all.filter(c => c.supervisorName === selectedSupervisor);
+        }
+        if (selectedPaymentMode !== "all") {
+          all = all.filter(c => c.paymentMode === selectedPaymentMode);
+        }
+        const searchLower = debouncedSearch.trim().toLowerCase();
+        if (searchLower) {
+          all = all.filter(c => 
+            (c.supervisorName?.toLowerCase().includes(searchLower)) ||
+            (c.comment?.toLowerCase().includes(searchLower)) ||
+            (c.transactionId?.toLowerCase().includes(searchLower))
+          );
+        }
+        setOverallTotalAmount(all.reduce((sum, c) => sum + c.amount, 0));
+      }
     } catch (err) {
       setLoadError(err.message || "Failed to load supervisor credits.");
       toast.error(err.message || "Failed to load supervisor credits.");
@@ -340,7 +365,7 @@ function SupervisorCredit() {
         </button>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
@@ -354,29 +379,13 @@ function SupervisorCredit() {
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-4">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#FDB71A20" }}
-            >
-              <ReceiptIndianRupee className="h-6 w-6" style={{ color: "#FDB71A" }} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Records (This Page)</p>
-              <h3 className="text-gray-900">
-                {credits.length}
-              </h3>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50">
-              <CreditCard className="h-6 w-6 text-blue-600" />
+              <ReceiptIndianRupee className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Amount (This Page)</p>
+              <p className="text-sm text-gray-500">Total Amount (Overall)</p>
               <h3 className="text-gray-900">
-                Rs. {credits.reduce((sum, c) => sum + c.amount, 0).toLocaleString("en-IN")}
+                Rs. {overallTotalAmount.toLocaleString("en-IN")}
               </h3>
             </div>
           </div>
@@ -516,14 +525,13 @@ function SupervisorCredit() {
                 </div>
 
                 <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(credit)}
-                    className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(credit)}
+                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                    >
+                      <Edit className="h-5 w-5 text-gray-600" />
+                    </button>
                   <button
                     type="button"
                     onClick={() => setItemToDelete(credit)}

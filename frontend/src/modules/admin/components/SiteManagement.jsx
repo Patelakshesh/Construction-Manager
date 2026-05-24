@@ -17,7 +17,7 @@ import ConfirmModal from "../../../shared/components/ConfirmModal";
 // ─── GraphQL queries ────────────────────────────────────────────────────────
 
 const LOAD_QUERY =
-  "query GetSitesAndUsers($pageNumber: Int!, $pageSize: Int!, $search: String) { sitesPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id siteName address contactPerson enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } users { id name enable roleId } roles { id roleName } }";
+  "query GetSitesAndUsers($pageNumber: Int!, $pageSize: Int!, $search: String) { sitesPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id siteName address contactPerson enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } users { id name enable roleId } roles { id roleName } allSites: sites { siteName address contactPerson enable } }";
 
 const CREATE_SITE_MUTATION =
   "mutation CreateSite($input: CreateSiteInput!) { createSite(input: $input) { id siteName address contactPerson enable createdOn createdBy modifiedOn modifiedBy } }";
@@ -108,6 +108,8 @@ function SiteManagement() {
   const debouncedSearch = useDebounce(searchQuery, 400);
   const [pageNumber, setPageNumber] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [overallActiveSiteCount, setOverallActiveSiteCount] = useState(0);
+  const [overallInactiveSiteCount, setOverallInactiveSiteCount] = useState(0);
   const pageSize = 10;
   const dropdownRef = useRef(null);
 
@@ -170,6 +172,20 @@ function SiteManagement() {
 
       setSites(apiSites.map(normalizeSite));
       setTotalCount(sitePage?.totalCount || 0);
+
+      if (response?.data?.data?.allSites) {
+        let allS = response.data.data.allSites;
+        const searchLower = trimmedSearch.toLowerCase();
+        if (searchLower) {
+          allS = allS.filter(s => 
+            (s.siteName?.toLowerCase().includes(searchLower)) ||
+            (s.address?.toLowerCase().includes(searchLower)) ||
+            (s.contactPerson?.toLowerCase().includes(searchLower))
+          );
+        }
+        setOverallActiveSiteCount(allS.filter(s => s.enable).length);
+        setOverallInactiveSiteCount(allS.filter(s => !s.enable).length);
+      }
 
       // Only use enabled users that have the supervisor role
       setSupervisorOptions(
@@ -332,8 +348,6 @@ function SiteManagement() {
 
   // ── Derived values ───────────────────────────────────────────────────────────
 
-  const activeSiteCount = sites.filter((s) => s.status === "active").length;
-  const inactiveSiteCount = sites.filter((s) => s.status === "inactive").length;
   const displayStart = totalCount ? (pageNumber - 1) * pageSize + 1 : 0;
   const displayEnd = Math.min(pageNumber * pageSize, totalCount);
 
@@ -382,8 +396,8 @@ function SiteManagement() {
               <UserCheck className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Active Sites</p>
-              <h3 className="text-gray-900">{activeSiteCount}</h3>
+              <p className="text-sm text-gray-500">Total Active</p>
+              <h3 className="text-gray-900">{overallActiveSiteCount}</h3>
             </div>
           </div>
         </div>
@@ -393,8 +407,8 @@ function SiteManagement() {
               <UserX className="h-6 w-6 text-gray-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Inactive Sites</p>
-              <h3 className="text-gray-900">{inactiveSiteCount}</h3>
+              <p className="text-sm text-gray-500">Total Inactive</p>
+              <h3 className="text-gray-900">{overallInactiveSiteCount}</h3>
             </div>
           </div>
         </div>
@@ -581,10 +595,9 @@ function SiteManagement() {
                     <button
                       type="button"
                       onClick={() => handleEdit(site)}
-                      className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100"
+                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
                     >
-                      <Edit className="h-4 w-4" />
-                      Edit
+                      <Edit className="h-5 w-5 text-gray-600" />
                     </button>
                   </div>
                 </div>

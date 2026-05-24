@@ -9,7 +9,6 @@ function LoginScreen({ onLogin }) {
   const [mobileNumber, setMobileNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState("admin");
   const [rememberMe, setRememberMe] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,7 +69,7 @@ function LoginScreen({ onLogin }) {
         2: "supervisor",
       };
       const apiUser = loginPayload.user;
-      const resolvedRole = roleMap[Number(apiUser.roleId)] || role;
+      const resolvedRole = roleMap[Number(apiUser.roleId)] || "admin";
       const normalizedUser = {
         id: apiUser.id,
         name: apiUser.name,
@@ -113,35 +112,7 @@ function LoginScreen({ onLogin }) {
       onSubmit={handleSubmit}
       className="space-y-4 xl:space-y-5 2xl:space-y-6"
     >
-      <div>
-        <label className="mb-2 block text-sm font-semibold text-[#717579] xl:text-base">
-          Role
-        </label>
-        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#F5F6F8] p-1 xl:p-1.5">
-          <button
-            type="button"
-            onClick={() => setRole("admin")}
-            className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors xl:rounded-2xl xl:py-3"
-            style={{
-              backgroundColor: role === "admin" ? "#FDB71A" : "#F5F5F5",
-              color: role === "admin" ? "white" : "#4A4D57",
-            }}
-          >
-            Admin
-          </button>
-          <button
-            type="button"
-            onClick={() => setRole("supervisor")}
-            className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors xl:rounded-2xl xl:py-3"
-            style={{
-              backgroundColor: role === "supervisor" ? "#FDB71A" : "#F5F5F5",
-              color: role === "supervisor" ? "white" : "#4A4D57",
-            }}
-          >
-            Supervisor
-          </button>
-        </div>
-      </div>
+
 
       <div>
         <label className="mb-2 block text-sm font-semibold text-[#717579] xl:text-base">
@@ -223,43 +194,6 @@ function LoginScreen({ onLogin }) {
       className="flex flex-1 flex-col"
       style={{ gap: "clamp(8px, 2vh, 14px)" }}
     >
-      {/* Role */}
-      <div className="shrink-0">
-        <label
-          className="mb-1 block font-semibold text-[#717579]"
-          style={{ fontSize: "clamp(10px, 2.2vw, 13px)" }}
-        >
-          Role
-        </label>
-        <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-[#F5F6F8] p-1">
-          <button
-            type="button"
-            onClick={() => setRole("admin")}
-            className="rounded-lg font-semibold transition-colors"
-            style={{
-              backgroundColor: role === "admin" ? "#FDB71A" : "#F5F5F5",
-              color: role === "admin" ? "white" : "#4A4D57",
-              fontSize: "clamp(10px, 2.5vw, 13px)",
-              padding: "clamp(6px, 1.5vh, 10px) 16px",
-            }}
-          >
-            Admin
-          </button>
-          <button
-            type="button"
-            onClick={() => setRole("supervisor")}
-            className="rounded-lg font-semibold transition-colors"
-            style={{
-              backgroundColor: role === "supervisor" ? "#FDB71A" : "#F5F5F5",
-              color: role === "supervisor" ? "white" : "#4A4D57",
-              fontSize: "clamp(10px, 2.5vw, 13px)",
-              padding: "clamp(6px, 1.5vh, 10px) 16px",
-            }}
-          >
-            Supervisor
-          </button>
-        </div>
-      </div>
 
       {/* Email */}
       <div className="shrink-0">
@@ -447,7 +381,7 @@ function LoginScreen({ onLogin }) {
           </div>
 
           {/* Form fills the rest — Login always at bottom */}
-          <div className="flex min-h-0 flex-1 flex-col">{mobileForm}</div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-4">{mobileForm}</div>
         </div>
       </div>
     </div>

@@ -34,6 +34,9 @@ const LOAD_CONTRACTORS_QUERY = `
       pageSize
       totalPages
     }
+    allContractors: contractors {
+      enable
+    }
   }
 `;
 
@@ -72,6 +75,8 @@ function Contractor() {
   const [contractors, setContractors] = useState([]);
   const [sitesList, setSitesList] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [overallActiveCount, setOverallActiveCount] = useState(0);
+  const [overallInactiveCount, setOverallInactiveCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
@@ -148,6 +153,19 @@ function Contractor() {
       const page = contractorsRes.data.data.contractorsPage;
       setContractors(page.items);
       setTotalCount(page.totalCount);
+
+      const all = contractorsRes.data.data.allContractors;
+      const searchLower = debouncedSearch.toLowerCase().trim();
+      const filteredAll = searchLower 
+        ? all.filter(c => 
+            (c.companyName?.toLowerCase().includes(searchLower)) ||
+            (c.contactPerson?.toLowerCase().includes(searchLower)) ||
+            (c.email?.toLowerCase().includes(searchLower))
+          )
+        : all;
+      
+      setOverallActiveCount(filteredAll.filter(c => c.enable).length);
+      setOverallInactiveCount(filteredAll.filter(c => !c.enable).length);
     } catch (err) {
       setLoadError(err.message || "Failed to load contractors.");
       toast.error(err.message || "Failed to load contractors.");
@@ -412,8 +430,8 @@ function Contractor() {
               <UserCheck className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Active (This Page)</p>
-              <h3 className="text-gray-900">{activeCount}</h3>
+              <p className="text-sm text-gray-500">Total Active</p>
+              <h3 className="text-gray-900">{overallActiveCount}</h3>
             </div>
           </div>
         </div>
@@ -423,8 +441,8 @@ function Contractor() {
               <UserX className="h-6 w-6 text-gray-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Inactive (This Page)</p>
-              <h3 className="text-gray-900">{inactiveCount}</h3>
+              <p className="text-sm text-gray-500">Total Inactive</p>
+              <h3 className="text-gray-900">{overallInactiveCount}</h3>
             </div>
           </div>
         </div>
@@ -597,10 +615,9 @@ function Contractor() {
                   <button
                     type="button"
                     onClick={() => handleEdit(contractor)}
-                    className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100"
+                    className="rounded-lg p-2 transition-colors hover:bg-gray-100"
                   >
-                    <Edit className="h-4 w-4" />
-                    Edit
+                    <Edit className="h-5 w-5 text-gray-600" />
                   </button>
                 </div>
               </div>

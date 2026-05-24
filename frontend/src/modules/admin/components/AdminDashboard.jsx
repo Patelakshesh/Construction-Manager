@@ -150,7 +150,7 @@ function AdminDashboard({ user, onLogout }) {
           <div className="h-9 w-9" />
         </header>
 
-        <main className="flex-1 overflow-auto">{renderContent()}</main>
+        <main className="flex-1 overflow-auto pb-20 md:pb-0">{renderContent()}</main>
       </div>
     </div>
   );
