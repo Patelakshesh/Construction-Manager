@@ -398,7 +398,7 @@ function Contractor() {
     `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
       hasError
         ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-        : "border-gray-300 focus:ring-[#FDB71A]"
+        : "border-gray-300 focus:ring-[#3D36BE]"
     }`;
 
   return (
@@ -416,7 +416,7 @@ function Contractor() {
           type="button"
           onClick={handleAddNew}
           className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#FDB71A" }}
+          style={{ backgroundColor: "#3D36BE" }}
         >
           <Plus className="h-5 w-5" />
           Add Contractor
@@ -450,9 +450,9 @@ function Contractor() {
           <div className="flex items-center gap-4">
             <div
               className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#FDB71A20" }}
+              style={{ backgroundColor: "#3D36BE20" }}
             >
-              <Building2 className="h-6 w-6" style={{ color: "#FDB71A" }} />
+              <Building2 className="h-6 w-6" style={{ color: "#3D36BE" }} />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Results</p>
@@ -468,7 +468,7 @@ function Contractor() {
           placeholder="Search by company, contact, or email..."
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A] sm:max-w-sm"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] sm:max-w-sm"
         />
       </div>
 
@@ -718,7 +718,7 @@ function Contractor() {
                   <button
                     type="button"
                     onClick={() => setIsSiteDropdownOpen((open) => !open)}
-                    className="flex w-full items-center justify-between rounded-lg border border-gray-300 px-4 py-2 text-left focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="flex w-full items-center justify-between rounded-lg border border-gray-300 px-4 py-2 text-left focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   >
                     <span className="truncate text-gray-700">
                       {formData.assignedSites.length > 0
@@ -742,7 +742,7 @@ function Contractor() {
                               type="checkbox"
                               checked={formData.assignedSites.includes(site)}
                               onChange={() => toggleAssignedSite(site)}
-                              className="h-4 w-4 rounded border-gray-300 text-[#FDB71A] focus:ring-[#FDB71A]"
+                              className="h-4 w-4 rounded border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
                             />
                             <span className="text-sm text-gray-700">{site}</span>
                           </label>
@@ -777,7 +777,7 @@ function Contractor() {
                 type="button"
                 onClick={handleSave}
                 className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#FDB71A" }}
+                style={{ backgroundColor: "#3D36BE" }}
               >
                 {editingContractor ? "Update" : "Create"} Contractor
               </button>

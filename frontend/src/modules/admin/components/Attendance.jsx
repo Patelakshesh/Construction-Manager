@@ -128,9 +128,9 @@ function Attendance() {
           <div className="flex items-center gap-4">
             <div
               className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#FDB71A20" }}
+              style={{ backgroundColor: "#3D36BE20" }}
             >
-              <Calendar className="h-6 w-6" style={{ color: "#FDB71A" }} />
+              <Calendar className="h-6 w-6" style={{ color: "#3D36BE" }} />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Entries</p>
@@ -147,7 +147,7 @@ function Attendance() {
             type="date"
             value={startDate}
             onChange={(event) => setStartDate(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
           />
         </div>
         <div>
@@ -156,7 +156,7 @@ function Attendance() {
             type="date"
             value={endDate}
             onChange={(event) => setEndDate(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
           />
         </div>
         <div>
@@ -164,7 +164,7 @@ function Attendance() {
           <select
             value={selectedSite}
             onChange={(event) => setSelectedSite(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
           >
             {siteOptions.map((site) => (
               <option key={site} value={site}>

@@ -62,12 +62,12 @@ function SupervisorHome({ site }) {
         <div className="space-y-4">
           <div
             className="flex items-center justify-between rounded-lg p-4"
-            style={{ backgroundColor: "#FDB71A20" }}
+            style={{ backgroundColor: "#3D36BE20" }}
           >
             <div className="flex items-center gap-3">
               <div
                 className="flex h-12 w-12 items-center justify-center rounded-lg"
-                style={{ backgroundColor: "#FDB71A" }}
+                style={{ backgroundColor: "#3D36BE" }}
               >
                 <ReceiptIndianRupee className="h-6 w-6 text-white" />
               </div>
@@ -128,7 +128,7 @@ function SupervisorHome({ site }) {
         >
           <div
             className="flex h-14 w-14 items-center justify-center rounded-full"
-            style={{ backgroundColor: "#FDB71A" }}
+            style={{ backgroundColor: "#3D36BE" }}
           >
             <Plus className="h-7 w-7 text-white" />
           </div>
@@ -163,7 +163,7 @@ function SupervisorHome({ site }) {
                   <div className="flex items-center gap-2">
                     <span
                       className="rounded px-2 py-1 text-xs"
-                      style={{ backgroundColor: "#FDB71A20", color: "#FDB71A" }}
+                      style={{ backgroundColor: "#3D36BE20", color: "#3D36BE" }}
                     >
                       {expense.category}
                     </span>

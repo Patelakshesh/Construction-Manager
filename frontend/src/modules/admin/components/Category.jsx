@@ -313,7 +313,7 @@ function Category() {
           type="button"
           onClick={handleAddNew}
           className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#FDB71A" }}
+          style={{ backgroundColor: "#3D36BE" }}
         >
           <Plus className="h-5 w-5" />
           Add Category
@@ -352,7 +352,7 @@ function Category() {
           placeholder="Search by category name or description..."
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A] sm:max-w-sm"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] sm:max-w-sm"
         />
       </div>
 
@@ -540,7 +540,7 @@ function Category() {
                   className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
                     formErrors.name
                       ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-                      : "border-gray-300 focus:ring-[#FDB71A]"
+                      : "border-gray-300 focus:ring-[#3D36BE]"
                   }`}
                   placeholder="Enter category name"
                 />
@@ -564,7 +564,7 @@ function Category() {
                   className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
                     formErrors.description
                       ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-                      : "border-gray-300 focus:ring-[#FDB71A]"
+                      : "border-gray-300 focus:ring-[#3D36BE]"
                   }`}
                   placeholder="Enter description"
                 />
@@ -595,7 +595,7 @@ function Category() {
                 type="button"
                 onClick={handleSave}
                 className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#FDB71A" }}
+                style={{ backgroundColor: "#3D36BE" }}
               >
                 {editingCategory ? "Update" : "Create"} Category
               </button>

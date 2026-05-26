@@ -88,7 +88,7 @@ function Notifications() {
           {unreadCount > 0 && (
             <div
               className="flex h-8 w-8 items-center justify-center rounded-full text-white"
-              style={{ backgroundColor: "#FDB71A" }}
+              style={{ backgroundColor: "#3D36BE" }}
             >
               {unreadCount}
             </div>
@@ -103,7 +103,7 @@ function Notifications() {
             className={`rounded-lg border p-4 shadow-sm ${
               notification.read
                 ? "border-gray-200 bg-white"
-                : "border-[#FDB71A] bg-[#FDB71A0A]"
+                : "border-[#3D36BE] bg-[#3D36BE0A]"
             }`}
           >
             <div className="flex gap-4">
@@ -119,7 +119,7 @@ function Notifications() {
                   {!notification.read && (
                     <div
                       className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: "#FDB71A" }}
+                      style={{ backgroundColor: "#3D36BE" }}
                     />
                   )}
                 </div>

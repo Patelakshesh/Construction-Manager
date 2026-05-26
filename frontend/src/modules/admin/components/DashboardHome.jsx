@@ -92,7 +92,7 @@ function DashboardHome() {
           <select
             value={filterSite}
             onChange={(e) => setFilterSite(e.target.value)}
-            className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+            className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
           >
             {sites.map((site) => (
               <option key={site} value={site}>
@@ -104,7 +104,7 @@ function DashboardHome() {
           <select
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
-            className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+            className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
           >
             <option value="today">Today</option>
             <option value="last7days">Last 7 Days</option>
@@ -119,11 +119,11 @@ function DashboardHome() {
           <div className="mb-4 flex items-center justify-between">
             <div
               className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#FDB71A20" }}
+              style={{ backgroundColor: "#3D36BE20" }}
             >
               <ReceiptIndianRupee
                 className="h-6 w-6"
-                style={{ color: "#FDB71A" }}
+                style={{ color: "#3D36BE" }}
               />
             </div>
             <div className="flex items-center gap-1 text-sm text-green-600">
@@ -199,7 +199,7 @@ function DashboardHome() {
               <Line
                 type="monotone"
                 dataKey="budget"
-                stroke="#FDB71A"
+                stroke="#3D36BE"
                 strokeWidth={2}
                 name="Budget"
               />
@@ -222,7 +222,7 @@ function DashboardHome() {
               <YAxis stroke="#6B7280" />
               <Tooltip />
               <Legend />
-              <Bar dataKey="budget" fill="#FDB71A" name="Budget" />
+              <Bar dataKey="budget" fill="#3D36BE" name="Budget" />
               <Bar dataKey="actual" fill="#2B2D33" name="Actual" />
             </BarChart>
           </ResponsiveContainer>
@@ -244,7 +244,7 @@ function DashboardHome() {
                   <div className="mb-2 flex flex-wrap items-center gap-3">
                     <span
                       className="rounded-full px-3 py-1 text-sm"
-                      style={{ backgroundColor: "#FDB71A20", color: "#FDB71A" }}
+                      style={{ backgroundColor: "#3D36BE20", color: "#3D36BE" }}
                     >
                       {activity.action}
                     </span>

@@ -188,7 +188,7 @@ function Expenses() {
             type="button"
             onClick={() => handleAddNew("Expense")}
             className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#FDB71A" }}
+            style={{ backgroundColor: "#3D36BE" }}
           >
             <Plus className="h-5 w-5" />
             Add Expense
@@ -202,12 +202,12 @@ function Expenses() {
           placeholder="Search by ID, title, or category..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
         />
         <select
           value={filterSite}
           onChange={(e) => setFilterSite(e.target.value)}
-          className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A] sm:w-48"
+          className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] sm:w-48"
         >
           {sites.map((site) => (
             <option key={site} value={site}>
@@ -220,10 +220,7 @@ function Expenses() {
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-4">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#FDB71A20" }}
-            >
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
               <CreditCard className="h-6 w-6 text-green-600" />
             </div>
             <div>
@@ -237,10 +234,13 @@ function Expenses() {
 
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-lg"
+              style={{ backgroundColor: "#3D36BE20" }}
+            >
               <ReceiptIndianRupee
                 className="h-6 w-6"
-                style={{ color: "#FDB71A" }}
+                style={{ color: "#3D36BE" }}
               />
             </div>
             <div>
@@ -361,7 +361,7 @@ function Expenses() {
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     placeholder="e.g. Cement Purchase"
                   />
                 </div>
@@ -375,7 +375,7 @@ function Expenses() {
                     onChange={(e) =>
                       setFormData({ ...formData, site: e.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   >
                     <option value="" disabled>
                       Select site
@@ -398,7 +398,7 @@ function Expenses() {
                       onChange={(e) =>
                         setFormData({ ...formData, category: e.target.value })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     >
                       <option value="" disabled>
                         Select category
@@ -437,7 +437,7 @@ function Expenses() {
                       onChange={(e) =>
                         setFormData({ ...formData, amount: e.target.value })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                       placeholder="Amount in Rs."
                     />
                   </div>
@@ -456,7 +456,7 @@ function Expenses() {
                           paymentMode: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     >
                       <option value="Cash">Cash</option>
                       <option value="Online">Online</option>
@@ -474,7 +474,7 @@ function Expenses() {
                       onChange={(e) =>
                         setFormData({ ...formData, date: e.target.value })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     />
                   </div>
                 </div>
@@ -495,7 +495,7 @@ function Expenses() {
                           transactionId: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                       placeholder={
                         formData.paymentMode === "Check"
                           ? "e.g. CHK98765"
@@ -510,7 +510,7 @@ function Expenses() {
                 <button
                   type="submit"
                   className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: "#FDB71A" }}
+                  style={{ backgroundColor: "#3D36BE" }}
                 >
                   {editingItem ? "Update" : "Add"} {modalType}
                 </button>

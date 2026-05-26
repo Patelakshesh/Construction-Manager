@@ -358,7 +358,7 @@ function SupervisorCredit() {
           type="button"
           onClick={handleAddNew}
           className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#FDB71A" }}
+          style={{ backgroundColor: "#3D36BE" }}
         >
           <Plus className="h-5 w-5" />
           Add Credit
@@ -398,12 +398,12 @@ function SupervisorCredit() {
           placeholder="Search by supervisor name or comment..."
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+          className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
         />
         <select
           value={selectedSupervisor}
           onChange={(event) => setSelectedSupervisor(event.target.value)}
-          className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+          className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
         >
           <option value="all">All Supervisors</option>
           {supervisors.map((supervisor) => (
@@ -415,7 +415,7 @@ function SupervisorCredit() {
         <select
           value={selectedPaymentMode}
           onChange={(event) => setSelectedPaymentMode(event.target.value)}
-          className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+          className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
         >
           <option value="all">All Payment Modes</option>
           <option value="Cash">Cash</option>
@@ -583,7 +583,7 @@ function SupervisorCredit() {
                     onChange={(event) =>
                       setFormData({ ...formData, supervisor: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     required
                   >
                     <option value="">Select supervisor</option>
@@ -607,7 +607,7 @@ function SupervisorCredit() {
                     onChange={(event) =>
                       setFormData({ ...formData, amount: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     placeholder="Amount in Rs."
                   />
                 </div>
@@ -628,7 +628,7 @@ function SupervisorCredit() {
                             : formData.transactionId,
                       })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   >
                     <option value="Cash">Cash</option>
                     <option value="Check">Check</option>
@@ -654,7 +654,7 @@ function SupervisorCredit() {
                           transactionId: event.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                       placeholder={
                         formData.paymentMode === "Check"
                           ? "e.g. CHK98765"
@@ -674,7 +674,7 @@ function SupervisorCredit() {
                       setFormData({ ...formData, comment: event.target.value })
                     }
                     rows={3}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     placeholder="Enter comment or description"
                   />
                 </div>
@@ -690,7 +690,7 @@ function SupervisorCredit() {
                     onChange={(event) =>
                       setFormData({ ...formData, date: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   />
                 </div>
               </div>
@@ -699,7 +699,7 @@ function SupervisorCredit() {
                 <button
                   type="submit"
                   className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: "#FDB71A" }}
+                  style={{ backgroundColor: "#3D36BE" }}
                 >
                   {editingCredit ? "Update" : "Add"} Credit
                 </button>

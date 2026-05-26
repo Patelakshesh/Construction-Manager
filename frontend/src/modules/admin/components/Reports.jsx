@@ -76,7 +76,7 @@ function Reports() {
 
       <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
-          <Filter className="h-5 w-5" style={{ color: "#FDB71A" }} />
+          <Filter className="h-5 w-5" style={{ color: "#3D36BE" }} />
           <h3 className="text-gray-900">Filters</h3>
         </div>
 
@@ -86,7 +86,7 @@ function Reports() {
             <select
               value={selectedSite}
               onChange={(event) => setSelectedSite(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
             >
               {sites.map((site) => (
                 <option key={site} value={site}>
@@ -101,7 +101,7 @@ function Reports() {
             <select
               value={selectedCategory}
               onChange={(event) => setSelectedCategory(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -119,7 +119,7 @@ function Reports() {
               onChange={(event) =>
                 setDateRange({ ...dateRange, start: event.target.value })
               }
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
             />
           </div>
 
@@ -131,7 +131,7 @@ function Reports() {
               onChange={(event) =>
                 setDateRange({ ...dateRange, end: event.target.value })
               }
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
             />
           </div>
         </div>
@@ -147,9 +147,9 @@ function Reports() {
               <div className="flex flex-1 items-start gap-4">
                 <div
                   className="flex h-12 w-12 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: "#FDB71A20" }}
+                  style={{ backgroundColor: "#3D36BE20" }}
                 >
-                  <FileText className="h-6 w-6" style={{ color: "#FDB71A" }} />
+                  <FileText className="h-6 w-6" style={{ color: "#3D36BE" }} />
                 </div>
                 <div className="flex-1">
                   <h3 className="mb-1 text-gray-900">{report.name}</h3>
@@ -174,7 +174,7 @@ function Reports() {
                 type="button"
                 onClick={() => handleDownload(report.name, "pdf")}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#FDB71A" }}
+                style={{ backgroundColor: "#3D36BE" }}
               >
                 <Download className="h-4 w-4" />
                 PDF

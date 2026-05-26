@@ -153,7 +153,7 @@ function AttendanceManagement({ site }) {
         type="button"
         onClick={() => setIsAdding(true)}
         className="flex w-full items-center justify-center gap-2 rounded-lg py-4 text-white transition-opacity hover:opacity-90"
-        style={{ backgroundColor: "#FDB71A" }}
+        style={{ backgroundColor: "#3D36BE" }}
       >
         <Plus className="h-5 w-5" />
         Add Attendance
@@ -227,7 +227,7 @@ function AttendanceManagement({ site }) {
                     onChange={(event) =>
                       setFormData({ ...formData, date: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     required
                   />
                 </div>
@@ -244,7 +244,7 @@ function AttendanceManagement({ site }) {
                         contractor: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   >
                     {contractors.map((contractor) => (
                       <option key={contractor} value={contractor}>
@@ -264,7 +264,7 @@ function AttendanceManagement({ site }) {
                     onChange={(event) =>
                       setFormData({ ...formData, workers: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     placeholder="Enter number of skills workers"
                     required
                     min="1"
@@ -280,7 +280,7 @@ function AttendanceManagement({ site }) {
                     onChange={(event) =>
                       setFormData({ ...formData, workers: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     placeholder="Enter number of semi-skills workers"
                     required
                     min="1"
@@ -296,7 +296,7 @@ function AttendanceManagement({ site }) {
                     onChange={(event) =>
                       setFormData({ ...formData, workers: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     placeholder="Enter number of unskills workers"
                     required
                     min="1"
@@ -310,7 +310,7 @@ function AttendanceManagement({ site }) {
                     onChange={(event) =>
                       setFormData({ ...formData, workType: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   >
                     {workTypes.map((type) => (
                       <option key={type} value={type}>
@@ -330,7 +330,7 @@ function AttendanceManagement({ site }) {
                     onChange={(event) =>
                       setFormData({ ...formData, hours: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     placeholder="Enter hours"
                     required
                     min="1"
@@ -350,7 +350,7 @@ function AttendanceManagement({ site }) {
                           startTime: event.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     >
                       {[...Array(24)].map((_, i) => (
                         <option key={i + 1} value={i + 1}>
@@ -370,7 +370,7 @@ function AttendanceManagement({ site }) {
                           endTime: event.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     >
                       {[...Array(24)].map((_, i) => (
                         <option key={i + 1} value={i + 1}>
@@ -385,7 +385,7 @@ function AttendanceManagement({ site }) {
                   <button
                     type="submit"
                     className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: "#FDB71A" }}
+                    style={{ backgroundColor: "#3D36BE" }}
                   >
                     Submit Attendance
                   </button>

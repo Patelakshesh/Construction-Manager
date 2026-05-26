@@ -360,7 +360,7 @@ function SiteManagement() {
     `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
       hasError
         ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-        : "border-gray-300 focus:ring-[#FDB71A]"
+        : "border-gray-300 focus:ring-[#3D36BE]"
     }`;
 
   // ── JSX ──────────────────────────────────────────────────────────────────────
@@ -381,7 +381,7 @@ function SiteManagement() {
           type="button"
           onClick={handleAddNew}
           className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#FDB71A" }}
+          style={{ backgroundColor: "#3D36BE" }}
         >
           <Plus className="h-5 w-5" />
           Add Site
@@ -416,9 +416,9 @@ function SiteManagement() {
           <div className="flex items-center gap-4">
             <div
               className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#FDB71A20" }}
+              style={{ backgroundColor: "#3D36BE20" }}
             >
-              <MapPin className="h-6 w-6" style={{ color: "#FDB71A" }} />
+              <MapPin className="h-6 w-6" style={{ color: "#3D36BE" }} />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Sites</p>
@@ -438,7 +438,7 @@ function SiteManagement() {
             setSearchQuery(e.target.value);
             setPageNumber(1);
           }}
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
         />
       </div>
 
@@ -667,7 +667,7 @@ function SiteManagement() {
                   Assign Supervisor
                 </label>
                 <div
-                  className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                  className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   onClick={() =>
                     setIsSupervisorDropdownOpen(!isSupervisorDropdownOpen)
                   }
@@ -704,7 +704,7 @@ function SiteManagement() {
                                 : formData.supervisor.filter((s) => s !== name),
                             });
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-[#FDB71A] focus:ring-[#FDB71A]"
+                          className="h-4 w-4 rounded border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
                         />
                         <span className="text-gray-700">{name}</span>
                       </label>
@@ -739,7 +739,7 @@ function SiteManagement() {
                 onClick={handleSave}
                 disabled={isSaving}
                 className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-                style={{ backgroundColor: "#FDB71A" }}
+                style={{ backgroundColor: "#3D36BE" }}
               >
                 {isSaving ? "Saving..." : editingSite ? "Update" : "Create"} Site
               </button>

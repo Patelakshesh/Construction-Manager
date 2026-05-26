@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import logoImage from "../../../assets/logo.png";
-import heroImage from "../../../assets/main_image.jpg";
+import heroImage from "../../../assets/leftside.jpg";
+import userIcon from "../../../assets/user.svg";
+import lockIcon from "../../../assets/lock.svg";
 import apiClient from "../../../shared/services/apiClient";
 
 function LoginScreen({ onLogin }) {
@@ -119,7 +121,7 @@ function LoginScreen({ onLogin }) {
           Mobile Number<span className="text-[#EC3F3F]">*</span>
         </label>
         <div className="flex h-[52px] items-center gap-3 rounded-xl border border-[#DFE0E2] bg-[#F9FAFC] px-4 xl:h-[62px] xl:rounded-2xl xl:px-5 2xl:h-[70px]">
-          <Mail className="h-4 w-4 shrink-0 text-[#F09E39] xl:h-5 xl:w-5" />
+          <img src={userIcon} alt="user" className="h-5 w-5 shrink-0 xl:h-6 xl:w-6" />
           <input
             type="tel"
             inputMode="numeric"
@@ -137,7 +139,7 @@ function LoginScreen({ onLogin }) {
           Password<span className="text-[#EC3F3F]">*</span>
         </label>
         <div className="flex h-[52px] items-center gap-3 rounded-xl border border-[#DFE0E2] bg-[#F9FAFC] px-4 xl:h-[62px] xl:rounded-2xl xl:px-5 2xl:h-[70px]">
-          <Lock className="h-4 w-4 shrink-0 text-[#F09E39] xl:h-5 xl:w-5" />
+          <img src={lockIcon} alt="lock" className="h-5 w-5 shrink-0 xl:h-6 xl:w-6" />
           <input
             type={showPassword ? "text" : "password"}
             value={password}
@@ -171,7 +173,7 @@ function LoginScreen({ onLogin }) {
           />
           <span>Remember me</span>
         </label>
-        <button type="button" className="font-semibold text-[#1F2937]">
+        <button type="button" className="font-bold text-[#1F2937]">
           Forgot Password?
         </button>
       </div>
@@ -180,7 +182,7 @@ function LoginScreen({ onLogin }) {
         type="submit"
         disabled={isSubmitting}
         className="mt-4 h-[52px] w-full rounded-[10px] text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70 xl:mt-6 xl:h-[62px] xl:text-lg 2xl:mt-8 2xl:h-[70px] 2xl:text-xl"
-        style={{ backgroundColor: "#F09E39" }}
+        style={{ backgroundColor: "#3D36BE" }}
       >
         {isSubmitting ? "Logging in..." : "Login"}
       </button>
@@ -207,7 +209,7 @@ function LoginScreen({ onLogin }) {
           className="flex items-center gap-2.5 rounded-xl border border-[#DFE0E2] bg-[#F9FAFC] px-3.5"
           style={{ height: "clamp(36px, 7vh, 44px)" }}
         >
-          <Mail className="h-3.5 w-3.5 shrink-0 text-[#F09E39]" />
+          <img src={userIcon} alt="user" className="h-4 w-4 shrink-0" />
           <input
             type="tel"
             inputMode="numeric"
@@ -233,7 +235,7 @@ function LoginScreen({ onLogin }) {
           className="flex items-center gap-2.5 rounded-xl border border-[#DFE0E2] bg-[#F9FAFC] px-3.5"
           style={{ height: "clamp(36px, 7vh, 44px)" }}
         >
-          <Lock className="h-3.5 w-3.5 shrink-0 text-[#F09E39]" />
+          <img src={lockIcon} alt="lock" className="h-4 w-4 shrink-0" />
           <input
             type={showPassword ? "text" : "password"}
             value={password}
@@ -274,7 +276,7 @@ function LoginScreen({ onLogin }) {
         </label>
         <button
           type="button"
-          className="font-semibold text-[#1F2937]"
+          className="font-bold text-[#1F2937]"
           style={{ fontSize: "clamp(9px, 2vw, 11px)" }}
         >
           Forgot Password?
@@ -290,7 +292,7 @@ function LoginScreen({ onLogin }) {
         disabled={isSubmitting}
         className="w-full shrink-0 rounded-[10px] font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
         style={{
-          backgroundColor: "#F09E39",
+          backgroundColor: "#3D36BE",
           height: "clamp(40px, 7.5vh, 48px)",
           fontSize: "clamp(12px, 2.8vw, 15px)",
         }}
@@ -316,7 +318,7 @@ function LoginScreen({ onLogin }) {
                 <img
                   src={logoImage}
                   alt="HRI logo"
-                  className="h-[120px] w-auto object-contain xl:h-[120px] xl:w-[188px] 2xl:h-[99px] 2xl:w-[218px]"
+                  className="h-[160px] w-auto object-contain xl:h-[180px] xl:w-[280px] 2xl:h-[200px] 2xl:w-[310px]"
                 />
                 <div className="space-y-2 text-center xl:space-y-3">
                   <h1 className="text-[32px] font-semibold text-[#1F2937] xl:text-[42px] 2xl:text-5xl">
@@ -362,7 +364,7 @@ function LoginScreen({ onLogin }) {
               alt="HRI logo"
               className="w-auto object-contain"
               style={{
-                height: "clamp(28px, 5.5vh, 44px)",
+                height: "clamp(48px, 8vh, 64px)",
                 marginBottom: "clamp(4px, 1vh, 8px)",
               }}
             />

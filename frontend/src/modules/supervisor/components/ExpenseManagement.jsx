@@ -139,7 +139,7 @@ function ExpenseManagement({ site }) {
         type="button"
         onClick={() => setIsAdding(true)}
         className="flex w-full items-center justify-center gap-2 rounded-lg py-4 text-white transition-opacity hover:opacity-90"
-        style={{ backgroundColor: "#FDB71A" }}
+        style={{ backgroundColor: "#3D36BE" }}
       >
         <Plus className="h-5 w-5" />
         Add New Expense
@@ -153,7 +153,7 @@ function ExpenseManagement({ site }) {
         <select
           value={filtertransactionType}
           onChange={(event) => setFiltertransactionType(event.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
         >
           <option value="All">All Categories</option>
           {transactionTypes.map((transactionType) => (
@@ -229,7 +229,7 @@ function ExpenseManagement({ site }) {
                     onChange={(event) =>
                       setFormData({ ...formData, amount: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     placeholder="Enter amount"
                     required
                   />
@@ -245,7 +245,7 @@ function ExpenseManagement({ site }) {
                         category: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   >
                     {expenseCategories.map((category) => (
                       <option key={category} value={category}>
@@ -267,7 +267,7 @@ function ExpenseManagement({ site }) {
                         description: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     placeholder="Enter description"
                     rows={3}
                     required
@@ -282,7 +282,7 @@ function ExpenseManagement({ site }) {
                     onChange={(event) =>
                       setFormData({ ...formData, date: event.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FDB71A]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     required
                   />
                 </div>
@@ -293,7 +293,7 @@ function ExpenseManagement({ site }) {
                   </label>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#FDB71A]"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE]"
                   >
                     <Camera className="h-5 w-5 text-gray-600" />
                     <span className="text-gray-600">
@@ -306,7 +306,7 @@ function ExpenseManagement({ site }) {
                   <button
                     type="submit"
                     className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: "#FDB71A" }}
+                    style={{ backgroundColor: "#3D36BE" }}
                   >
                     Submit Expense
                   </button>

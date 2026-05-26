@@ -3,7 +3,6 @@ import {
   Calendar,
   Briefcase,
   FileText,
-  HardHat,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -13,6 +12,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import logoImage from "../../../assets/logo.png";
 import Attendance from "./Attendance";
 import Category from "./Category";
 import DashboardHome from "./DashboardHome";
@@ -71,9 +71,7 @@ function AdminDashboard({ user, onLogout }) {
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-[#4A4D57] p-6 md:justify-start">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FDB71A]">
-                <HardHat className="h-6 w-6 text-white" />
-              </div>
+              <img src={logoImage} alt="BuildManager logo" className="h-14 w-14 rounded-lg object-contain" />
               <div>
                 <h2 className="text-white">BuildManager</h2>
                 <p className="text-sm text-gray-400">Admin Portal</p>
@@ -103,7 +101,7 @@ function AdminDashboard({ user, onLogout }) {
                   }}
                   className="flex w-full items-center gap-3 rounded-lg px-4 py-3 transition-colors"
                   style={{
-                    backgroundColor: isActive ? "#FDB71A" : "transparent",
+                    backgroundColor: isActive ? "#3D36BE" : "transparent",
                     color: isActive ? "white" : "#9CA3AF",
                   }}
                 >
@@ -116,12 +114,12 @@ function AdminDashboard({ user, onLogout }) {
 
           <div className="border-t border-[#4A4D57] p-4">
             <div className="mb-2 flex items-center gap-3 rounded-lg bg-[#4A4D57] px-4 py-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FDB71A]">
-                <span className="text-sm text-white">A</span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3D36BE]">
+                <span className="text-sm font-semibold text-white">{user.name?.charAt(0).toUpperCase()}</span>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-white">{user.name}</p>
-                <p className="text-xs text-gray-400">Administrator</p>
+                <p className="truncate text-xs capitalize text-gray-400">{user.role}</p>
               </div>
             </div>
             <button

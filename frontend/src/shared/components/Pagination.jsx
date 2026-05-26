@@ -55,9 +55,9 @@ function Pagination({ pageNumber, pageSize, totalCount, onPageChange }) {
   const items = buildPageItems(pageNumber, totalPages);
 
   const navBtnBase =
-    "inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-lg border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDB71A] focus-visible:ring-offset-1";
+    "inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-lg border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D36BE] focus-visible:ring-offset-1";
   const navBtnActive =
-    "border-gray-200 bg-white text-gray-600 hover:border-[#FDB71A] hover:bg-[#FFF8E6] hover:text-[#B47B00]";
+    "border-gray-200 bg-white text-gray-600 hover:border-[#3D36BE] hover:bg-[#F0EFFF] hover:text-[#2A2585]";
   const navBtnDisabled =
     "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed";
 
@@ -116,10 +116,10 @@ function Pagination({ pageNumber, pageSize, totalCount, onPageChange }) {
                   aria-label={`Page ${item}`}
                   aria-current={item === pageNumber ? "page" : undefined}
                   onClick={() => onPageChange(item)}
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDB71A] focus-visible:ring-offset-1 sm:h-9 sm:w-9 sm:text-sm ${
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D36BE] focus-visible:ring-offset-1 sm:h-9 sm:w-9 sm:text-sm ${
                     item === pageNumber
-                      ? "border-[#FDB71A] bg-[#FDB71A] text-white shadow-sm"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-[#FDB71A] hover:bg-[#FFF8E6] hover:text-[#B47B00]"
+                      ? "border-[#3D36BE] bg-[#3D36BE] text-white shadow-sm"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-[#3D36BE] hover:bg-[#F0EFFF] hover:text-[#2A2585]"
                   }`}
                 >
                   {item}

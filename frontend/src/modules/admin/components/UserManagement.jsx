@@ -490,7 +490,7 @@ function UserManagement() {
     `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
       hasError
         ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-        : "border-gray-300 focus:ring-[#FDB71A]"
+        : "border-gray-300 focus:ring-[#3D36BE]"
     }`;
 
   const displayStart = totalCount ? (pageNumber - 1) * pageSize + 1 : 0;
@@ -510,7 +510,7 @@ function UserManagement() {
           onClick={handleAddNew}
           disabled={roles.length === 0}
           className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          style={{ backgroundColor: "#FDB71A" }}
+          style={{ backgroundColor: "#3D36BE" }}
         >
           <Plus className="h-5 w-5" />
           Add User
@@ -544,9 +544,9 @@ function UserManagement() {
           <div className="flex items-center gap-4">
             <div
               className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#FDB71A20" }}
+              style={{ backgroundColor: "#3D36BE20" }}
             >
-              <UserCheck className="h-6 w-6" style={{ color: "#FDB71A" }} />
+              <UserCheck className="h-6 w-6" style={{ color: "#3D36BE" }} />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Users</p>
@@ -562,7 +562,7 @@ function UserManagement() {
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           placeholder="Search by name, mobile, or email"
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FDB71A] sm:max-w-sm"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] sm:max-w-sm"
         />
       </div>
 
@@ -905,7 +905,7 @@ function UserManagement() {
                 onClick={handleSave}
                 disabled={isSaving}
                 className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-                style={{ backgroundColor: "#FDB71A" }}
+                style={{ backgroundColor: "#3D36BE" }}
               >
                 {editingUser ? "Update" : "Create"} User
               </button>
