@@ -30,7 +30,7 @@ const menuItems = [
   { id: "contractors", label: "Contractor", icon: Briefcase },
   { id: "categories", label: "Category", icon: Shapes },
   { id: "supervisor-credit", label: "Supervisor Credit", icon: ReceiptIndianRupee },
-  { id: "expenses", label: "Income and Expense", icon: ReceiptIndianRupee },
+  { id: "expenses", label: "Income/Expense", icon: ReceiptIndianRupee },
   { id: "attendance", label: "Attendance", icon: Calendar },
   { id: "reports", label: "Reports", icon: FileText },
 ];
@@ -71,10 +71,8 @@ function AdminDashboard({ user, onLogout }) {
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-[#4A4D57] p-6 md:justify-start">
             <div className="flex items-center gap-3">
-              <img src={logoImage} alt="BuildManager logo" className="h-14 w-14 rounded-lg object-contain" />
               <div>
-                <h2 className="text-white">BuildManager</h2>
-                <p className="text-sm text-gray-400">Admin Portal</p>
+                <h1 className="text-white">Admin Portal</h1>
               </div>
             </div>
             <button

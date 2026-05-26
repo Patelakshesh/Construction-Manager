@@ -173,9 +173,6 @@ function LoginScreen({ onLogin }) {
           />
           <span>Remember me</span>
         </label>
-        <button type="button" className="font-bold text-[#1F2937]">
-          Forgot Password?
-        </button>
       </div>
 
       <button
@@ -303,7 +300,7 @@ function LoginScreen({ onLogin }) {
   );
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-white">
+    <div className="fixed inset-0 bg-white overflow-y-auto">
       {/* ===================== DESKTOP & TABLET — md+ (768px+) ===================== */}
       <div className="hidden h-full md:flex">
         <div
@@ -313,7 +310,7 @@ function LoginScreen({ onLogin }) {
 
         <div className="flex h-full w-1/2 items-center justify-center rounded-bl-[100px] bg-white px-6 py-8 md:px-8 md:py-12 xl:px-10 xl:py-16 2xl:px-14">
           <div className="w-full max-w-[560px] xl:max-w-[650px]">
-            <div className="flex flex-col gap-8 xl:gap-12 2xl:gap-14">
+            <div className="flex flex-col gap-4 xl:gap-6 2xl:gap-6">
               <div className="flex flex-col items-center gap-5 xl:gap-7 2xl:gap-8">
                 <img
                   src={logoImage}

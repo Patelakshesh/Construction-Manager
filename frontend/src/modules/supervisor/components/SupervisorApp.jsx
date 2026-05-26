@@ -19,12 +19,11 @@ function SupervisorApp({ user, onLogout }) {
       <div className="border-b border-gray-700 bg-[#2B2D33] p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <img src={logoImage} alt="BuildManager logo" className="h-14 w-14 rounded-lg object-contain shrink-0" />
+           
             <div className="min-w-0">
               <h2 className="truncate text-lg text-white">
-                {user.assignedSite}
+                Supervision Portal
               </h2>
-              <p className="truncate text-sm text-gray-400">Supervision Dashboard</p>
             </div>
           </div>
           <button
