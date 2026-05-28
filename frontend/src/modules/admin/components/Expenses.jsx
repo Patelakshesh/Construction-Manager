@@ -104,7 +104,7 @@ function Expenses() {
     const matchesSearch =
       transaction.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       transaction.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction.category.toLowerCase().includes(searchQuery.toLowerCase());
+      (transaction.category || "").toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSite && matchesSearch;
   });
 
@@ -145,19 +145,23 @@ function Expenses() {
   const handleSave = (e) => {
     e.preventDefault();
     const newAmount = `Rs. ${Number(formData.amount).toLocaleString("en-IN")}`;
+    const savedFormData = {
+      ...formData,
+      category: modalType === "Income" ? "" : formData.category,
+    };
 
     if (editingItem) {
       setTransactions(
         transactions.map((t) =>
           t.id === editingItem.id
-            ? { ...t, ...formData, type: modalType, amount: newAmount }
+            ? { ...t, ...savedFormData, type: modalType, amount: newAmount }
             : t,
         ),
       );
     } else {
       const newId = `${modalType === "Income" ? "INC" : "EXP"}-00${transactions.length + 1}`;
       setTransactions([
-        { id: newId, type: modalType, ...formData, amount: newAmount },
+        { id: newId, type: modalType, ...savedFormData, amount: newAmount },
         ...transactions,
       ]);
     }
@@ -285,7 +289,7 @@ function Expenses() {
                     {transaction.site}
                   </td>
                   <td className="px-6 py-4 text-gray-900">
-                    {transaction.category}
+                    {transaction.category || "—"}
                   </td>
                   <td className="px-6 py-4 text-gray-900">
                     {transaction.amount}
@@ -362,7 +366,11 @@ function Expenses() {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder="e.g. Cement Purchase"
+                    placeholder={
+                      modalType === "Expense"
+                        ? "e.g. Cement Purchase"
+                        : "e.g. Client Payment Advance"
+                    }
                   />
                 </div>
 
@@ -388,43 +396,51 @@ function Expenses() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Category
-                    </label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) =>
-                        setFormData({ ...formData, category: e.target.value })
-                      }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    >
-                      <option value="" disabled>
-                        Select category
-                      </option>
-                      {modalType === "Expense" ? (
-                        <>
-                          <option value="Materials">Materials</option>
-                          <option value="Contractor">Contractor</option>
-                          <option value="Supplies">Supplies</option>
-                          <option value="Hardware">Hardware</option>
-                          <option value="Logistics">Logistics</option>
-                          <option value="Labor">Labor</option>
-                          <option value="Equipment">Equipment</option>
-                          <option value="Miscellaneous">Miscellaneous</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="Hardware">Hardware</option>
-                          <option value="Supplies">Supplies</option>
-                          <option value="Labor">Labor</option>
-                          <option value="Equipment">Equipment</option>
-                          <option value="Materials">Materials</option>
-                        </>
-                      )}
-                    </select>
+                {modalType === "Expense" ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Category
+                      </label>
+                      <select
+                        required
+                        value={formData.category}
+                        onChange={(e) =>
+                          setFormData({ ...formData, category: e.target.value })
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+                      >
+                        <option value="" disabled>
+                          Select category
+                        </option>
+                        <option value="Materials">Materials</option>
+                        <option value="Contractor">Contractor</option>
+                        <option value="Supplies">Supplies</option>
+                        <option value="Hardware">Hardware</option>
+                        <option value="Logistics">Logistics</option>
+                        <option value="Labor">Labor</option>
+                        <option value="Equipment">Equipment</option>
+                        <option value="Miscellaneous">Miscellaneous</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Amount
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        value={formData.amount}
+                        onChange={(e) =>
+                          setFormData({ ...formData, amount: e.target.value })
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+                        placeholder="Amount in Rs."
+                      />
+                    </div>
                   </div>
+                ) : (
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
                       Amount
@@ -441,7 +457,7 @@ function Expenses() {
                       placeholder="Amount in Rs."
                     />
                   </div>
-                </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>

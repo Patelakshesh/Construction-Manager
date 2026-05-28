@@ -110,6 +110,7 @@ function DashboardHome() {
             <option value="last7days">Last 7 Days</option>
             <option value="last30days">Last 30 Days</option>
             <option value="thisMonth">This Month</option>
+            <option value="tillDate">Till Date</option>
           </select>
         </div>
       </div>

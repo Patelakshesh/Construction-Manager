@@ -619,7 +619,7 @@ function SiteManagement() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+          <div className="max-h-[90vh] overflow-y-auto w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h3 className="mb-6 text-gray-900">
               {editingSite ? "Edit Site" : "Add New Site"}
             </h3>

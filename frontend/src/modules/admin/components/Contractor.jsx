@@ -22,8 +22,7 @@ const LOAD_CONTRACTORS_QUERY = `
     ) {
       items {
         id
-        companyName
-        contactPerson
+        contractorName
         email
         phone
         assignedSites
@@ -92,8 +91,7 @@ function Contractor() {
   const [itemToDelete, setItemToDelete] = useState(null);
 
   const [formData, setFormData] = useState({
-    companyName: "",
-    contactPerson: "",
+    contractorName: "",
     email: "",
     phone: "",
     assignedSites: [],
@@ -158,8 +156,7 @@ function Contractor() {
       const searchLower = debouncedSearch.toLowerCase().trim();
       const filteredAll = searchLower 
         ? all.filter(c => 
-            (c.companyName?.toLowerCase().includes(searchLower)) ||
-            (c.contactPerson?.toLowerCase().includes(searchLower)) ||
+            (c.contractorName?.toLowerCase().includes(searchLower)) ||
             (c.email?.toLowerCase().includes(searchLower))
           )
         : all;
@@ -196,8 +193,7 @@ function Contractor() {
   const handleAddNew = () => {
     setEditingContractor(null);
     setFormData({
-      companyName: "",
-      contactPerson: "",
+      contractorName: "",
       email: "",
       phone: "",
       assignedSites: [],
@@ -215,8 +211,7 @@ function Contractor() {
       : [];
       
     setFormData({
-      companyName: contractor.companyName,
-      contactPerson: contractor.contactPerson,
+      contractorName: contractor.contractorName,
       email: contractor.email,
       phone: contractor.phone,
       assignedSites: assignedSitesArray,
@@ -237,8 +232,7 @@ function Contractor() {
           variables: {
             input: {
               id: contractor.id,
-              companyName: contractor.companyName,
-              contactPerson: contractor.contactPerson,
+              contractorName: contractor.contractorName,
               email: contractor.email,
               phone: contractor.phone,
               assignedSites: contractor.assignedSites,
@@ -301,8 +295,7 @@ function Contractor() {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.companyName.trim()) errors.companyName = "Company name is required";
-    if (!formData.contactPerson.trim()) errors.contactPerson = "Contact person is required";
+    if (!formData.contractorName.trim()) errors.contractorName = "Contractor name is required";
     
     if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = "Invalid email format";
@@ -334,8 +327,7 @@ function Contractor() {
             variables: {
               input: {
                 id: editingContractor.id,
-                companyName: formData.companyName,
-                contactPerson: formData.contactPerson,
+                contractorName: formData.contractorName,
                 email: formData.email,
                 phone: cleanPhone,
                 assignedSites: sitesString,
@@ -360,8 +352,7 @@ function Contractor() {
             query: CREATE_CONTRACTOR_MUTATION,
             variables: {
               input: {
-                companyName: formData.companyName,
-                contactPerson: formData.contactPerson,
+                contractorName: formData.contractorName,
                 email: formData.email,
                 phone: cleanPhone,
                 assignedSites: sitesString,
@@ -484,8 +475,7 @@ function Contractor() {
             <table className="w-full min-w-[900px]">
             <thead className="border-b border-gray-200 bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-gray-700">Company</th>
-                <th className="px-6 py-4 text-left text-gray-700">Contact Person</th>
+                <th className="px-6 py-4 text-left text-gray-700">Contractor Name</th>
                 <th className="px-6 py-4 text-left text-gray-700">Email</th>
                 <th className="px-6 py-4 text-left text-gray-700">Phone</th>
                 <th className="px-6 py-4 text-left text-gray-700">Assigned Sites</th>
@@ -496,14 +486,14 @@ function Contractor() {
             <tbody className="divide-y divide-gray-200">
               {isLoading && (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                     Loading...
                   </td>
                 </tr>
               )}
               {!isLoading && contractors.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                     No contractors found.
                   </td>
                 </tr>
@@ -514,9 +504,8 @@ function Contractor() {
                   className="transition-colors hover:bg-gray-50"
                 >
                   <td className="px-6 py-4">
-                    <p className="text-gray-900 capitalize">{contractor.companyName}</p>
+                    <p className="text-gray-900 capitalize">{contractor.contractorName}</p>
                   </td>
-                  <td className="px-6 py-4 text-gray-900">{contractor.contactPerson}</td>
                   <td className="px-6 py-4 text-gray-900">{contractor.email}</td>
                   <td className="px-6 py-4 text-gray-900">{contractor.phone}</td>
                   <td className="px-6 py-4 text-gray-900">
@@ -575,8 +564,7 @@ function Contractor() {
               >
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900 capitalize">{contractor.companyName}</p>
-                    <p className="text-xs text-gray-500">{contractor.contactPerson}</p>
+                    <p className="font-medium text-gray-900 capitalize">{contractor.contractorName}</p>
                   </div>
                   <button
                     type="button"
@@ -646,36 +634,19 @@ function Contractor() {
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-gray-700">
-                  Company Name <span className="text-[#EC3F3F]">*</span>
+                  Contractor Name <span className="text-[#EC3F3F]">*</span>
                 </label>
                 <input
                   type="text"
-                  value={formData.companyName}
+                  value={formData.contractorName}
                   onChange={(event) => {
-                    setFormData({ ...formData, companyName: event.target.value });
-                    if (formErrors.companyName) setFormErrors({ ...formErrors, companyName: null });
+                    setFormData({ ...formData, contractorName: event.target.value });
+                    if (formErrors.contractorName) setFormErrors({ ...formErrors, contractorName: null });
                   }}
-                  className={getFieldClassName(formErrors.companyName)}
-                  placeholder="Enter company name"
+                  className={getFieldClassName(formErrors.contractorName)}
+                  placeholder="Enter contractor name"
                 />
-                {renderFieldError(formErrors.companyName)}
-              </div>
-
-              <div>
-                <label className="mb-2 block text-gray-700">
-                  Contact Person <span className="text-[#EC3F3F]">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.contactPerson}
-                  onChange={(event) => {
-                    setFormData({ ...formData, contactPerson: event.target.value });
-                    if (formErrors.contactPerson) setFormErrors({ ...formErrors, contactPerson: null });
-                  }}
-                  className={getFieldClassName(formErrors.contactPerson)}
-                  placeholder="Enter contact person"
-                />
-                {renderFieldError(formErrors.contactPerson)}
+                {renderFieldError(formErrors.contractorName)}
               </div>
 
               <div>
@@ -796,7 +767,7 @@ function Contractor() {
       <ConfirmModal
         isOpen={!!itemToDelete}
         title="Delete Contractor"
-        message={`Are you sure you want to delete the contractor "${itemToDelete?.companyName}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete the contractor "${itemToDelete?.contractorName}"? This action cannot be undone.`}
         confirmText="Delete"
         onConfirm={confirmDelete}
         onCancel={() => setItemToDelete(null)}

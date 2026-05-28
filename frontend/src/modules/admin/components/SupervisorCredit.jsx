@@ -98,6 +98,38 @@ function SupervisorCredit() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCredit, setEditingCredit] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+
+  const renderFieldError = (message) =>
+    message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
+
+  const getFieldClassName = (hasError) =>
+    `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
+      hasError
+        ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
+        : "border-gray-300 focus:ring-[#3D36BE]"
+    }`;
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.supervisor) {
+      errors.supervisor = "Supervisor is required.";
+    }
+    if (!formData.amount) {
+      errors.amount = "Amount is required.";
+    } else if (Number(formData.amount) <= 0) {
+      errors.amount = "Amount must be greater than 0.";
+    }
+    if (formData.paymentMode !== "Cash" && !formData.transactionId.trim()) {
+      errors.transactionId = `${
+        formData.paymentMode === "Check" ? "Check ID" : "Transaction ID"
+      } is required.`;
+    }
+    if (!formData.date) {
+      errors.date = "Date is required.";
+    }
+    return errors;
+  };
 
   const [formData, setFormData] = useState({
     supervisor: "",
@@ -218,6 +250,7 @@ function SupervisorCredit() {
 
   const handleAddNew = () => {
     setEditingCredit(null);
+    setFormErrors({});
     setFormData({
       supervisor: "",
       amount: "",
@@ -231,6 +264,7 @@ function SupervisorCredit() {
 
   const handleEdit = (credit) => {
     setEditingCredit(credit);
+    setFormErrors({});
     setFormData({
       supervisor: credit.supervisorName,
       amount: credit.amount,
@@ -270,13 +304,16 @@ function SupervisorCredit() {
     }
   };
 
-  const handleSave = async (event) => {
-    event.preventDefault();
-    
-    if (formData.amount <= 0) {
-      toast.error("Amount must be greater than 0");
+  const handleSave = async () => {
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Please fix the errors below.");
       return;
     }
+
+    setFormErrors({});
+    setIsLoading(true);
 
     const token = localStorage.getItem("authToken");
     
@@ -340,6 +377,8 @@ function SupervisorCredit() {
       loadData(false);
     } catch (err) {
       toast.error("Failed to save credit.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -558,160 +597,158 @@ function SupervisorCredit() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-md overflow-auto rounded-lg bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-gray-200 p-6">
-              <h3 className="text-xl font-semibold text-gray-900">
-                {editingCredit ? "Edit Supervisor Credit" : "Add Supervisor Credit"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="rounded-lg p-2 hover:bg-gray-100"
-              >
-                <X className="h-5 w-5 text-gray-500" />
-              </button>
-            </div>
+          <div className="max-h-[90vh] overflow-y-auto w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="mb-6 text-gray-900">
+              {editingCredit ? "Edit Supervisor Credit" : "Add Supervisor Credit"}
+            </h3>
 
-            <form onSubmit={handleSave} className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Supervisor <span className="text-[#EC3F3F]">*</span>
-                  </label>
-                  <select
-                    value={formData.supervisor}
-                    onChange={(event) =>
-                      setFormData({ ...formData, supervisor: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    required
-                  >
-                    <option value="">Select supervisor</option>
-                    {supervisors.map((supervisor) => (
-                      <option key={supervisor} value={supervisor}>
-                        {supervisor}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-gray-700">
+                  Supervisor <span className="text-[#EC3F3F]">*</span>
+                </label>
+                <select
+                  value={formData.supervisor}
+                  onChange={(event) =>
+                    setFormData({ ...formData, supervisor: event.target.value })
+                  }
+                  className={getFieldClassName(Boolean(formErrors.supervisor))}
+                  required
+                >
+                  <option value="">Select supervisor</option>
+                  {supervisors.map((supervisor) => (
+                    <option key={supervisor} value={supervisor}>
+                      {supervisor}
+                    </option>
+                  ))}
+                </select>
+                {renderFieldError(formErrors.supervisor)}
+              </div>
 
+              <div>
+                <label className="mb-2 block text-gray-700">
+                  Amount <span className="text-[#EC3F3F]">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={formData.amount}
+                  onChange={(event) =>
+                    setFormData({ ...formData, amount: event.target.value })
+                  }
+                  className={getFieldClassName(Boolean(formErrors.amount))}
+                  placeholder="Amount in Rs."
+                />
+                {renderFieldError(formErrors.amount)}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-gray-700">
+                  Payment Mode <span className="text-[#EC3F3F]">*</span>
+                </label>
+                <select
+                  value={formData.paymentMode}
+                  onChange={(event) =>
+                    setFormData({
+                      ...formData,
+                      paymentMode: event.target.value,
+                      transactionId:
+                        event.target.value === "Cash"
+                          ? ""
+                          : formData.transactionId,
+                    })
+                  }
+                  className={getFieldClassName(Boolean(formErrors.paymentMode))}
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Check">Check</option>
+                  <option value="Online">Online</option>
+                </select>
+                {renderFieldError(formErrors.paymentMode)}
+              </div>
+
+              {(formData.paymentMode === "Check" ||
+                formData.paymentMode === "Online") && (
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Amount <span className="text-[#EC3F3F]">*</span>
+                  <label className="mb-2 block text-gray-700">
+                    {formData.paymentMode === "Check"
+                      ? "Check ID"
+                      : "Transaction ID"} <span className="text-[#EC3F3F]">*</span>
                   </label>
                   <input
-                    type="number"
-                    min="0"
+                    type="text"
                     required
-                    value={formData.amount}
-                    onChange={(event) =>
-                      setFormData({ ...formData, amount: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder="Amount in Rs."
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Payment Mode <span className="text-[#EC3F3F]">*</span>
-                  </label>
-                  <select
-                    value={formData.paymentMode}
+                    value={formData.transactionId}
                     onChange={(event) =>
                       setFormData({
                         ...formData,
-                        paymentMode: event.target.value,
-                        transactionId:
-                          event.target.value === "Cash"
-                            ? ""
-                            : formData.transactionId,
+                        transactionId: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                  >
-                    <option value="Cash">Cash</option>
-                    <option value="Check">Check</option>
-                    <option value="Online">Online</option>
-                  </select>
-                </div>
-
-                {(formData.paymentMode === "Check" ||
-                  formData.paymentMode === "Online") && (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      {formData.paymentMode === "Check"
-                        ? "Check ID"
-                        : "Transaction ID"} <span className="text-[#EC3F3F]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.transactionId}
-                      onChange={(event) =>
-                        setFormData({
-                          ...formData,
-                          transactionId: event.target.value,
-                        })
-                      }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                      placeholder={
-                        formData.paymentMode === "Check"
-                          ? "e.g. CHK98765"
-                          : "e.g. TXN123456"
-                      }
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Comment
-                  </label>
-                  <textarea
-                    value={formData.comment}
-                    onChange={(event) =>
-                      setFormData({ ...formData, comment: event.target.value })
+                    className={getFieldClassName(Boolean(formErrors.transactionId))}
+                    placeholder={
+                      formData.paymentMode === "Check"
+                        ? "e.g. CHK98765"
+                        : "e.g. TXN123456"
                     }
-                    rows={3}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder="Enter comment or description"
                   />
+                  {renderFieldError(formErrors.transactionId)}
                 </div>
+              )}
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Date <span className="text-[#EC3F3F]">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.date}
-                    onChange={(event) =>
-                      setFormData({ ...formData, date: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                  />
-                </div>
+              <div>
+                <label className="mb-2 block text-gray-700">
+                  Comment
+                </label>
+                <textarea
+                  value={formData.comment}
+                  onChange={(event) =>
+                    setFormData({ ...formData, comment: event.target.value })
+                  }
+                  rows={3}
+                  className={getFieldClassName(false)}
+                  placeholder="Enter comment or description"
+                />
               </div>
 
-              <div className="mt-8 flex gap-3">
-                <button
-                  type="submit"
-                  className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: "#3D36BE" }}
-                >
-                  {editingCredit ? "Update" : "Add"} Credit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
+              <div>
+                <label className="mb-2 block text-gray-700">
+                  Date <span className="text-[#EC3F3F]">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.date}
+                  onChange={(event) =>
+                    setFormData({ ...formData, date: event.target.value })
+                  }
+                  className={getFieldClassName(Boolean(formErrors.date))}
+                />
+                {renderFieldError(formErrors.date)}
               </div>
-            </form>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={handleSave}
+                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "#3D36BE" }}
+              >
+                {editingCredit ? "Update" : "Add"} Credit
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setFormErrors({});
+                }}
+                className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
