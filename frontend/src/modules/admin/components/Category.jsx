@@ -397,22 +397,24 @@ function Category() {
                   >
                     <td className="px-6 py-4 text-gray-900 capitalize">{category.name}</td>
                     <td className="px-6 py-4 text-gray-900">
-                      {category.description}
+                      <div className="max-w-xs truncate" title={category.description}>
+                        {category.description || "-"}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <button
                         type="button"
                         onClick={() => toggleStatus(category)}
-                        className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
+                        className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
                           category.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
                         }`}
                       >
-                        <span className={`absolute text-[10px] font-bold text-white ${category.enable ? 'left-2' : 'right-2'}`}>
+                        <span className={`absolute text-[10px] font-bold text-white ${category.enable ? 'left-2.5' : 'right-1'}`}>
                           {category.enable ? "ACTIVE" : "INACTIVE"}
                         </span>
                         <span
                           className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            category.enable ? "translate-x-[60px]" : "translate-x-1"
+                            category.enable ? "translate-x-[52px]" : "translate-x-1"
                           }`}
                         />
                       </button>
@@ -464,25 +466,25 @@ function Category() {
                   <button
                     type="button"
                     onClick={() => toggleStatus(category)}
-                    className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
+                    className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
                       category.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
                     }`}
                   >
-                    <span className={`absolute text-[10px] font-bold text-white ${category.enable ? 'left-2' : 'right-2'}`}>
+                    <span className={`absolute text-[10px] font-bold text-white ${category.enable ? 'left-2.5' : 'right-1'}`}>
                       {category.enable ? "ACTIVE" : "INACTIVE"}
                     </span>
                     <span
                       className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        category.enable ? "translate-x-[60px]" : "translate-x-1"
+                        category.enable ? "translate-x-[52px]" : "translate-x-1"
                       }`}
                     />
                   </button>
                 </div>
                 
                 <div className="mb-4 space-y-2 text-sm text-gray-600">
-                  <div className="flex justify-between">
+                  <div className="flex flex-col gap-1">
                     <span className="font-medium">Description:</span>
-                    <span className="truncate ml-4">{category.description || "-"}</span>
+                    <span className="text-gray-500 break-words line-clamp-3">{category.description || "-"}</span>
                   </div>
                 </div>
 
@@ -624,3 +626,7 @@ function Category() {
 }
 
 export default Category;
+
+
+
+

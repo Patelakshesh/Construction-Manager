@@ -635,16 +635,16 @@ function UserManagement() {
                             onClick={() => handleToggleStatus(user)}
                             disabled={user.phone === currentUserMobile}
                             title={user.phone === currentUserMobile ? "Cannot change your own status" : ""}
-                            className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
+                            className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
                               user.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
                             }`}
                           >
-                            <span className={`absolute text-[10px] font-bold text-white ${user.enable ? 'left-2' : 'right-2'}`}>
+                            <span className={`absolute text-[10px] font-bold text-white ${user.enable ? 'left-2.5' : 'right-1'}`}>
                               {user.enable ? "ACTIVE" : "INACTIVE"}
                             </span>
                             <span
                               className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                user.enable ? "translate-x-[60px]" : "translate-x-1"
+                                user.enable ? "translate-x-[52px]" : "translate-x-1"
                               }`}
                             />
                           </button>
@@ -699,16 +699,16 @@ function UserManagement() {
                       onClick={() => handleToggleStatus(user)}
                       disabled={user.phone === currentUserMobile}
                       title={user.phone === currentUserMobile ? "Cannot change your own status" : ""}
-                      className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
+                      className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
                         user.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
                       }`}
                     >
-                      <span className={`absolute text-[10px] font-bold text-white ${user.enable ? 'left-2' : 'right-2'}`}>
+                      <span className={`absolute text-[10px] font-bold text-white ${user.enable ? 'left-2.5' : 'right-1'}`}>
                         {user.enable ? "ACTIVE" : "INACTIVE"}
                       </span>
                       <span
                         className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          user.enable ? "translate-x-[60px]" : "translate-x-1"
+                          user.enable ? "translate-x-[52px]" : "translate-x-1"
                         }`}
                       />
                     </button>
@@ -750,13 +750,14 @@ function UserManagement() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] overflow-y-auto w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
             <h3 className="mb-6 text-gray-900">
               {editingUser ? "Edit User" : "Add New User"}
             </h3>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="mb-2 block text-gray-700">
                   Full Name<span className="text-[#EC3F3F]">*</span>
@@ -806,7 +807,7 @@ function UserManagement() {
                 {renderFieldError(formErrors.email)}
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="mb-2 block text-gray-700">
                   Address<span className="text-[#EC3F3F]">*</span>
                 </label>
@@ -880,7 +881,7 @@ function UserManagement() {
                 {renderFieldError(formErrors.password)}
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 md:col-span-2">
                 <input
                   type="checkbox"
                   id="activeStatus"
@@ -920,6 +921,7 @@ function UserManagement() {
                 Cancel
               </button>
             </div>
+            </div>
           </div>
         </div>
       )}
@@ -937,3 +939,7 @@ function UserManagement() {
 }
 
 export default UserManagement;
+
+
+
+

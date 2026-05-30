@@ -596,13 +596,14 @@ function SupervisorCredit() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] overflow-y-auto w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
             <h3 className="mb-6 text-gray-900">
               {editingCredit ? "Edit Supervisor Credit" : "Add Supervisor Credit"}
             </h3>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="mb-2 block text-gray-700">
                   Supervisor <span className="text-[#EC3F3F]">*</span>
@@ -697,7 +698,7 @@ function SupervisorCredit() {
                 </div>
               )}
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="mb-2 block text-gray-700">
                   Comment
                 </label>
@@ -749,6 +750,7 @@ function SupervisorCredit() {
                 Cancel
               </button>
             </div>
+            </div>
           </div>
         </div>
       )}
@@ -766,3 +768,7 @@ function SupervisorCredit() {
 }
 
 export default SupervisorCredit;
+
+
+
+

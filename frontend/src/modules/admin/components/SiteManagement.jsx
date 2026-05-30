@@ -177,7 +177,7 @@ function SiteManagement() {
         let allS = response.data.data.allSites;
         const searchLower = trimmedSearch.toLowerCase();
         if (searchLower) {
-          allS = allS.filter(s => 
+          allS = allS.filter(s =>
             (s.siteName?.toLowerCase().includes(searchLower)) ||
             (s.address?.toLowerCase().includes(searchLower)) ||
             (s.contactPerson?.toLowerCase().includes(searchLower))
@@ -357,10 +357,9 @@ function SiteManagement() {
     message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
 
   const getFieldClassName = (hasError) =>
-    `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
-      hasError
-        ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-        : "border-gray-300 focus:ring-[#3D36BE]"
+    `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${hasError
+      ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
+      : "border-gray-300 focus:ring-[#3D36BE]"
     }`;
 
   // ── JSX ──────────────────────────────────────────────────────────────────────
@@ -457,77 +456,75 @@ function SiteManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-              {isLoading && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-6 text-center text-gray-500">
-                    Loading sites...
-                  </td>
-                </tr>
-              )}
-              {!isLoading && loadError && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-6 text-center text-red-600">
-                    {loadError}
-                  </td>
-                </tr>
-              )}
-              {!isLoading && !loadError && sites.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-6 text-center text-gray-500">
-                    No sites found.
-                  </td>
-                </tr>
-              )}
-              {!isLoading &&
-                !loadError &&
-                sites.map((site) => (
-                  <tr
-                    key={site.id}
-                    className="transition-colors hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4">
-                        <p className="text-gray-900 capitalize">{site.name}</p>
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">{site.location}</td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {site.supervisor.length > 0
-                        ? site.supervisor.join(", ")
-                        : "—"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(site)}
-                        disabled={isSaving}
-                        className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                          site.status === "active" ? "bg-[#34A853]" : "bg-[#EA4335]"
-                        }`}
-                      >
-                        <span className={`absolute text-[10px] font-bold text-white ${site.status === "active" ? 'left-2' : 'right-2'}`}>
-                          {site.status === "active" ? "ACTIVE" : "INACTIVE"}
-                        </span>
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            site.status === "active" ? "translate-x-[60px]" : "translate-x-1"
-                          }`}
-                        />
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(site)}
-                          className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                        >
-                          <Edit className="h-5 w-5 text-gray-600" />
-                        </button>
-                      </div>
+                {isLoading && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-6 text-center text-gray-500">
+                      Loading sites...
                     </td>
                   </tr>
-                ))}
-            </tbody>
-          </table>
+                )}
+                {!isLoading && loadError && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-6 text-center text-red-600">
+                      {loadError}
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && !loadError && sites.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-6 text-center text-gray-500">
+                      No sites found.
+                    </td>
+                  </tr>
+                )}
+                {!isLoading &&
+                  !loadError &&
+                  sites.map((site) => (
+                    <tr
+                      key={site.id}
+                      className="transition-colors hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4">
+                        <p className="text-gray-900 capitalize">{site.name}</p>
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">{site.location}</td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {site.supervisor.length > 0
+                          ? site.supervisor.join(", ")
+                          : "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(site)}
+                          disabled={isSaving}
+                          className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${site.status === "active" ? "bg-[#34A853]" : "bg-[#EA4335]"
+                            }`}
+                        >
+                          <span className={`absolute text-[10px] font-bold text-white ${site.status === "active" ? 'left-2.5' : 'right-1'}`}>
+                            {site.status === "active" ? "ACTIVE" : "INACTIVE"}
+                          </span>
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${site.status === "active" ? "translate-x-[52px]" : "translate-x-1"
+                              }`}
+                          />
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(site)}
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                          >
+                            <Edit className="h-5 w-5 text-gray-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
 
           <div className="block md:hidden">
@@ -561,21 +558,19 @@ function SiteManagement() {
                       type="button"
                       onClick={() => handleToggleStatus(site)}
                       disabled={isSaving}
-                      className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                        site.status === "active" ? "bg-[#34A853]" : "bg-[#EA4335]"
-                      }`}
+                      className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${site.status === "active" ? "bg-[#34A853]" : "bg-[#EA4335]"
+                        }`}
                     >
-                      <span className={`absolute text-[10px] font-bold text-white ${site.status === "active" ? 'left-2' : 'right-2'}`}>
+                      <span className={`absolute text-[10px] font-bold text-white ${site.status === "active" ? 'left-2.5' : 'right-1'}`}>
                         {site.status === "active" ? "ACTIVE" : "INACTIVE"}
                       </span>
                       <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          site.status === "active" ? "translate-x-[60px]" : "translate-x-1"
-                        }`}
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${site.status === "active" ? "translate-x-[52px]" : "translate-x-1"
+                          }`}
                       />
                     </button>
                   </div>
-                  
+
                   <div className="mb-4 space-y-2 text-sm text-gray-600">
                     <div className="flex justify-between">
                       <span className="font-medium">Location:</span>
@@ -618,13 +613,14 @@ function SiteManagement() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] overflow-y-auto w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
             <h3 className="mb-6 text-gray-900">
               {editingSite ? "Edit Site" : "Add New Site"}
             </h3>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Site Name */}
               <div>
                 <label className="mb-2 block text-gray-700">
@@ -662,10 +658,11 @@ function SiteManagement() {
               </div>
 
               {/* Assign Supervisor (multi-select dropdown from API users) */}
-              <div className="relative" ref={dropdownRef}>
+              <div className="md:col-span-2">
                 <label className="mb-2 block text-gray-700">
                   Assign Supervisor
                 </label>
+                <div className="relative" ref={dropdownRef}>
                 <div
                   className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   onClick={() =>
@@ -681,7 +678,7 @@ function SiteManagement() {
                 </div>
 
                 {isSupervisorDropdownOpen && (
-                  <div className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
                     {supervisorOptions.length === 0 && (
                       <p className="px-4 py-2 text-sm text-gray-500">
                         No users available
@@ -712,9 +709,10 @@ function SiteManagement() {
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Active Status */}
-              <div className="flex items-center gap-3">
+            {/* Active Status */}
+              <div className="flex items-center gap-3 md:col-span-2">
                 <input
                   type="checkbox"
                   id="activeSiteStatus"
@@ -758,6 +756,7 @@ function SiteManagement() {
                 Cancel
               </button>
             </div>
+            </div>
           </div>
         </div>
       )}
@@ -775,3 +774,7 @@ function SiteManagement() {
 }
 
 export default SiteManagement;
+
+
+
+

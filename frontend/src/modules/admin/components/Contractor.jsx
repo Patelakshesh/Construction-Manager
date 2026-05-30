@@ -114,7 +114,7 @@ function Contractor() {
 
     try {
       const trimmedSearch = debouncedSearch.trim();
-      
+
       // Load both contractors page and all sites
       const [contractorsRes, sitesRes] = await Promise.all([
         apiClient.post(
@@ -154,13 +154,13 @@ function Contractor() {
 
       const all = contractorsRes.data.data.allContractors;
       const searchLower = debouncedSearch.toLowerCase().trim();
-      const filteredAll = searchLower 
-        ? all.filter(c => 
-            (c.contractorName?.toLowerCase().includes(searchLower)) ||
-            (c.email?.toLowerCase().includes(searchLower))
-          )
+      const filteredAll = searchLower
+        ? all.filter(c =>
+          (c.contractorName?.toLowerCase().includes(searchLower)) ||
+          (c.email?.toLowerCase().includes(searchLower))
+        )
         : all;
-      
+
       setOverallActiveCount(filteredAll.filter(c => c.enable).length);
       setOverallInactiveCount(filteredAll.filter(c => !c.enable).length);
     } catch (err) {
@@ -206,10 +206,10 @@ function Contractor() {
 
   const handleEdit = (contractor) => {
     setEditingContractor(contractor);
-    const assignedSitesArray = contractor.assignedSites 
+    const assignedSitesArray = contractor.assignedSites
       ? contractor.assignedSites.split(',').map(s => s.trim()).filter(Boolean)
       : [];
-      
+
     setFormData({
       contractorName: contractor.contractorName,
       email: contractor.email,
@@ -296,7 +296,7 @@ function Contractor() {
   const validateForm = () => {
     const errors = {};
     if (!formData.contractorName.trim()) errors.contractorName = "Contractor name is required";
-    
+
     if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = "Invalid email format";
     }
@@ -332,7 +332,7 @@ function Contractor() {
                 phone: cleanPhone,
                 assignedSites: sitesString,
                 enable: formData.enable,
-                modifiedBy: "system", 
+                modifiedBy: "system",
               },
             },
           },
@@ -371,7 +371,7 @@ function Contractor() {
 
         toast.success("Contractor created successfully.");
       }
-      
+
       setIsModalOpen(false);
       loadData(false);
     } catch (err) {
@@ -386,10 +386,9 @@ function Contractor() {
     message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
 
   const getFieldClassName = (hasError) =>
-    `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
-      hasError
-        ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-        : "border-gray-300 focus:ring-[#3D36BE]"
+    `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${hasError
+      ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
+      : "border-gray-300 focus:ring-[#3D36BE]"
     }`;
 
   return (
@@ -473,77 +472,75 @@ function Contractor() {
         <div className="overflow-x-auto">
           <div className="hidden md:block">
             <table className="w-full min-w-[900px]">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-gray-700">Contractor Name</th>
-                <th className="px-6 py-4 text-left text-gray-700">Email</th>
-                <th className="px-6 py-4 text-left text-gray-700">Phone</th>
-                <th className="px-6 py-4 text-left text-gray-700">Assigned Sites</th>
-                <th className="px-6 py-4 text-left text-gray-700">Status</th>
-                <th className="px-6 py-4 text-left text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {isLoading && (
+              <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    Loading...
-                  </td>
+                  <th className="px-6 py-4 text-left text-gray-700">Contractor Name</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Email</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Phone</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Assigned Sites</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Status</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Actions</th>
                 </tr>
-              )}
-              {!isLoading && contractors.length === 0 && (
-                <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    No contractors found.
-                  </td>
-                </tr>
-              )}
-              {!isLoading && contractors.map((contractor) => (
-                <tr
-                  key={contractor.id}
-                  className="transition-colors hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4">
-                    <p className="text-gray-900 capitalize">{contractor.contractorName}</p>
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">{contractor.email}</td>
-                  <td className="px-6 py-4 text-gray-900">{contractor.phone}</td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {contractor.assignedSites || "-"}
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      type="button"
-                      onClick={() => toggleStatus(contractor)}
-                      className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
-                        contractor.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
-                      }`}
-                    >
-                      <span className={`absolute text-[10px] font-bold text-white ${contractor.enable ? 'left-2' : 'right-2'}`}>
-                        {contractor.enable ? "ACTIVE" : "INACTIVE"}
-                      </span>
-                      <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          contractor.enable ? "translate-x-[60px]" : "translate-x-1"
-                        }`}
-                      />
-                    </button>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {isLoading && (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                      Loading...
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && contractors.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                      No contractors found.
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && contractors.map((contractor) => (
+                  <tr
+                    key={contractor.id}
+                    className="transition-colors hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4">
+                      <p className="text-gray-900 capitalize">{contractor.contractorName}</p>
+                    </td>
+                    <td className="px-6 py-4 text-gray-900">{contractor.email}</td>
+                    <td className="px-6 py-4 text-gray-900">{contractor.phone}</td>
+                    <td className="px-6 py-4 text-gray-900">
+                      {contractor.assignedSites || "-"}
+                    </td>
+                    <td className="px-6 py-4">
                       <button
                         type="button"
-                        onClick={() => handleEdit(contractor)}
-                        className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                        onClick={() => toggleStatus(contractor)}
+                        className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${contractor.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
+                          }`}
                       >
-                        <Edit className="h-5 w-5 text-gray-600" />
+                        <span className={`absolute text-[10px] font-bold text-white ${contractor.enable ? 'left-2.5' : 'right-1'}`}>
+                          {contractor.enable ? "ACTIVE" : "INACTIVE"}
+                        </span>
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${contractor.enable ? "translate-x-[52px]" : "translate-x-1"
+                            }`}
+                        />
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(contractor)}
+                          className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                        >
+                          <Edit className="h-5 w-5 text-gray-600" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           <div className="block md:hidden">
@@ -569,21 +566,19 @@ function Contractor() {
                   <button
                     type="button"
                     onClick={() => toggleStatus(contractor)}
-                    className={`relative inline-flex h-7 w-[84px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
-                      contractor.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
-                    }`}
+                    className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${contractor.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
+                      }`}
                   >
-                    <span className={`absolute text-[10px] font-bold text-white ${contractor.enable ? 'left-2' : 'right-2'}`}>
+                    <span className={`absolute text-[10px] font-bold text-white ${contractor.enable ? 'left-2.5' : 'right-1'}`}>
                       {contractor.enable ? "ACTIVE" : "INACTIVE"}
                     </span>
                     <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        contractor.enable ? "translate-x-[60px]" : "translate-x-1"
-                      }`}
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${contractor.enable ? "translate-x-[52px]" : "translate-x-1"
+                        }`}
                     />
                   </button>
                 </div>
-                
+
                 <div className="mb-4 space-y-2 text-sm text-gray-600">
                   <div className="flex justify-between">
                     <span className="font-medium">Email:</span>
@@ -625,13 +620,14 @@ function Contractor() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
             <h3 className="mb-6 text-gray-900">
               {editingContractor ? "Edit Contractor" : "Add New Contractor"}
             </h3>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="mb-2 block text-gray-700">
                   Contractor Name <span className="text-[#EC3F3F]">*</span>
@@ -683,7 +679,7 @@ function Contractor() {
                 {renderFieldError(formErrors.phone)}
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="mb-2 block text-gray-700">Assign Sites</label>
                 <div className="relative" ref={siteDropdownRef}>
                   <button
@@ -703,7 +699,7 @@ function Contractor() {
 
                   {isSiteDropdownOpen && (
                     <div className="absolute z-10 mt-2 w-full rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
-                      <div className="max-h-48 space-y-2 overflow-auto">
+                      <div className="max-h-48 space-y-2 overflow-y-auto">
                         {sitesList.map((site) => (
                           <label
                             key={site}
@@ -727,7 +723,7 @@ function Contractor() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 md:col-span-2">
                 <input
                   type="checkbox"
                   id="activeContractorStatus"
@@ -760,6 +756,7 @@ function Contractor() {
                 Cancel
               </button>
             </div>
+            </div>
           </div>
         </div>
       )}
@@ -777,3 +774,7 @@ function Contractor() {
 }
 
 export default Contractor;
+
+
+
+

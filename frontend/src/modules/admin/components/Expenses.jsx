@@ -337,8 +337,9 @@ function Expenses() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-md overflow-auto rounded-lg bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-200 p-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 {editingItem ? `Edit ${modalType}` : `Add ${modalType}`}
@@ -353,7 +354,7 @@ function Expenses() {
             </div>
 
             <form onSubmit={handleSave} className="p-6">
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
                     Title
@@ -397,7 +398,7 @@ function Expenses() {
                 </div>
 
                 {modalType === "Expense" ? (
-                  <div className="grid grid-cols-2 gap-4">
+                  <>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
                         Category
@@ -439,7 +440,7 @@ function Expenses() {
                         placeholder="Amount in Rs."
                       />
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -459,7 +460,7 @@ function Expenses() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
                       Payment Mode
@@ -493,7 +494,7 @@ function Expenses() {
                       className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                     />
                   </div>
-                </div>
+                </>
 
                 {(formData.paymentMode === "Check" ||
                   formData.paymentMode === "Online") && (
@@ -539,6 +540,7 @@ function Expenses() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
@@ -547,3 +549,7 @@ function Expenses() {
 }
 
 export default Expenses;
+
+
+
+

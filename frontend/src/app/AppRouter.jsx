@@ -19,47 +19,43 @@ function DashboardLoader() {
   );
 }
 
+// Read auth from localStorage synchronously so there is no flash/delay on first render
+function getInitialUser() {
+  try {
+    const token = localStorage.getItem("authToken");
+    const raw = localStorage.getItem("authUser");
+    if (!token || !raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 function AppRouter() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(getInitialUser);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
-    const storedUser = localStorage.getItem("authUser");
-    if (!storedToken || !storedUser) {
-      return;
-    }
-
-    try {
-      const parsedUser = JSON.parse(storedUser);
-      setCurrentUser(parsedUser);
-    } catch {
-      setCurrentUser(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleStorage = (event) => {
-      if (event.key && event.key !== "authToken" && event.key !== "authUser") {
-        return;
-      }
-
-      const storedToken = localStorage.getItem("authToken");
-      const storedUser = localStorage.getItem("authUser");
-      if (!storedToken || !storedUser) {
+    // Handle cross-tab logout (storage event) and 401 logout (auth:logout event)
+    const syncAuth = () => {
+      const token = localStorage.getItem("authToken");
+      const raw = localStorage.getItem("authUser");
+      if (!token || !raw) {
         setCurrentUser(null);
         return;
       }
-
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setCurrentUser(parsedUser);
+        setCurrentUser(JSON.parse(raw));
       } catch {
         setCurrentUser(null);
       }
     };
 
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener("auth:logout", syncAuth);
+    return () => {
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener("auth:logout", syncAuth);
+    };
   }, []);
 
   const handleLogin = (role, user) => {
