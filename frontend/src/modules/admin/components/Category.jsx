@@ -573,21 +573,22 @@ function Category() {
                 {renderFieldError(formErrors.description)}
               </div>
 
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="activeCategoryStatus"
-                  checked={formData.enable}
-                  onChange={(event) =>
-                    setFormData({
-                      ...formData,
-                      enable: event.target.checked,
-                    })
-                  }
-                  className="h-5 w-5 rounded border-gray-300"
-                />
-                <label htmlFor="activeCategoryStatus" className="text-gray-700">
-                  Active Category
+              <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                <span className="text-sm text-gray-500">Status</span>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="activeCategoryStatus"
+                    checked={formData.enable}
+                    onChange={(event) =>
+                      setFormData({
+                        ...formData,
+                        enable: event.target.checked,
+                      })
+                    }
+                    className="h-5 w-5 rounded border-gray-300 accent-[#3D36BE]"
+                  />
+                  <span className="text-gray-700">Active Category</span>
                 </label>
               </div>
             </div>

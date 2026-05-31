@@ -604,6 +604,7 @@ function SupervisorCredit() {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Row 1: Supervisor | Amount */}
               <div>
                 <label className="mb-2 block text-gray-700">
                   Supervisor <span className="text-[#EC3F3F]">*</span>
@@ -644,6 +645,7 @@ function SupervisorCredit() {
                 {renderFieldError(formErrors.amount)}
               </div>
 
+              {/* Row 2: Payment Mode | Transaction ID (or Date if Cash) */}
               <div>
                 <label className="mb-2 block text-gray-700">
                   Payment Mode <span className="text-[#EC3F3F]">*</span>
@@ -670,7 +672,7 @@ function SupervisorCredit() {
               </div>
 
               {(formData.paymentMode === "Check" ||
-                formData.paymentMode === "Online") && (
+                formData.paymentMode === "Online") ? (
                 <div>
                   <label className="mb-2 block text-gray-700">
                     {formData.paymentMode === "Check"
@@ -696,8 +698,45 @@ function SupervisorCredit() {
                   />
                   {renderFieldError(formErrors.transactionId)}
                 </div>
+              ) : (
+                <div>
+                  <label className="mb-2 block text-gray-700">
+                    Date <span className="text-[#EC3F3F]">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.date}
+                    onChange={(event) =>
+                      setFormData({ ...formData, date: event.target.value })
+                    }
+                    className={getFieldClassName(Boolean(formErrors.date))}
+                  />
+                  {renderFieldError(formErrors.date)}
+                </div>
               )}
 
+              {/* Row 3: Date (only when transactionId visible) */}
+              {(formData.paymentMode === "Check" ||
+                formData.paymentMode === "Online") && (
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-gray-700">
+                    Date <span className="text-[#EC3F3F]">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.date}
+                    onChange={(event) =>
+                      setFormData({ ...formData, date: event.target.value })
+                    }
+                    className={getFieldClassName(Boolean(formErrors.date))}
+                  />
+                  {renderFieldError(formErrors.date)}
+                </div>
+              )}
+
+              {/* Comment — full width, last */}
               <div className="md:col-span-2">
                 <label className="mb-2 block text-gray-700">
                   Comment
@@ -707,26 +746,10 @@ function SupervisorCredit() {
                   onChange={(event) =>
                     setFormData({ ...formData, comment: event.target.value })
                   }
-                  rows={3}
+                  rows={2}
                   className={getFieldClassName(false)}
                   placeholder="Enter comment or description"
                 />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-gray-700">
-                  Date <span className="text-[#EC3F3F]">*</span>
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={formData.date}
-                  onChange={(event) =>
-                    setFormData({ ...formData, date: event.target.value })
-                  }
-                  className={getFieldClassName(Boolean(formErrors.date))}
-                />
-                {renderFieldError(formErrors.date)}
               </div>
             </div>
 

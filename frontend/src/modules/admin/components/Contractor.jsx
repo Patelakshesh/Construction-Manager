@@ -679,7 +679,7 @@ function Contractor() {
                 {renderFieldError(formErrors.phone)}
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label className="mb-2 block text-gray-700">Assign Sites</label>
                 <div className="relative" ref={siteDropdownRef}>
                   <button
@@ -723,18 +723,19 @@ function Contractor() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 md:col-span-2">
-                <input
-                  type="checkbox"
-                  id="activeContractorStatus"
-                  checked={formData.enable}
-                  onChange={(event) =>
-                    setFormData({ ...formData, enable: event.target.checked })
-                  }
-                  className="h-5 w-5 rounded border-gray-300"
-                />
-                <label htmlFor="activeContractorStatus" className="text-gray-700">
-                  Active Contractor
+              <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 md:col-span-2">
+                <span className="text-sm text-gray-500">Status</span>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="activeContractorStatus"
+                    checked={formData.enable}
+                    onChange={(event) =>
+                      setFormData({ ...formData, enable: event.target.checked })
+                    }
+                    className="h-5 w-5 rounded border-gray-300 accent-[#3D36BE]"
+                  />
+                  <span className="text-gray-700">Active Contractor</span>
                 </label>
               </div>
             </div>

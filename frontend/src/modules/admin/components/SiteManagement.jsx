@@ -657,76 +657,76 @@ function SiteManagement() {
                 {renderFieldError(formErrors.location)}
               </div>
 
-              {/* Assign Supervisor (multi-select dropdown from API users) */}
-              <div className="md:col-span-2">
+              {/* Assign Supervisor | Status — same row */}
+              <div>
                 <label className="mb-2 block text-gray-700">
                   Assign Supervisor
                 </label>
                 <div className="relative" ref={dropdownRef}>
-                <div
-                  className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                  onClick={() =>
-                    setIsSupervisorDropdownOpen(!isSupervisorDropdownOpen)
-                  }
-                >
-                  <span className="truncate text-gray-700">
-                    {formData.supervisor.length > 0
-                      ? formData.supervisor.join(", ")
-                      : "Select supervisors"}
-                  </span>
-                  <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-500" />
-                </div>
-
-                {isSupervisorDropdownOpen && (
-                  <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                    {supervisorOptions.length === 0 && (
-                      <p className="px-4 py-2 text-sm text-gray-500">
-                        No users available
-                      </p>
-                    )}
-                    {supervisorOptions.map((name) => (
-                      <label
-                        key={name}
-                        className="flex cursor-pointer items-center gap-3 px-4 py-2 hover:bg-gray-50"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.supervisor.includes(name)}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setFormData({
-                              ...formData,
-                              supervisor: checked
-                                ? [...formData.supervisor, name]
-                                : formData.supervisor.filter((s) => s !== name),
-                            });
-                          }}
-                          className="h-4 w-4 rounded border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
-                        />
-                        <span className="text-gray-700">{name}</span>
-                      </label>
-                    ))}
+                  <div
+                    className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+                    onClick={() =>
+                      setIsSupervisorDropdownOpen(!isSupervisorDropdownOpen)
+                    }
+                  >
+                    <span className="truncate text-gray-700">
+                      {formData.supervisor.length > 0
+                        ? formData.supervisor.join(", ")
+                        : "Select supervisors"}
+                    </span>
+                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-500" />
                   </div>
-                )}
-              </div>
-            </div>
 
-            {/* Active Status */}
-              <div className="flex items-center gap-3 md:col-span-2">
-                <input
-                  type="checkbox"
-                  id="activeSiteStatus"
-                  checked={formData.status === "active"}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      status: e.target.checked ? "active" : "inactive",
-                    })
-                  }
-                  className="h-5 w-5 rounded border-gray-300"
-                />
-                <label htmlFor="activeSiteStatus" className="text-gray-700">
-                  Active Site
+                  {isSupervisorDropdownOpen && (
+                    <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                      {supervisorOptions.length === 0 && (
+                        <p className="px-4 py-2 text-sm text-gray-500">
+                          No users available
+                        </p>
+                      )}
+                      {supervisorOptions.map((name) => (
+                        <label
+                          key={name}
+                          className="flex cursor-pointer items-center gap-3 px-4 py-2 hover:bg-gray-50"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.supervisor.includes(name)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setFormData({
+                                ...formData,
+                                supervisor: checked
+                                  ? [...formData.supervisor, name]
+                                  : formData.supervisor.filter((s) => s !== name),
+                              });
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
+                          />
+                          <span className="text-gray-700">{name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                <span className="text-sm text-gray-500">Status</span>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="activeSiteStatus"
+                    checked={formData.status === "active"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        status: e.target.checked ? "active" : "inactive",
+                      })
+                    }
+                    className="h-5 w-5 rounded border-gray-300 accent-[#3D36BE]"
+                  />
+                  <span className="text-gray-700">Active Site</span>
                 </label>
               </div>
             </div>

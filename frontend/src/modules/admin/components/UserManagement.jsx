@@ -758,6 +758,7 @@ function UserManagement() {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Row 1: Full Name | Phone */}
               <div>
                 <label className="mb-2 block text-gray-700">
                   Full Name<span className="text-[#EC3F3F]">*</span>
@@ -792,6 +793,7 @@ function UserManagement() {
                 {renderFieldError(formErrors.phone)}
               </div>
 
+              {/* Row 2: Email | Role */}
               <div>
                 <label className="mb-2 block text-gray-700">Email</label>
                 <input
@@ -805,23 +807,6 @@ function UserManagement() {
                   aria-invalid={Boolean(formErrors.email)}
                 />
                 {renderFieldError(formErrors.email)}
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-gray-700">
-                  Address<span className="text-[#EC3F3F]">*</span>
-                </label>
-                <textarea
-                  rows={3}
-                  value={formData.address}
-                  onChange={(event) =>
-                    setFormData({ ...formData, address: event.target.value })
-                  }
-                  className={getFieldClassName(Boolean(formErrors.address))}
-                  placeholder="Enter address"
-                  aria-invalid={Boolean(formErrors.address)}
-                />
-                {renderFieldError(formErrors.address)}
               </div>
 
               <div>
@@ -848,6 +833,7 @@ function UserManagement() {
                 {renderFieldError(formErrors.roleId)}
               </div>
 
+              {/* Row 3: Password | Active User */}
               <div>
                 <label className="mb-2 block text-gray-700">
                   Password<span className="text-[#EC3F3F]">*</span>
@@ -881,22 +867,41 @@ function UserManagement() {
                 {renderFieldError(formErrors.password)}
               </div>
 
-              <div className="flex items-center gap-3 md:col-span-2">
-                <input
-                  type="checkbox"
-                  id="activeStatus"
-                  checked={formData.enable}
-                  onChange={(event) =>
-                    setFormData({
-                      ...formData,
-                      enable: event.target.checked,
-                    })
-                  }
-                  className="h-5 w-5 rounded border-gray-300"
-                />
-                <label htmlFor="activeStatus" className="text-gray-700">
-                  Active User
+              <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                <span className="text-sm text-gray-500">Status</span>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="activeStatus"
+                    checked={formData.enable}
+                    onChange={(event) =>
+                      setFormData({
+                        ...formData,
+                        enable: event.target.checked,
+                      })
+                    }
+                    className="h-5 w-5 rounded border-gray-300 accent-[#3D36BE]"
+                  />
+                  <span className="text-gray-700">Active User</span>
                 </label>
+              </div>
+
+              {/* Row 4: Address (full width, last) */}
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-gray-700">
+                  Address<span className="text-[#EC3F3F]">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.address}
+                  onChange={(event) =>
+                    setFormData({ ...formData, address: event.target.value })
+                  }
+                  className={getFieldClassName(Boolean(formErrors.address))}
+                  placeholder="Enter address"
+                  aria-invalid={Boolean(formErrors.address)}
+                />
+                {renderFieldError(formErrors.address)}
               </div>
             </div>
 
