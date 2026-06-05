@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   CreditCard,
   Edit,
@@ -7,114 +7,153 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-
-const initialTransactions = [
-  {
-    id: "INC-001",
-    title: "Client Payment Advance",
-    type: "Income",
-    site: "Downtown Plaza",
-    category: "Hardware",
-    amount: "Rs. 2,00,000",
-    date: "2026-04-28",
-    paymentMode: "Online",
-  },
-  {
-    id: "EXP-001",
-    title: "Cement Purchase",
-    type: "Expense",
-    site: "Downtown Plaza",
-    category: "Materials",
-    amount: "Rs. 48,500",
-    date: "2026-04-27",
-    paymentMode: "Check",
-  },
-  {
-    id: "EXP-002",
-    title: "Electrical Contractor Payment",
-    type: "Expense",
-    site: "Riverside Complex",
-    category: "Contractor",
-    amount: "Rs. 75,000",
-    date: "2026-04-26",
-    paymentMode: "Online",
-  },
-  {
-    id: "EXP-003",
-    title: "Safety Equipment",
-    type: "Expense",
-    site: "Industrial Park",
-    category: "Supplies",
-    amount: "Rs. 18,250",
-    date: "2026-04-25",
-    paymentMode: "Cash",
-  },
-  {
-    id: "EXP-004",
-    title: "Worker Transport",
-    type: "Expense",
-    site: "Suburban Mall",
-    category: "Logistics",
-    amount: "Rs. 12,800",
-    date: "2026-04-24",
-    paymentMode: "Cash",
-  },
-  {
-    id: "EXP-005",
-    title: "Steel Delivery",
-    type: "Expense",
-    site: "Tech Campus",
-    category: "Materials",
-    amount: "Rs. 96,400",
-    date: "2026-04-23",
-    paymentMode: "Online",
-  },
-];
-
-const siteOptions = [
-  "Downtown Plaza",
-  "Riverside Complex",
-  "Industrial Park",
-  "Suburban Mall",
-  "Tech Campus",
-];
+import apiClient from "../../../shared/services/apiClient";
+import toast from "react-hot-toast";
+import useDebounce from "../../../shared/hooks/useDebounce";
+import Pagination from "../../../shared/components/Pagination";
 
 function Expenses() {
-  const [transactions, setTransactions] = useState(initialTransactions);
+  const [transactions, setTransactions] = useState([]);
+  const [sites, setSites] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filterSite, setFilterSite] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 400);
+  const [pageNumber, setPageNumber] = useState(1);
+  const pageSize = 10;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState("Expense"); // "Income" or "Expense"
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
-    site: "",
-    category: "",
+    siteId: "",
+    categoryId: "",
     amount: "",
     date: new Date().toISOString().split("T")[0],
     paymentMode: "Cash",
     transactionId: "",
   });
 
-  const sites = ["all", ...new Set(siteOptions)];
+  const [totalCount, setTotalCount] = useState(0);
+  const [allTransactions, setAllTransactions] = useState([]);
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSite = filterSite === "all" || transaction.site === filterSite;
+  useEffect(() => {
+    loadMetadata();
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [pageNumber, filterSite, debouncedSearch]);
+
+  useEffect(() => {
+    setPageNumber(1);
+  }, [filterSite, debouncedSearch]);
+
+  const loadMetadata = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query: `
+            query GetExpensesMetadata {
+              sites { id siteName }
+              categories { id name }
+            }
+          `
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response?.data?.data) {
+        setSites(response.data.data.sites || []);
+        setCategories(response.data.data.categories || []);
+      }
+    } catch (error) {
+      console.error("Failed to load metadata", error);
+    }
+  };
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query: `
+            query GetExpensesPage($pageNumber: Int!, $pageSize: Int!, $search: String, $siteId: Int) {
+              expensesPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search, siteId: $siteId) {
+                items {
+                  id
+                  title
+                  siteId
+                  site { siteName }
+                  categoryId
+                  category { name }
+                  amount
+                  paymentMode
+                  transactionId
+                  date
+                  type
+                }
+                totalCount
+              }
+              expenses {
+                type
+                siteId
+                title
+                category { name }
+                transactionId
+              }
+            }
+          `,
+          variables: {
+            pageNumber,
+            pageSize,
+            search: debouncedSearch.trim() || null,
+            siteId: filterSite === "all" ? null : parseInt(filterSite),
+          }
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response?.data?.data) {
+        setTransactions(response.data.data.expensesPage?.items || []);
+        setTotalCount(response.data.data.expensesPage?.totalCount || 0);
+        setAllTransactions(response.data.data.expenses || []);
+      }
+    } catch (error) {
+      console.error("Failed to load expenses data", error);
+      toast.error("Failed to load data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredAll = allTransactions.filter((t) => {
+    const matchesSite = filterSite === "all" || String(t.siteId) === String(filterSite);
+    const catName = t.category?.name || "";
     const matchesSearch =
-      transaction.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (transaction.category || "").toLowerCase().includes(searchQuery.toLowerCase());
+      !debouncedSearch ||
+      t.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      (t.transactionId && t.transactionId.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
+      catName.toLowerCase().includes(debouncedSearch.toLowerCase());
     return matchesSite && matchesSearch;
   });
+
+  const totalIncome = filteredAll.filter((t) => t.type === "Income").length;
+  const totalExpense = filteredAll.filter((t) => t.type === "Expense").length;
+
+  const paginatedTransactions = transactions;
 
   const handleAddNew = (type) => {
     setModalType(type);
     setEditingItem(null);
     setFormData({
       title: "",
-      site: "",
-      category: "",
+      siteId: "",
+      categoryId: "",
       amount: "",
       date: new Date().toISOString().split("T")[0],
       paymentMode: "Cash",
@@ -128,44 +167,73 @@ function Expenses() {
     setEditingItem(transaction);
     setFormData({
       title: transaction.title,
-      site: transaction.site,
-      category: transaction.category,
-      amount: transaction.amount.replace("Rs. ", "").replace(/,/g, ""),
-      date: transaction.date,
+      siteId: transaction.siteId || "",
+      categoryId: transaction.categoryId || "",
+      amount: String(transaction.amount),
+      date: transaction.date.split("T")[0],
       paymentMode: transaction.paymentMode || "Cash",
       transactionId: transaction.transactionId || "",
     });
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    setTransactions(transactions.filter((t) => t.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this record?")) return;
+    try {
+      const token = localStorage.getItem("authToken");
+      await apiClient.post(
+        "/graphql",
+        {
+          query: `mutation DeleteExpense($id: Int!) { deleteExpense(id: $id) }`,
+          variables: { id: parseInt(id) }
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Record deleted");
+      loadData();
+    } catch (error) {
+      toast.error("Failed to delete record");
+    }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    const newAmount = `Rs. ${Number(formData.amount).toLocaleString("en-IN")}`;
-    const savedFormData = {
-      ...formData,
-      category: modalType === "Income" ? "" : formData.category,
-    };
-
-    if (editingItem) {
-      setTransactions(
-        transactions.map((t) =>
-          t.id === editingItem.id
-            ? { ...t, ...savedFormData, type: modalType, amount: newAmount }
-            : t,
-        ),
+    try {
+      const token = localStorage.getItem("authToken");
+      const isIncome = modalType === "Income";
+      const variables = {
+        input: {
+          ...formData,
+          id: editingItem ? editingItem.id : undefined,
+          siteId: formData.siteId ? parseInt(formData.siteId) : null,
+          categoryId: (!isIncome && formData.categoryId) ? parseInt(formData.categoryId) : null,
+          amount: parseFloat(formData.amount),
+          type: modalType,
+          date: new Date(formData.date).toISOString()
+        }
+      };
+      
+      const query = editingItem
+        ? `mutation UpdateExpense($input: UpdateExpenseInput!) { updateExpense(input: $input) { id } }`
+        : `mutation CreateExpense($input: CreateExpenseInput!) { createExpense(input: $input) { id } }`;
+        
+      const response = await apiClient.post(
+        "/graphql",
+        { query, variables },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-    } else {
-      const newId = `${modalType === "Income" ? "INC" : "EXP"}-00${transactions.length + 1}`;
-      setTransactions([
-        { id: newId, type: modalType, ...savedFormData, amount: newAmount },
-        ...transactions,
-      ]);
+      
+      if (response.data?.errors) {
+        toast.error(response.data.errors[0].message);
+        return;
+      }
+      
+      toast.success(`${modalType} ${editingItem ? "updated" : "added"} successfully`);
+      setIsModalOpen(false);
+      loadData();
+    } catch (error) {
+      toast.error(error?.response?.data?.errors?.[0]?.message || "Failed to save record");
     }
-    setIsModalOpen(false);
   };
 
   return (
@@ -213,9 +281,10 @@ function Expenses() {
           onChange={(e) => setFilterSite(e.target.value)}
           className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] sm:w-48"
         >
+          <option value="all">All Sites</option>
           {sites.map((site) => (
-            <option key={site} value={site}>
-              {site === "all" ? "All Sites" : site}
+            <option key={site.id} value={site.id}>
+              {site.siteName}
             </option>
           ))}
         </select>
@@ -230,7 +299,7 @@ function Expenses() {
             <div>
               <p className="text-sm text-gray-500">Total Income</p>
               <h3 className="text-gray-900">
-                {transactions.filter((t) => t.type === "Income").length}
+                {totalIncome}
               </h3>
             </div>
           </div>
@@ -250,7 +319,7 @@ function Expenses() {
             <div>
               <p className="text-sm text-gray-500">Total Expenses</p>
               <h3 className="text-gray-900">
-                {transactions.filter((t) => t.type === "Expense").length}
+                {totalExpense}
               </h3>
             </div>
           </div>
@@ -262,7 +331,6 @@ function Expenses() {
           <table className="w-full min-w-[860px]">
             <thead className="border-b border-gray-200 bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-gray-700">ID</th>
                 <th className="px-6 py-4 text-left text-gray-700">Title</th>
                 <th className="px-6 py-4 text-left text-gray-700">Site</th>
                 <th className="px-6 py-4 text-left text-gray-700">Category</th>
@@ -276,63 +344,79 @@ function Expenses() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredTransactions.map((transaction) => (
-                <tr
-                  key={transaction.id}
-                  className="transition-colors hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4 text-gray-900">{transaction.id}</td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {transaction.title}
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {transaction.site}
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {transaction.category || "—"}
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {transaction.amount}
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {transaction.paymentMode}
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {transaction.date}
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        transaction.type === "Income"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {transaction.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(transaction)}
-                        className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                      >
-                        <Edit className="h-5 w-5 text-gray-600" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(transaction.id)}
-                        className="rounded-lg p-2 transition-colors hover:bg-red-50"
-                      >
-                        <Trash2 className="h-5 w-5 text-red-500" />
-                      </button>
-                    </div>
+              {transactions.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                    No data available
                   </td>
                 </tr>
-              ))}
+              ) : (
+                transactions.map((transaction) => (
+                  <tr
+                    key={transaction.id}
+                    className="transition-colors hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 text-gray-900">
+                      {transaction.title}
+                    </td>
+                    <td className="px-6 py-4 text-gray-900">
+                      {transaction.site?.siteName || "—"}
+                    </td>
+                    <td className="px-6 py-4 text-gray-900">
+                      {transaction.category?.name || "—"}
+                    </td>
+                    <td className="px-6 py-4 text-gray-900">
+                      Rs. {Number(transaction.amount).toLocaleString("en-IN")}
+                    </td>
+                    <td className="px-6 py-4 text-gray-900">
+                      {transaction.paymentMode}
+                    </td>
+                    <td className="px-6 py-4 text-gray-900">
+                      {transaction.date.split("T")[0]}
+                    </td>
+                    <td className="px-6 py-4 text-gray-900">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          transaction.type === "Income"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {transaction.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(transaction)}
+                          className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                        >
+                          <Edit className="h-5 w-5 text-gray-600" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(transaction.id)}
+                          className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                        >
+                          <Trash2 className="h-5 w-5 text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+        </div>
+        {/* Pagination */}
+        <div className="border-t border-gray-200 px-6 py-4">
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={(nextPage) => setPageNumber(nextPage)}
+          />
         </div>
       </div>
 
@@ -357,7 +441,7 @@ function Expenses() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Title
+                    Title <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -377,21 +461,21 @@ function Expenses() {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Site
+                    Site <span className="text-red-500">*</span>
                   </label>
                   <select
-                    value={formData.site}
+                    value={formData.siteId}
                     onChange={(e) =>
-                      setFormData({ ...formData, site: e.target.value })
+                      setFormData({ ...formData, siteId: e.target.value })
                     }
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                   >
                     <option value="" disabled>
                       Select site
                     </option>
-                    {siteOptions.map((site) => (
-                      <option key={site} value={site}>
-                        {site}
+                    {sites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.siteName}
                       </option>
                     ))}
                   </select>
@@ -401,32 +485,27 @@ function Expenses() {
                   <>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Category
+                        Category <span className="text-red-500">*</span>
                       </label>
                       <select
                         required
-                        value={formData.category}
+                        value={formData.categoryId}
                         onChange={(e) =>
-                          setFormData({ ...formData, category: e.target.value })
+                          setFormData({ ...formData, categoryId: e.target.value })
                         }
                         className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
                       >
                         <option value="" disabled>
                           Select category
                         </option>
-                        <option value="Materials">Materials</option>
-                        <option value="Contractor">Contractor</option>
-                        <option value="Supplies">Supplies</option>
-                        <option value="Hardware">Hardware</option>
-                        <option value="Logistics">Logistics</option>
-                        <option value="Labor">Labor</option>
-                        <option value="Equipment">Equipment</option>
-                        <option value="Miscellaneous">Miscellaneous</option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
                       </select>
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Amount
+                        Amount <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -444,7 +523,7 @@ function Expenses() {
                 ) : (
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Amount
+                      Amount <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -463,7 +542,7 @@ function Expenses() {
                 <>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Payment Mode
+                      Payment Mode <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={formData.paymentMode}
@@ -482,7 +561,7 @@ function Expenses() {
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Date
+                      Date <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
@@ -500,7 +579,7 @@ function Expenses() {
                   formData.paymentMode === "Online") && (
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Transaction ID / Check Number
+                      Transaction ID / Check Number <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"

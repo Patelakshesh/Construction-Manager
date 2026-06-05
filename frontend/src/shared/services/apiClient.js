@@ -30,7 +30,16 @@ apiClient.interceptors.request.use(
 
 // ── Response interceptor: clear session and redirect to login on 401
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response?.data?.errors?.length) {
+      const errorMsg = response.data.errors[0].message;
+      const error = new Error(errorMsg);
+      error.response = response;
+      error.isGraphQL = true;
+      return Promise.reject(error);
+    }
+    return response;
+  },
   (error) => {
     if (error?.response?.status === 401) {
       localStorage.removeItem("authToken");
@@ -38,6 +47,10 @@ apiClient.interceptors.response.use(
       localStorage.removeItem("authExpiresOn");
       // Dispatch a storage event so AppRouter reacts immediately
       window.dispatchEvent(new Event("auth:logout"));
+    }
+    const gqlMessage = error?.response?.data?.errors?.[0]?.message;
+    if (gqlMessage) {
+      error.message = gqlMessage;
     }
     return Promise.reject(error);
   }

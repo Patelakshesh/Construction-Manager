@@ -782,12 +782,15 @@ function UserManagement() {
                 </label>
                 <input
                   type="tel"
+                  maxLength={10}
+                  required
                   value={formData.phone}
-                  onChange={(event) =>
-                    setFormData({ ...formData, phone: event.target.value })
-                  }
+                  onChange={(event) => {
+                    const val = event.target.value.replace(/\D/g, '').slice(0, 10);
+                    setFormData({ ...formData, phone: val });
+                  }}
                   className={getFieldClassName(Boolean(formErrors.phone))}
-                  placeholder="Enter phone number"
+                  placeholder="Enter 10 digit number"
                   aria-invalid={Boolean(formErrors.phone)}
                 />
                 {renderFieldError(formErrors.phone)}

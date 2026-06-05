@@ -1,127 +1,292 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Plus, Users as UsersIcon, X } from "lucide-react";
+import apiClient from "../../../shared/services/apiClient";
+import toast from "react-hot-toast";
+import Pagination from "../../../shared/components/Pagination";
 
-const initialAttendance = [
-  {
-    id: "1",
-    date: "2026-04-27",
-    contractor: "ABC Construction",
-    workers: 25,
-    workType: "Foundation work",
-    hours: 8,
-  },
-  {
-    id: "2",
-    date: "2026-04-26",
-    contractor: "ABC Construction",
-    workers: 28,
-    workType: "Concrete pouring",
-    hours: 9,
-  },
-  {
-    id: "3",
-    date: "2026-04-26",
-    contractor: "XYZ Electrical",
-    workers: 8,
-    workType: "Wiring installation",
-    hours: 8,
-  },
-  {
-    id: "4",
-    date: "2026-04-25",
-    contractor: "ABC Construction",
-    workers: 22,
-    workType: "Reinforcement setup",
-    hours: 8,
-  },
-  {
-    id: "5",
-    date: "2026-04-25",
-    contractor: "Steel Masters",
-    workers: 12,
-    workType: "Steel frame assembly",
-    hours: 10,
-  },
-  {
-    id: "6",
-    date: "2026-04-24",
-    contractor: "ABC Construction",
-    workers: 26,
-    workType: "Excavation",
-    hours: 8,
-  },
-];
+const CREATE_ATTENDANCE_MUTATION = `
+  mutation CreateAttendance($input: CreateAttendanceInput!) {
+    createAttendance(input: $input) {
+      id
+    }
+  }
+`;
 
-const contractors = [
-  "ABC Construction",
-  "XYZ Electrical",
-  "Steel Masters",
-  "Plumbing Pro",
-  "Mason Works",
-];
+const toIsoDuration = (timeStr) => {
+  if (!timeStr) return null;
+  const parts = timeStr.split(":");
+  const h = parseInt(parts[0] || "0", 10);
+  const m = parseInt(parts[1] || "0", 10);
+  const s = parseInt(parts[2] || "0", 10);
+  return `PT${h}H${m}M${s}S`;
+};
 
-const workTypes = [
-  "Foundation work",
-  "Concrete pouring",
-  "Wiring installation",
-  "Plumbing",
-  "Masonry",
-  "Steel work",
-  "Finishing",
-];
+const formatDuration = (durationStr) => {
+  if (!durationStr) return "--:--";
+  const regex = /^-?PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/;
+  const match = durationStr.match(regex);
+  if (!match) {
+    if (durationStr.includes(":")) {
+      return durationStr.slice(0, 5);
+    }
+    return durationStr;
+  }
+  const hours = parseInt(match[1] || "0", 10);
+  const minutes = parseInt(match[2] || "0", 10);
+  const hh = String(hours).padStart(2, "0");
+  const mm = String(minutes).padStart(2, "0");
+  return `${hh}:${mm}`;
+};
 
-function AttendanceManagement({ site }) {
-  const [attendance, setAttendance] = useState(initialAttendance);
+const calculateHours = (startIso, endIso) => {
+  if (!startIso || !endIso) return null;
+  const parseToMinutes = (durationStr) => {
+    const regex = /^-?PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/;
+    const match = durationStr.match(regex);
+    if (!match) {
+      if (durationStr.includes(":")) {
+        const parts = durationStr.split(":");
+        return parseInt(parts[0] || "0", 10) * 60 + parseInt(parts[1] || "0", 10);
+      }
+      return 0;
+    }
+    const hours = parseInt(match[1] || "0", 10);
+    const minutes = parseInt(match[2] || "0", 10);
+    return hours * 60 + minutes;
+  };
+  const startMins = parseToMinutes(startIso);
+  const endMins = parseToMinutes(endIso);
+  const diffMins = endMins - startMins;
+  if (diffMins <= 0) return null;
+  const h = Math.floor(diffMins / 60);
+  const m = diffMins % 60;
+  if (m === 0) {
+    return `${h} hrs`;
+  }
+  return `${h}h ${m}m`;
+};
+
+
+function AttendanceManagement({ selectedSite, user }) {
+  const [attendance, setAttendance] = useState([]);
+  const [allSiteAttendance, setAllSiteAttendance] = useState([]);
+  const [contractors, setContractors] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
+
   const [formData, setFormData] = useState({
-    contractor: contractors[0],
-    workers: "",
-    workType: workTypes[0],
-    hours: "8",
+    contractorId: "",
+    skilledWorkers: "0",
+    semiSkilledWorkers: "0",
+    unskilledWorkers: "0",
+    startTime: "09:00",
+    endTime: "17:00",
     date: new Date().toISOString().split("T")[0],
   });
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const newRecord = {
-      id: String(attendance.length + 1),
-      date: formData.date,
-      contractor: formData.contractor,
-      workers: Number(formData.workers),
-      workType: formData.workType,
-      hours: Number(formData.hours),
-    };
+  const loadData = async () => {
+    if (!selectedSite) return;
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query: `
+            query GetAttendanceAndContractors($pageNumber: Int!, $pageSize: Int!, $siteId: Int) {
+              attendancesPage(pageNumber: $pageNumber, pageSize: $pageSize, siteId: $siteId) {
+                items {
+                  id
+                  date
+                  contractorId
+                  contractor { contractorName }
+                  supervisorId
+                  supervisor { name }
+                  siteId
+                  skilledWorkers
+                  semiSkilledWorkers
+                  unskilledWorkers
+                  startTime
+                  endTime
+                }
+                totalCount
+              }
+              attendances {
+                date
+                siteId
+                skilledWorkers
+                semiSkilledWorkers
+                unskilledWorkers
+              }
+              contractors { id contractorName enable }
+            }
+          `,
+          variables: {
+            pageNumber,
+            pageSize,
+            siteId: parseInt(selectedSite.id),
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    setAttendance([newRecord, ...attendance]);
-    setIsAdding(false);
-    setFormData({
-      contractor: contractors[0],
-      workers: "",
-      workType: workTypes[0],
-      hours: "8",
-      date: new Date().toISOString().split("T")[0],
-    });
+      if (response.data?.data) {
+        const pageItems = response.data.data.attendancesPage?.items || [];
+        setAttendance(pageItems);
+        setTotalCount(response.data.data.attendancesPage?.totalCount || 0);
+
+        const allAttendances = response.data.data.attendances || [];
+        const siteAttendance = allAttendances.filter(
+          a => String(a.siteId) === String(selectedSite.id)
+        );
+        setAllSiteAttendance(siteAttendance);
+
+        const loadedContractors = (response.data.data.contractors || []).filter(c => c.enable);
+        setContractors(loadedContractors);
+      }
+    } catch (error) {
+      toast.error("Failed to load attendance data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [selectedSite, pageNumber]);
+
+  useEffect(() => {
+    setPageNumber(1);
+  }, [selectedSite]);
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.date) errors.date = "Date is required.";
+    if (!formData.contractorId) errors.contractorId = "Contractor is required.";
+    
+    const skilled = formData.skilledWorkers === "" ? 0 : Number(formData.skilledWorkers);
+    const semiSkilled = formData.semiSkilledWorkers === "" ? 0 : Number(formData.semiSkilledWorkers);
+    const unskilled = formData.unskilledWorkers === "" ? 0 : Number(formData.unskilledWorkers);
+    
+    if (formData.skilledWorkers !== "" && Number(formData.skilledWorkers) < 0) {
+      errors.skilledWorkers = "Cannot be negative.";
+    }
+    if (formData.semiSkilledWorkers !== "" && Number(formData.semiSkilledWorkers) < 0) {
+      errors.semiSkilledWorkers = "Cannot be negative.";
+    }
+    if (formData.unskilledWorkers !== "" && Number(formData.unskilledWorkers) < 0) {
+      errors.unskilledWorkers = "Cannot be negative.";
+    }
+    
+    if (skilled === 0 && semiSkilled === 0 && unskilled === 0) {
+      errors.skilledWorkers = "At least one worker type must be greater than 0.";
+    }
+
+    if (!formData.startTime) errors.startTime = "Start time is required.";
+    if (!formData.endTime) errors.endTime = "End time is required.";
+    
+    return errors;
+  };
+
+  const getFieldClassName = (hasError) =>
+    `w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 ${
+      hasError
+        ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
+        : "border-gray-300 focus:ring-[#3D36BE]"
+    }`;
+
+  const renderFieldError = (message) =>
+    message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Please fix the errors below.");
+      return;
+    }
+
+    setFormErrors({});
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const startTimeIso = toIsoDuration(formData.startTime);
+      const endTimeIso = toIsoDuration(formData.endTime);
+
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query: CREATE_ATTENDANCE_MUTATION,
+          variables: {
+            input: {
+              date: new Date(formData.date).toISOString(),
+              siteId: Number(selectedSite.id),
+              contractorId: Number(formData.contractorId),
+              supervisorId: Number(user.id),
+              skilledWorkers: formData.skilledWorkers === "" ? 0 : Number(formData.skilledWorkers),
+              semiSkilledWorkers: formData.semiSkilledWorkers === "" ? 0 : Number(formData.semiSkilledWorkers),
+              unskilledWorkers: formData.unskilledWorkers === "" ? 0 : Number(formData.unskilledWorkers),
+              startTime: startTimeIso,
+              endTime: endTimeIso,
+              createdBy: user.name,
+            },
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.errors) {
+        toast.error(response.data.errors[0].message);
+        return;
+      }
+
+      toast.success("Attendance added successfully!");
+      setIsAdding(false);
+      setFormData({
+        contractorId: "",
+        skilledWorkers: "0",
+        semiSkilledWorkers: "0",
+        unskilledWorkers: "0",
+        startTime: "09:00",
+        endTime: "17:00",
+        date: new Date().toISOString().split("T")[0],
+      });
+      loadData();
+    } catch (error) {
+      toast.error(error?.message || "Failed to add attendance");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const today = new Date().toISOString().split("T")[0];
-  const totalWorkers = attendance
-    .filter((record) => record.date === today)
-    .reduce((sum, record) => sum + record.workers, 0);
+  const totalWorkersToday = allSiteAttendance
+    .filter((record) => record.date.split("T")[0] === today)
+    .reduce((sum, record) => sum + (record.skilledWorkers || 0) + (record.semiSkilledWorkers || 0) + (record.unskilledWorkers || 0), 0);
 
-  const thisWeekWorkers = attendance
+  const thisWeekWorkers = allSiteAttendance
     .filter((record) => {
       const recordDate = new Date(record.date);
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       return recordDate >= weekAgo;
     })
-    .reduce((sum, record) => sum + record.workers, 0);
+    .reduce((sum, record) => sum + (record.skilledWorkers || 0) + (record.semiSkilledWorkers || 0) + (record.unskilledWorkers || 0), 0);
 
   const groupedByDate = attendance.reduce((accumulator, record) => {
-    if (!accumulator[record.date]) {
-      accumulator[record.date] = [];
+    const dateStr = record.date.split("T")[0];
+    if (!accumulator[dateStr]) {
+      accumulator[dateStr] = [];
     }
-    accumulator[record.date].push(record);
+    accumulator[dateStr].push(record);
     return accumulator;
   }, {});
 
@@ -129,19 +294,27 @@ function AttendanceManagement({ site }) {
     b.localeCompare(a),
   );
 
+  if (!selectedSite) {
+    return (
+      <div className="flex h-full items-center justify-center p-8 text-gray-500">
+        Please select a site to manage attendance.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 p-4">
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <p className="text-xs uppercase tracking-wide text-gray-500">
           Current Site
         </p>
-        <h3 className="text-gray-900">{site}</h3>
+        <h3 className="text-gray-900">{selectedSite.siteName}</h3>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <p className="mb-1 text-sm text-gray-600">Today&apos;s Workers</p>
-          <h3 className="text-gray-900">{totalWorkers}</h3>
+          <h3 className="text-gray-900">{totalWorkersToday}</h3>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <p className="mb-1 text-sm text-gray-600">This Week</p>
@@ -159,53 +332,77 @@ function AttendanceManagement({ site }) {
         Add Attendance
       </button>
 
-      <div className="space-y-4">
-        {sortedDates.map((date) => (
-          <div key={date}>
-            <div className="mb-3 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-gray-600" />
-              <h4 className="text-gray-900">{date}</h4>
-              <span className="text-sm text-gray-500">
-                (
-                {groupedByDate[date].reduce(
-                  (sum, record) => sum + record.workers,
-                  0,
-                )}{" "}
-                workers)
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {groupedByDate[date].map((record) => (
-                <div
-                  key={record.id}
-                  className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="mb-1 text-gray-900">{record.contractor}</p>
-                      <p className="mb-2 text-sm text-gray-600">
-                        {record.workType}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <UsersIcon className="h-4 w-4" />
-                          <span>{record.workers} workers</span>
-                        </div>
-                        <span>{record.hours}h</span>
-                      </div>
-                    </div>
-                  </div>
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="divide-y divide-gray-100">
+          {isLoading ? (
+             <div className="p-4 text-center text-gray-500">Loading attendance...</div>
+          ) : sortedDates.length === 0 ? (
+             <div className="p-4 text-center text-gray-500">No attendance recorded for this site yet.</div>
+          ) : (
+            sortedDates.map((date) => (
+              <div key={date} className="p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-gray-600" />
+                  <h4 className="text-gray-900">{new Date(date).toLocaleDateString()}</h4>
+                  <span className="text-sm text-gray-500">
+                    (
+                    {groupedByDate[date].reduce(
+                      (sum, record) => sum + (record.skilledWorkers || 0) + (record.semiSkilledWorkers || 0) + (record.unskilledWorkers || 0),
+                      0,
+                    )}{" "}
+                    workers)
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        ))}
+
+                <div className="space-y-2">
+                  {groupedByDate[date].map((record) => {
+                    const total = (record.skilledWorkers || 0) + (record.semiSkilledWorkers || 0) + (record.unskilledWorkers || 0);
+                    const startTime = formatDuration(record.startTime);
+                    const endTime = formatDuration(record.endTime);
+                    const hrs = calculateHours(record.startTime, record.endTime);
+                    const hrsDisplay = hrs ? ` (${hrs})` : "";
+                    return (
+                      <div
+                        key={record.id}
+                        className="rounded-lg border border-gray-100 bg-gray-50 p-3"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="mb-1 text-gray-900 font-medium">{record.contractor?.contractorName || "Unknown Contractor"}</p>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-500 mt-2">
+                              <div className="flex items-center gap-1">
+                                <UsersIcon className="h-4 w-4" />
+                                <span>{total} workers total</span>
+                              </div>
+                              <span className="bg-white border border-gray-200 px-2 py-1 rounded text-xs">
+                                {startTime} to {endTime}{hrsDisplay}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        
+        {/* Pagination */}
+        <div className="border-t border-gray-200 px-4 py-3">
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={(nextPage) => setPageNumber(nextPage)}
+          />
+        </div>
       </div>
 
       {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-md overflow-auto rounded-lg bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl">
             <div className="p-6">
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="text-gray-900">Add Daily Attendance</h3>
@@ -219,179 +416,162 @@ function AttendanceManagement({ site }) {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-gray-700">Date</label>
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(event) =>
-                      setFormData({ ...formData, date: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-gray-700">
-                    Contractor Name
-                  </label>
-                  <select
-                    value={formData.contractor}
-                    onChange={(event) =>
-                      setFormData({
-                        ...formData,
-                        contractor: event.target.value,
-                      })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                  >
-                    {contractors.map((contractor) => (
-                      <option key={contractor} value={contractor}>
-                        {contractor}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-gray-700">
-                    Number of Skills Workers
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.workers}
-                    onChange={(event) =>
-                      setFormData({ ...formData, workers: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder="Enter number of skills workers"
-                    required
-                    min="1"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-gray-700">
-                    Number of Semi-Skills Workers
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.workers}
-                    onChange={(event) =>
-                      setFormData({ ...formData, workers: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder="Enter number of semi-skills workers"
-                    required
-                    min="1"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-gray-700">
-                    Number of Unskills Workers
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.workers}
-                    onChange={(event) =>
-                      setFormData({ ...formData, workers: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder="Enter number of unskills workers"
-                    required
-                    min="1"
-                  />
-                </div>
-
-                {/* <div>
-                  <label className="mb-2 block text-gray-700">Work Type</label>
-                  <select
-                    value={formData.workType}
-                    onChange={(event) =>
-                      setFormData({ ...formData, workType: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                  >
-                    {workTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div> */}
-
-                {/* <div>
-                  <label className="mb-2 block text-gray-700">
-                    Hours Worked
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.hours}
-                    onChange={(event) =>
-                      setFormData({ ...formData, hours: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder="Enter hours"
-                    required
-                    min="1"
-                    max="24"
-                  />
-                </div> */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Row 1 */}
                   <div>
                     <label className="mb-2 block text-gray-700">
-                      Start Time
+                      Date <span className="text-[#EC3F3F]">*</span>
                     </label>
-                    <select
-                      value={formData.startTime || "9"}
+                    <input
+                      type="date"
+                      value={formData.date}
                       onChange={(event) =>
-                        setFormData({
-                          ...formData,
-                          startTime: event.target.value,
-                        })
+                        setFormData({ ...formData, date: event.target.value })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    >
-                      {[...Array(24)].map((_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          {i + 1}:00
-                        </option>
-                      ))}
-                    </select>
+                      className={getFieldClassName(Boolean(formErrors.date))}
+                      required
+                    />
+                    {renderFieldError(formErrors.date)}
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-gray-700">End Time</label>
+                    <label className="mb-2 block text-gray-700">
+                      Contractor Name <span className="text-[#EC3F3F]">*</span>
+                    </label>
                     <select
-                      value={formData.endTime || "17"}
+                      value={formData.contractorId}
                       onChange={(event) =>
                         setFormData({
                           ...formData,
-                          endTime: event.target.value,
+                          contractorId: event.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+                      className={getFieldClassName(Boolean(formErrors.contractorId))}
+                      required
                     >
-                      {[...Array(24)].map((_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          {i + 1}:00
+                      <option value="" disabled>Select contractor</option>
+                      {contractors.map((contractor) => (
+                        <option key={contractor.id} value={contractor.id}>
+                          {contractor.contractorName}
                         </option>
                       ))}
                     </select>
+                    {renderFieldError(formErrors.contractorId)}
+                  </div>
+
+                  {/* Row 2 */}
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block text-gray-700 font-medium border-b pb-2">
+                      Worker Breakdown
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      Skilled Workers
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.skilledWorkers}
+                      onChange={(event) =>
+                        setFormData({ ...formData, skilledWorkers: event.target.value })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.skilledWorkers))}
+                      placeholder="0"
+                    />
+                    {renderFieldError(formErrors.skilledWorkers)}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      Semi-Skilled Workers
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.semiSkilledWorkers}
+                      onChange={(event) =>
+                        setFormData({ ...formData, semiSkilledWorkers: event.target.value })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.semiSkilledWorkers))}
+                      placeholder="0"
+                    />
+                    {renderFieldError(formErrors.semiSkilledWorkers)}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      Unskilled Workers
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.unskilledWorkers}
+                      onChange={(event) =>
+                        setFormData({ ...formData, unskilledWorkers: event.target.value })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.unskilledWorkers))}
+                      placeholder="0"
+                    />
+                    {renderFieldError(formErrors.unskilledWorkers)}
+                  </div>
+
+                  {/* Row 3 */}
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block text-gray-700 font-medium border-b pb-2">
+                      Work Hours
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      Start Time <span className="text-[#EC3F3F]">*</span>
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.startTime}
+                      onChange={(event) =>
+                        setFormData({ ...formData, startTime: event.target.value })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.startTime))}
+                      required
+                    />
+                    {renderFieldError(formErrors.startTime)}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      End Time <span className="text-[#EC3F3F]">*</span>
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.endTime}
+                      onChange={(event) =>
+                        setFormData({ ...formData, endTime: event.target.value })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.endTime))}
+                      required
+                    />
+                    {renderFieldError(formErrors.endTime)}
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-3 pt-6">
                   <button
                     type="submit"
-                    className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90"
+                    disabled={isSubmitting}
+                    className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ backgroundColor: "#3D36BE" }}
                   >
-                    Submit Attendance
+                    {isSubmitting ? "Submitting..." : "Submit Attendance"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsAdding(false)}
+                    onClick={() => {
+                      setIsAdding(false);
+                      setFormErrors({});
+                    }}
                     className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300"
                   >
                     Cancel

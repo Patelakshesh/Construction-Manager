@@ -252,7 +252,7 @@ function Contractor() {
       toast.success(`Contractor marked as ${!contractor.enable ? 'Active' : 'Inactive'}`);
       loadData(false);
     } catch (err) {
-      toast.error("Failed to update status.");
+      toast.error(err?.message || "Failed to update status.");
     }
   };
 
@@ -278,7 +278,7 @@ function Contractor() {
       toast.success("Contractor deleted successfully.");
       loadData(false);
     } catch (err) {
-      toast.error("Failed to delete contractor.");
+      toast.error(err?.message || "Failed to delete contractor.");
     } finally {
       setItemToDelete(null);
     }
@@ -375,7 +375,7 @@ function Contractor() {
       setIsModalOpen(false);
       loadData(false);
     } catch (err) {
-      toast.error("Failed to save contractor.");
+      toast.error(err?.message || "Failed to save contractor.");
     }
   };
 
@@ -668,9 +668,11 @@ function Contractor() {
                 </label>
                 <input
                   type="tel"
+                  maxLength={10}
                   value={formData.phone}
                   onChange={(event) => {
-                    setFormData({ ...formData, phone: event.target.value });
+                    const val = event.target.value.replace(/\D/g, '').slice(0, 10);
+                    setFormData({ ...formData, phone: val });
                     if (formErrors.phone) setFormErrors({ ...formErrors, phone: null });
                   }}
                   className={getFieldClassName(formErrors.phone)}
@@ -722,8 +724,7 @@ function Contractor() {
                   )}
                 </div>
               </div>
-
-              <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 md:col-span-2">
+                      <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 md:col-span-2">
                 <span className="text-sm text-gray-500">Status</span>
                 <label className="flex cursor-pointer items-center gap-3">
                   <input

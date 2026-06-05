@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Activity,
   MapPin,
@@ -18,62 +18,64 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-
-const expenseData = [
-  { month: "Jan", expenses: 45000, budget: 50000 },
-  { month: "Feb", expenses: 52000, budget: 55000 },
-  { month: "Mar", expenses: 48000, budget: 50000 },
-  { month: "Apr", expenses: 61000, budget: 60000 },
-  { month: "May", expenses: 55000, budget: 65000 },
-  { month: "Jun", expenses: 67000, budget: 70000 },
-];
-
-const budgetComparison = [
-  { site: "Downtown Plaza", budget: 500000, actual: 420000 },
-  { site: "Riverside Complex", budget: 750000, actual: 680000 },
-  { site: "Industrial Park", budget: 300000, actual: 310000 },
-  { site: "Suburban Mall", budget: 600000, actual: 550000 },
-];
-
-const recentActivity = [
-  {
-    id: 1,
-    action: "Expense Added",
-    site: "Downtown Plaza",
-    amount: 5200,
-    user: "John Doe",
-    time: "2 hours ago",
-  },
-  {
-    id: 2,
-    action: "Attendance Submitted",
-    site: "Riverside Complex",
-    workers: 25,
-    user: "Jane Smith",
-    time: "3 hours ago",
-  },
-  {
-    id: 3,
-    action: "Budget Updated",
-    site: "Industrial Park",
-    amount: 15000,
-    user: "Admin",
-    time: "5 hours ago",
-  },
-  {
-    id: 4,
-    action: "New Supervisor Added",
-    site: "Suburban Mall",
-    user: "Admin",
-    time: "1 day ago",
-  },
-];
+import apiClient from "../../../shared/services/apiClient";
 
 function DashboardHome() {
   const [filterSite, setFilterSite] = useState("all");
   const [filterDate, setFilterDate] = useState("last7days");
+  
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const sites = ["all", ...new Set(budgetComparison.map((i) => i.site))];
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query: `
+            query GetDashboard {
+              dashboardStats {
+                totalBudget
+                totalExpenses
+                remainingBudget
+                activeSites
+                expenseTrends {
+                  month
+                  expenses
+                  budget
+                }
+                budgetComparisons {
+                  site
+                  budget
+                  actual
+                }
+              }
+            }
+          `
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response?.data?.data?.dashboardStats) {
+        setDashboardData(response.data.data.dashboardStats);
+      }
+    } catch (error) {
+      console.error("Failed to load dashboard data", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sites = ["all", ...new Set(dashboardData?.budgetComparisons?.map((i) => i.site) || [])];
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>;
+  }
+
 
   return (
     <div className="p-4 md:p-8">
@@ -132,7 +134,7 @@ function DashboardHome() {
               <span>12%</span>
             </div>
           </div>
-          <h3 className="mb-1 text-gray-900">₹2,450,000</h3>
+          <h3 className="mb-1 text-gray-900">₹{dashboardData?.totalBudget?.toLocaleString() || 0}</h3>
           <p className="text-sm text-gray-500">Total Budget</p>
         </div>
 
@@ -145,7 +147,7 @@ function DashboardHome() {
               <span>85%</span>
             </div>
           </div>
-          <h3 className="mb-1 text-gray-900">₹2,080,000</h3>
+          <h3 className="mb-1 text-gray-900">₹{dashboardData?.totalExpenses?.toLocaleString() || 0}</h3>
           <p className="text-sm text-gray-500">Total Expenses</p>
         </div>
 
@@ -159,7 +161,7 @@ function DashboardHome() {
               <span>15%</span>
             </div>
           </div>
-          <h3 className="mb-1 text-gray-900">₹370,000</h3>
+          <h3 className="mb-1 text-gray-900">₹{dashboardData?.remainingBudget?.toLocaleString() || 0}</h3>
           <p className="text-sm text-gray-500">Remaining Budget</p>
         </div>
 
@@ -175,7 +177,7 @@ function DashboardHome() {
               <Activity className="h-4 w-4" />
             </div>
           </div>
-          <h3 className="mb-1 text-gray-900">8</h3>
+          <h3 className="mb-1 text-gray-900">{dashboardData?.activeSites || 0}</h3>
           <p className="text-sm text-gray-500">Active Sites</p>
         </div>
       </div>
@@ -184,7 +186,7 @@ function DashboardHome() {
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6">
           <h3 className="mb-4 text-gray-900">Expense Trends</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={expenseData}>
+            <LineChart data={dashboardData?.expenseTrends || []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
               <XAxis dataKey="month" stroke="#6B7280" />
               <YAxis stroke="#6B7280" />
@@ -211,7 +213,7 @@ function DashboardHome() {
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6">
           <h3 className="mb-4 text-gray-900">Budget vs Actual by Site</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={budgetComparison}>
+            <BarChart data={dashboardData?.budgetComparisons || []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
               <XAxis
                 dataKey="site"

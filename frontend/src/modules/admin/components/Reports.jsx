@@ -1,5 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Download, FileText, Filter } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import apiClient from "../../../shared/services/apiClient";
+import toast from "react-hot-toast";
 
 const reportTemplates = [
   {
@@ -18,49 +23,212 @@ const reportTemplates = [
   },
 ];
 
-const sites = [
-  "All Sites",
-  "Downtown Plaza",
-  "Riverside Complex",
-  "Industrial Park",
-  "Suburban Mall",
-  "Tech Campus",
-];
-
-const categories = [
-  "All Categories",
-  "Financial",
-  "Performance",
-  "HR",
-  "Management",
-];
-
 function Reports() {
-  const [selectedSite, setSelectedSite] = useState("All Sites");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [sites, setSites] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [isLoadingFilters, setIsLoadingFilters] = useState(true);
   const [dateRange, setDateRange] = useState({
     start: "2026-01-01",
-    end: "2026-04-27",
+    end: new Date().toISOString().split("T")[0],
   });
 
-  const handleDownload = (reportName, format) => {
-    window.alert(`Downloading ${reportName} as ${format.toUpperCase()}`);
+  useEffect(() => {
+    const loadFiltersData = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await apiClient.post(
+          "/graphql",
+          {
+            query: `
+              query GetReportFilters {
+                sites {
+                  id
+                  siteName
+                  enable
+                }
+                categories {
+                  id
+                  name
+                }
+              }
+            `
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (response.data?.data) {
+          setSites((response.data.data.sites || []).filter(s => s.enable));
+          setCategories(response.data.data.categories || []);
+        }
+      } catch (error) {
+        console.error("Failed to load report filters", error);
+      } finally {
+        setIsLoadingFilters(false);
+      }
+    };
+    loadFiltersData();
+  }, []);
+
+  const handleDownload = async (reportName, format) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (reportName === "Credit and Debit Report") {
+        toast.loading("Generating report...", { id: "report" });
+        const response = await apiClient.post(
+          "/graphql",
+          {
+            query: `
+              query GetReportExpenses {
+                expensesPage(pageNumber: 1, pageSize: 10000) {
+                  items {
+                    id
+                    title
+                    siteId
+                    site { siteName }
+                    categoryId
+                    category { name }
+                    amount
+                    paymentMode
+                    date
+                    type
+                  }
+                }
+              }
+            `
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        let data = response.data?.data?.expensesPage?.items || [];
+        
+        // Apply Filters
+        if (selectedSite !== "All") {
+          data = data.filter(e => String(e.siteId) === String(selectedSite));
+        }
+        if (selectedCategory !== "All") {
+          data = data.filter(e => String(e.categoryId) === String(selectedCategory));
+        }
+        if (dateRange.start) {
+          data = data.filter(e => e.date.split("T")[0] >= dateRange.start);
+        }
+        if (dateRange.end) {
+          data = data.filter(e => e.date.split("T")[0] <= dateRange.end);
+        }
+        
+        if (format === "pdf") {
+          const doc = new jsPDF();
+          doc.text("Credit and Debit Report", 14, 15);
+          autoTable(doc, {
+            startY: 20,
+            head: [["ID", "Title", "Site", "Category", "Amount", "Mode", "Date", "Type"]],
+            body: data.map(e => [
+              e.id, 
+              e.title, 
+              e.site?.siteName || "-", 
+              e.category?.name || "-", 
+              e.amount, 
+              e.paymentMode, 
+              e.date.split("T")[0], 
+              e.type
+            ]),
+          });
+          doc.save("Credit_Debit_Report.pdf");
+        } else if (format === "excel") {
+          const ws = XLSX.utils.json_to_sheet(data.map(e => ({
+            ID: e.id,
+            Title: e.title,
+            Site: e.site?.siteName || "-",
+            Category: e.category?.name || "-",
+            Amount: e.amount,
+            "Payment Mode": e.paymentMode,
+            Date: e.date.split("T")[0],
+            Type: e.type
+          })));
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+          XLSX.writeFile(wb, "Credit_Debit_Report.xlsx");
+        }
+        toast.success("Report downloaded!", { id: "report" });
+      } else if (reportName === "Workforce Attendance Report") {
+        toast.loading("Generating report...", { id: "report" });
+        const response = await apiClient.post(
+          "/graphql",
+          {
+            query: `
+              query GetReportAttendances {
+                attendancesPage(pageNumber: 1, pageSize: 10000) {
+                  items {
+                    id
+                    date
+                    siteId
+                    site { siteName }
+                    contractor { contractorName }
+                    supervisor { name }
+                    skilledWorkers
+                    semiSkilledWorkers
+                    unskilledWorkers
+                  }
+                }
+              }
+            `
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        let data = response.data?.data?.attendancesPage?.items || [];
+        
+        // Apply Filters
+        if (selectedSite !== "All") {
+          data = data.filter(a => String(a.siteId) === String(selectedSite));
+        }
+        if (dateRange.start) {
+          data = data.filter(a => a.date.split("T")[0] >= dateRange.start);
+        }
+        if (dateRange.end) {
+          data = data.filter(a => a.date.split("T")[0] <= dateRange.end);
+        }
+        
+        if (format === "pdf") {
+          const doc = new jsPDF();
+          doc.text("Workforce Attendance Report", 14, 15);
+          autoTable(doc, {
+            startY: 20,
+            head: [["ID", "Date", "Site", "Contractor", "Supervisor", "Skilled", "Semi-Skilled", "Unskilled"]],
+            body: data.map(a => [
+              a.id, 
+              a.date.split("T")[0], 
+              a.site?.siteName || "-", 
+              a.contractor?.contractorName || "-", 
+              a.supervisor?.name || "-", 
+              a.skilledWorkers, 
+              a.semiSkilledWorkers, 
+              a.unskilledWorkers
+            ]),
+          });
+          doc.save("Workforce_Attendance_Report.pdf");
+        } else if (format === "excel") {
+          const ws = XLSX.utils.json_to_sheet(data.map(a => ({
+            ID: a.id,
+            Date: a.date.split("T")[0],
+            Site: a.site?.siteName || "-",
+            Contractor: a.contractor?.contractorName || "-",
+            Supervisor: a.supervisor?.name || "-",
+            Skilled: a.skilledWorkers,
+            "Semi-Skilled": a.semiSkilledWorkers,
+            Unskilled: a.unskilledWorkers
+          })));
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+          XLSX.writeFile(wb, "Workforce_Attendance_Report.xlsx");
+        }
+        toast.success("Report downloaded!", { id: "report" });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to generate report", { id: "report" });
+    }
   };
 
-  const filteredReports = reportTemplates.filter((report) => {
-    if (
-      selectedCategory !== "All Categories" &&
-      report.category !== selectedCategory
-    ) {
-      return false;
-    }
-    if (selectedSite === "All Sites") {
-      return true;
-    }
-    return report.name
-      .toLowerCase()
-      .includes(selectedSite.split(" ")[0].toLowerCase());
-  });
+  const filteredReports = reportTemplates;
 
   return (
     <div className="p-4 md:p-8">
@@ -88,9 +256,10 @@ function Reports() {
               onChange={(event) => setSelectedSite(event.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
             >
+              <option value="All">All Sites</option>
               {sites.map((site) => (
-                <option key={site} value={site}>
-                  {site}
+                <option key={site.id} value={site.id}>
+                  {site.siteName}
                 </option>
               ))}
             </select>
@@ -103,9 +272,10 @@ function Reports() {
               onChange={(event) => setSelectedCategory(event.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
             >
+              <option value="All">All Categories</option>
               {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
+                <option key={category.id} value={category.id}>
+                  {category.name}
                 </option>
               ))}
             </select>

@@ -126,7 +126,10 @@ function LoginScreen({ onLogin }) {
             type="tel"
             inputMode="numeric"
             value={mobileNumber}
-            onChange={(e) => setMobileNumber(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+              setMobileNumber(val);
+            }}
             placeholder="Enter mobile number"
             className="w-full border-0 bg-transparent p-0 text-sm text-[#1F2937] placeholder:text-[#A5A3A3] focus:outline-none focus:ring-0 xl:text-base"
           />
@@ -211,7 +214,10 @@ function LoginScreen({ onLogin }) {
             type="tel"
             inputMode="numeric"
             value={mobileNumber}
-            onChange={(e) => setMobileNumber(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+              setMobileNumber(val);
+            }}
             placeholder="Enter mobile number"
             className="w-full border-0 bg-transparent p-0 text-[#1F2937] placeholder:text-[#A5A3A3] focus:outline-none focus:ring-0"
             style={{ fontSize: "clamp(10px, 2.5vw, 13px)" }}

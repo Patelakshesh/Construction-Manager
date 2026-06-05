@@ -1,116 +1,214 @@
-import { useState } from "react";
-import { Camera, Plus, ReceiptIndianRupee, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Camera, Plus, ReceiptIndianRupee, X, Filter } from "lucide-react";
+import apiClient from "../../../shared/services/apiClient";
+import toast from "react-hot-toast";
+import Pagination from "../../../shared/components/Pagination";
 
-const initialExpenses = [
-  {
-    id: "1",
-    amount: 5200,
-    transactionType: "Credit",
-    description: "Concrete supplies",
-    date: "2026-04-26",
-    status: "approved",
-  },
-  {
-    id: "2",
-    amount: 3800,
-    transactionType: "Credit",
-    description: "Weekly wages - 15 workers",
-    date: "2026-04-25",
-    status: "approved",
-  },
-  {
-    id: "3",
-    amount: 1200,
-    transactionType: "Debit",
-    description: "Excavator rental (3 days)",
-    date: "2026-04-24",
-    status: "pending",
-  },
-  {
-    id: "4",
-    amount: 450,
-    transactionType: "Debit",
-    description: "Material delivery",
-    date: "2026-04-23",
-    status: "approved",
-  },
-  {
-    id: "5",
-    amount: 2100,
-    transactionType: "Debit",
-    description: "Steel reinforcement bars",
-    date: "2026-04-22",
-    status: "approved",
-  },
-  {
-    id: "6",
-    amount: 890,
-    transactionType: "Credit",
-    description: "Safety equipment",
-    date: "2026-04-21",
-    status: "approved",
-  },
-];
+const CREATE_EXPENSE_MUTATION = `
+  mutation CreateExpense($input: CreateExpenseInput!) {
+    createExpense(input: $input) {
+      id
+    }
+  }
+`;
 
-const transactionTypes = ["Credit", "Debit"];
-const expenseCategories = [
-  "Materials",
-  "Labor",
-  "Equipment",
-  "Transport",
-  "Safety",
-  "Contractor",
-  "Supplies",
-  "Miscellaneous",
-];
-
-function ExpenseManagement({ site }) {
-  const [expenses, setExpenses] = useState(initialExpenses);
+function ExpenseManagement({ selectedSite, user }) {
+  const [expenses, setExpenses] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
-  const [filtertransactionType, setFiltertransactionType] = useState("All");
+  const [isLoading, setIsLoading] = useState(true);
+  const [filterTransactionType, setFilterTransactionType] = useState("All");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalExpensesAmount, setTotalExpensesAmount] = useState(0);
+  const pageSize = 10;
+
   const [formData, setFormData] = useState({
     amount: "",
-    category: expenseCategories[0],
-    description: "",
+    categoryId: "",
+    title: "",
     date: new Date().toISOString().split("T")[0],
+    paymentMode: "Cash",
+    transactionId: "",
   });
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const loadData = async () => {
+    if (!selectedSite) return;
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query: `
+            query GetExpensesAndCategories($pageNumber: Int!, $pageSize: Int!, $siteId: Int) {
+              expensesPage(pageNumber: $pageNumber, pageSize: $pageSize, siteId: $siteId) {
+                items {
+                  id
+                  title
+                  siteId
+                  categoryId
+                  category { name }
+                  amount
+                  paymentMode
+                  transactionId
+                  date
+                  type
+                }
+                totalCount
+              }
+              expenses {
+                amount
+                siteId
+              }
+              categories { id name }
+            }
+          `,
+          variables: {
+            pageNumber,
+            pageSize,
+            siteId: parseInt(selectedSite.id),
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    const newExpense = {
-      id: String(expenses.length + 1),
-      amount: Number(formData.amount),
-      transactionType: formData.category,
-      description: formData.description,
-      date: formData.date,
-      status: "pending",
-    };
+      if (response.data?.data) {
+        const pageItems = response.data.data.expensesPage?.items || [];
+        setExpenses(pageItems);
+        setTotalCount(response.data.data.expensesPage?.totalCount || 0);
 
-    setExpenses([newExpense, ...expenses]);
-    setIsAdding(false);
-    setFormData({
-      amount: "",
-      category: expenseCategories[0],
-      description: "",
-      date: new Date().toISOString().split("T")[0],
-    });
+        const allExpenses = response.data.data.expenses || [];
+        const siteExpenses = allExpenses.filter(
+          e => String(e.siteId) === String(selectedSite.id)
+        );
+        const total = siteExpenses.reduce((sum, e) => sum + e.amount, 0);
+        setTotalExpensesAmount(total);
+
+        const loadedCategories = response.data.data.categories || [];
+        setCategories(loadedCategories);
+        
+        if (loadedCategories.length > 0 && !formData.categoryId) {
+          setFormData(prev => ({ ...prev, categoryId: loadedCategories[0].id }));
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to load expenses data");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const filteredExpenses =
-    filtertransactionType === "All"
-      ? expenses
-      : expenses.filter(
-          (expense) => expense.transactionType === filtertransactionType,
-        );
+  useEffect(() => {
+    loadData();
+  }, [selectedSite, pageNumber]);
 
-  const totalExpenses = expenses.reduce(
-    (sum, expense) => sum + expense.amount,
-    0,
-  );
-  const pendingExpenses = expenses.filter(
-    (expense) => expense.status === "pending",
-  ).length;
+  useEffect(() => {
+    setPageNumber(1);
+  }, [selectedSite]);
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.amount) {
+      errors.amount = "Amount is required.";
+    } else if (Number(formData.amount) <= 0) {
+      errors.amount = "Amount must be greater than 0.";
+    }
+    if (!formData.categoryId) {
+      errors.categoryId = "Category is required.";
+    }
+    if (!formData.title.trim()) {
+      errors.title = "Description is required.";
+    }
+    if (!formData.date) {
+      errors.date = "Date is required.";
+    }
+    if (formData.paymentMode !== "Cash" && !formData.transactionId.trim()) {
+      errors.transactionId = `${
+        formData.paymentMode === "Check" ? "Check ID" : "Transaction ID"
+      } is required.`;
+    }
+    return errors;
+  };
+
+  const getFieldClassName = (hasError) =>
+    `w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 ${
+      hasError
+        ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
+        : "border-gray-300 focus:ring-[#3D36BE]"
+    }`;
+
+  const renderFieldError = (message) =>
+    message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Please fix the errors below.");
+      return;
+    }
+
+    setFormErrors({});
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query: CREATE_EXPENSE_MUTATION,
+          variables: {
+            input: {
+              title: formData.title,
+              siteId: Number(selectedSite.id),
+              categoryId: Number(formData.categoryId),
+              amount: Number(formData.amount),
+              paymentMode: formData.paymentMode,
+              transactionId: formData.paymentMode === "Cash" ? null : formData.transactionId,
+              date: new Date(formData.date).toISOString(),
+              type: "Expense", // Default to expense for supervisor
+              createdBy: user?.name || "supervisor",
+            },
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.errors) {
+        toast.error(response.data.errors[0].message);
+        return;
+      }
+
+      toast.success("Expense added successfully!");
+      setIsAdding(false);
+      setFormData({
+        amount: "",
+        categoryId: categories.length > 0 ? categories[0].id : "",
+        title: "",
+        date: new Date().toISOString().split("T")[0],
+        paymentMode: "Cash",
+        transactionId: "",
+      });
+      loadData();
+    } catch (error) {
+      toast.error(error?.message || "Failed to add expense");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!selectedSite) {
+    return (
+      <div className="flex h-full items-center justify-center p-8 text-gray-500">
+        Please select a site to manage expenses.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-4">
@@ -118,20 +216,16 @@ function ExpenseManagement({ site }) {
         <p className="text-xs uppercase tracking-wide text-gray-500">
           Current Site
         </p>
-        <h3 className="text-gray-900">{site}</h3>
+        <h3 className="text-gray-900">{selectedSite.siteName}</h3>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm col-span-2">
           <div className="mb-1 flex items-center gap-2 text-sm text-gray-600">
             <ReceiptIndianRupee className="h-4 w-4" />
-            <p>Total Expenses</p>
+            <p>Total Recorded Expenses for Site</p>
           </div>
-          <h3 className="text-gray-900">₹{totalExpenses.toLocaleString()}</h3>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="mb-1 text-sm text-gray-600">Total Contractor</p>
-          <h3 className="text-gray-900">{pendingExpenses} Contractors</h3>
+          <h3 className="text-gray-900">₹{totalExpensesAmount.toLocaleString("en-IN")}</h3>
         </div>
       </div>
 
@@ -145,67 +239,73 @@ function ExpenseManagement({ site }) {
         Add New Expense
       </button>
 
-      {/* <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
-          <Filter className="h-5 w-5 text-gray-600" />
-          <label className="text-gray-700">Filter by transactionType</label>
-        </div>
-        <select
-          value={filtertransactionType}
-          onChange={(event) => setFiltertransactionType(event.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-        >
-          <option value="All">All Categories</option>
-          {transactionTypes.map((transactionType) => (
-            <option key={transactionType} value={transactionType}>
-              {transactionType}
-            </option>
-          ))}
-        </select>
-      </div> */}
-
-      <div className="space-y-3">
-        {filteredExpenses.map((expense) => (
-          <div
-            key={expense.id}
-            className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
-          >
-            <div className="mb-3 flex items-start justify-between">
-              <div className="flex-1">
-                <div className="mb-2 flex items-center gap-2">
-                  <span
-                    className="rounded px-2 py-1 text-xs"
-                    style={{
-                      backgroundColor:
-                        expense.transactionType === "Credit"
-                          ? "#DCFCE7"
-                          : "#FEE2E2",
-                      color:
-                        expense.transactionType === "Credit"
-                          ? "#15803D"
-                          : "#DC2626",
-                    }}
-                  >
-                    {expense.transactionType}
-                  </span>
-                  
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="divide-y divide-gray-100">
+          {isLoading ? (
+            <div className="p-4 text-center text-gray-500">Loading expenses...</div>
+          ) : expenses.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">No expenses found for this site.</div>
+          ) : (
+            expenses.map((expense) => (
+              <div
+                key={expense.id}
+                className="p-4 transition-colors hover:bg-gray-50"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span
+                        className="rounded px-2 py-1 text-xs"
+                        style={{
+                          backgroundColor:
+                            expense.type === "Income"
+                              ? "#DCFCE7"
+                              : "#FEE2E2",
+                          color:
+                            expense.type === "Income"
+                              ? "#15803D"
+                              : "#DC2626",
+                        }}
+                      >
+                        {expense.type}
+                      </span>
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        {expense.category?.name || "Uncategorized"}
+                      </span>
+                    </div>
+                    <p className="mb-1 text-gray-900 font-medium">{expense.title}</p>
+                    <p className="text-sm text-gray-500">{new Date(expense.date).toLocaleDateString()}</p>
+                    {expense.paymentMode !== "Cash" && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        {expense.paymentMode} • {expense.transactionId}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg text-gray-900 font-semibold">
+                      ₹{expense.amount.toLocaleString("en-IN")}
+                    </p>
+                  </div>
                 </div>
-                <p className="mb-1 text-gray-900">{expense.description}</p>
-                <p className="text-sm text-gray-500">{expense.date}</p>
               </div>
-              <div className="text-right">
-                <p className="text-lg text-gray-900">
-                  ₹{expense.amount.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
+            ))
+          )}
+        </div>
+        
+        {/* Pagination */}
+        <div className="border-t border-gray-200 px-4 py-3">
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={(nextPage) => setPageNumber(nextPage)}
+          />
+        </div>
       </div>
 
       {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-md overflow-auto rounded-lg bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl">
             <div className="p-6">
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="text-gray-900">Add New Expense</h3>
@@ -219,100 +319,173 @@ function ExpenseManagement({ site }) {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-gray-700">
-                    Amount (₹)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.amount}
-                    onChange={(event) =>
-                      setFormData({ ...formData, amount: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder="Enter amount"
-                    required
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Row 1 */}
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      Amount (₹) <span className="text-[#EC3F3F]">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.amount}
+                      onChange={(event) =>
+                        setFormData({ ...formData, amount: event.target.value })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.amount))}
+                      placeholder="Enter amount"
+                      required
+                    />
+                    {renderFieldError(formErrors.amount)}
+                  </div>
 
-                <div>
-                  <label className="mb-2 block text-gray-700">Category</label>
-                  <select
-                    value={formData.category}
-                    onChange={(event) =>
-                      setFormData({
-                        ...formData,
-                        category: event.target.value,
-                      })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                  >
-                    {expenseCategories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      Category <span className="text-[#EC3F3F]">*</span>
+                    </label>
+                    <select
+                      value={formData.categoryId}
+                      onChange={(event) =>
+                        setFormData({
+                          ...formData,
+                          categoryId: event.target.value,
+                        })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.categoryId))}
+                      required
+                    >
+                      <option value="" disabled>Select category</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    {renderFieldError(formErrors.categoryId)}
+                  </div>
 
-                <div>
-                  <label className="mb-2 block text-gray-700">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(event) =>
-                      setFormData({
-                        ...formData,
-                        description: event.target.value,
-                      })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder="Enter description"
-                    rows={3}
-                    required
-                  />
-                </div>
+                  {/* Row 2 */}
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block text-gray-700">
+                      Description <span className="text-[#EC3F3F]">*</span>
+                    </label>
+                    <textarea
+                      value={formData.title}
+                      onChange={(event) =>
+                        setFormData({
+                          ...formData,
+                          title: event.target.value,
+                        })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.title))}
+                      placeholder="Enter description of expense"
+                      rows={2}
+                      required
+                    />
+                    {renderFieldError(formErrors.title)}
+                  </div>
 
-                <div>
-                  <label className="mb-2 block text-gray-700">Date</label>
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(event) =>
-                      setFormData({ ...formData, date: event.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    required
-                  />
-                </div>
+                  {/* Row 3 */}
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      Date <span className="text-[#EC3F3F]">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.date}
+                      onChange={(event) =>
+                        setFormData({ ...formData, date: event.target.value })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.date))}
+                      required
+                    />
+                    {renderFieldError(formErrors.date)}
+                  </div>
 
-                <div>
-                  <label className="mb-2 block text-gray-700">
-                    Upload Bill/Receipt
-                  </label>
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE]"
-                  >
-                    <Camera className="h-5 w-5 text-gray-600" />
-                    <span className="text-gray-600">
-                      Take Photo / Upload Image
-                    </span>
-                  </button>
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      Payment Mode <span className="text-[#EC3F3F]">*</span>
+                    </label>
+                    <select
+                      value={formData.paymentMode}
+                      onChange={(event) =>
+                        setFormData({
+                          ...formData,
+                          paymentMode: event.target.value,
+                          transactionId:
+                            event.target.value === "Cash"
+                              ? ""
+                              : formData.transactionId,
+                        })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.paymentMode))}
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="Check">Check</option>
+                      <option value="Online">Online</option>
+                    </select>
+                    {renderFieldError(formErrors.paymentMode)}
+                  </div>
+
+                  {/* Row 4 (Conditional Transaction ID) */}
+                  {(formData.paymentMode === "Check" || formData.paymentMode === "Online") && (
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-gray-700">
+                        {formData.paymentMode === "Check" ? "Check Number" : "Transaction ID"} <span className="text-[#EC3F3F]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.transactionId}
+                        onChange={(event) =>
+                          setFormData({
+                            ...formData,
+                            transactionId: event.target.value,
+                          })
+                        }
+                        className={getFieldClassName(Boolean(formErrors.transactionId))}
+                        placeholder={
+                          formData.paymentMode === "Check"
+                            ? "e.g. CHK123456"
+                            : "e.g. TXN987654321"
+                        }
+                        required
+                      />
+                      {renderFieldError(formErrors.transactionId)}
+                    </div>
+                  )}
+
+                  {/* Upload Receipt */}
+                  <div className="md:col-span-2 mt-2">
+                    <label className="mb-2 block text-gray-700">
+                      Upload Bill/Receipt
+                    </label>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE]"
+                    >
+                      <Camera className="h-5 w-5 text-gray-600" />
+                      <span className="text-gray-600">
+                        Take Photo / Upload Image
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90"
+                    disabled={isSubmitting}
+                    className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ backgroundColor: "#3D36BE" }}
                   >
-                    Submit Expense
+                    {isSubmitting ? "Submitting..." : "Submit Expense"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsAdding(false)}
+                    onClick={() => {
+                      setIsAdding(false);
+                      setFormErrors({});
+                    }}
                     className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300"
                   >
                     Cancel

@@ -298,7 +298,7 @@ function SupervisorCredit() {
       toast.success("Credit deleted successfully.");
       loadData(false);
     } catch (err) {
-      toast.error("Failed to delete credit.");
+      toast.error(err?.message || "Failed to delete credit.");
     } finally {
       setItemToDelete(null);
     }
@@ -376,7 +376,7 @@ function SupervisorCredit() {
       setIsModalOpen(false);
       loadData(false);
     } catch (err) {
-      toast.error("Failed to save credit.");
+      toast.error(err?.message || "Failed to save credit.");
     } finally {
       setIsLoading(false);
     }
