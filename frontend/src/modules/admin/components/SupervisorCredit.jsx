@@ -81,6 +81,17 @@ const DELETE_CREDIT_MUTATION = `
 `;
 
 function SupervisorCredit() {
+  const getActorName = () => {
+    const storedUser = localStorage.getItem("authUser");
+    if (!storedUser) return "system";
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      return parsedUser?.name || "system";
+    } catch {
+      return "system";
+    }
+  };
+
   const [credits, setCredits] = useState([]);
   const [supervisors, setSupervisors] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -332,7 +343,7 @@ function SupervisorCredit() {
                 transactionId: formData.paymentMode === "Cash" ? null : formData.transactionId,
                 comment: formData.comment,
                 date: new Date(formData.date).toISOString(),
-                modifiedBy: "system",
+                modifiedBy: getActorName(),
               },
             },
           },
@@ -358,7 +369,7 @@ function SupervisorCredit() {
                 transactionId: formData.paymentMode === "Cash" ? null : formData.transactionId,
                 comment: formData.comment,
                 date: new Date(formData.date).toISOString(),
-                createdBy: "system",
+                createdBy: getActorName(),
               },
             },
           },

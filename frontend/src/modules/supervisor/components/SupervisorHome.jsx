@@ -85,7 +85,7 @@ function SupervisorHome({ selectedSite, user }) {
         }
 
       } catch (error) {
-        toast.error("Failed to load dashboard data");
+        toast.error(error?.message || "Failed to load dashboard data");
       } finally {
         setIsLoading(false);
       }

@@ -52,7 +52,7 @@ function AdminDashboard({ user, onLogout }) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F5F5F5]">
+    <div className="flex h-dvh overflow-hidden bg-[#F5F5F5]">
       {isSidebarOpen && (
         <button
           type="button"

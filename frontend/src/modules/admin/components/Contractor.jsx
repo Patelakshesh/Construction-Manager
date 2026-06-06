@@ -71,6 +71,17 @@ const DELETE_CONTRACTOR_MUTATION = `
 `;
 
 function Contractor() {
+  const getActorName = () => {
+    const storedUser = localStorage.getItem("authUser");
+    if (!storedUser) return "system";
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      return parsedUser?.name || "system";
+    } catch {
+      return "system";
+    }
+  };
+
   const [contractors, setContractors] = useState([]);
   const [sitesList, setSitesList] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -237,7 +248,7 @@ function Contractor() {
               phone: contractor.phone,
               assignedSites: contractor.assignedSites,
               enable: !contractor.enable,
-              modifiedBy: "system"
+              modifiedBy: getActorName()
             }
           },
         },
@@ -332,7 +343,7 @@ function Contractor() {
                 phone: cleanPhone,
                 assignedSites: sitesString,
                 enable: formData.enable,
-                modifiedBy: "system",
+                modifiedBy: getActorName(),
               },
             },
           },
@@ -357,7 +368,7 @@ function Contractor() {
                 phone: cleanPhone,
                 assignedSites: sitesString,
                 enable: formData.enable,
-                createdBy: "system",
+                createdBy: getActorName(),
               },
             },
           },

@@ -18,7 +18,7 @@
   }
 
   body {
-    @apply m-0 p-0 min-h-screen bg-[#F5F5F5] text-slate-900 antialiased;
+    @apply m-0 p-0 min-h-[100dvh] bg-[#F5F5F5] text-slate-900 antialiased;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     overflow: hidden;
   }
@@ -36,7 +36,7 @@
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
   width: 100vw;
   overflow: hidden;
 }

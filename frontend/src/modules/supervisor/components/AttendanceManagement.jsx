@@ -150,7 +150,7 @@ function AttendanceManagement({ selectedSite, user }) {
         setContractors(loadedContractors);
       }
     } catch (error) {
-      toast.error("Failed to load attendance data");
+      toast.error(error?.message || "Failed to load attendance data");
     } finally {
       setIsLoading(false);
     }

@@ -72,6 +72,7 @@ function Expenses() {
       }
     } catch (error) {
       console.error("Failed to load metadata", error);
+      toast.error(error?.message || "Failed to load metadata");
     }
   };
 
@@ -125,7 +126,7 @@ function Expenses() {
       }
     } catch (error) {
       console.error("Failed to load expenses data", error);
-      toast.error("Failed to load data");
+      toast.error(error?.message || "Failed to load data");
     } finally {
       setIsLoading(false);
     }
@@ -192,7 +193,7 @@ function Expenses() {
       toast.success("Record deleted");
       loadData();
     } catch (error) {
-      toast.error("Failed to delete record");
+      toast.error(error?.message || "Failed to delete record");
     }
   };
 
@@ -232,7 +233,7 @@ function Expenses() {
       setIsModalOpen(false);
       loadData();
     } catch (error) {
-      toast.error(error?.response?.data?.errors?.[0]?.message || "Failed to save record");
+      toast.error(error?.message || "Failed to save record");
     }
   };
 

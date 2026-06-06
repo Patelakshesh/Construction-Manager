@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import logoImage from "../../../assets/logo.png";
@@ -14,6 +14,17 @@ function LoginScreen({ onLogin }) {
   const [rememberMe, setRememberMe] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const savedRememberMe = localStorage.getItem("rememberMe") === "true";
+    if (savedRememberMe) {
+      setRememberMe(true);
+      const savedMobileNumber = localStorage.getItem("rememberedMobileNumber");
+      const savedPassword = localStorage.getItem("rememberedPassword");
+      if (savedMobileNumber) setMobileNumber(savedMobileNumber);
+      if (savedPassword) setPassword(savedPassword);
+    }
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -89,6 +100,16 @@ function LoginScreen({ onLogin }) {
       localStorage.setItem("authToken", loginPayload.token);
       localStorage.setItem("authUser", JSON.stringify(normalizedUser));
       localStorage.setItem("authExpiresOn", loginPayload.expiresOn || "");
+
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("rememberedMobileNumber", trimmedMobileNumber);
+        localStorage.setItem("rememberedPassword", trimmedPassword);
+      } else {
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("rememberedMobileNumber");
+        localStorage.removeItem("rememberedPassword");
+      }
 
       toast.success("Login successful. Redirecting...");
       onLogin(resolvedRole, normalizedUser);
@@ -263,7 +284,7 @@ function LoginScreen({ onLogin }) {
         {renderFieldError(formErrors.password)}
       </div>
 
-      {/* Remember me / Forgot */}
+      {/* Remember me */}
       <div
         className="flex shrink-0 items-center justify-between gap-3 text-[#414651]"
         style={{ fontSize: "clamp(9px, 2vw, 11px)" }}
@@ -277,13 +298,6 @@ function LoginScreen({ onLogin }) {
           />
           <span>Remember me</span>
         </label>
-        <button
-          type="button"
-          className="font-bold text-[#1F2937]"
-          style={{ fontSize: "clamp(9px, 2vw, 11px)" }}
-        >
-          Forgot Password?
-        </button>
       </div>
 
       {/* Spacer pushes Login to bottom */}

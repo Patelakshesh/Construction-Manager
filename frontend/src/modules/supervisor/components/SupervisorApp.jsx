@@ -54,7 +54,7 @@ function SupervisorApp({ user, onLogout }) {
           }
         }
       } catch (error) {
-        toast.error("Failed to load sites");
+        toast.error(error?.message || "Failed to load sites");
       } finally {
         setIsLoading(false);
       }
@@ -66,7 +66,7 @@ function SupervisorApp({ user, onLogout }) {
   const selectedSite = sites.find(s => String(s.id) === selectedSiteId);
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50">
+    <div className="flex h-dvh flex-col bg-gray-50">
       <div className="border-b border-gray-700 bg-[#2B2D33] p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-4 flex-1">
@@ -104,14 +104,16 @@ function SupervisorApp({ user, onLogout }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto pb-24 md:pb-6">
-        {activeTab === "home" && <SupervisorHome selectedSite={selectedSite} user={user} />}
-        {activeTab === "expenses" && (
-          <ExpenseManagement selectedSite={selectedSite} user={user} />
-        )}
-        {activeTab === "attendance" && (
-          <AttendanceManagement selectedSite={selectedSite} user={user} />
-        )}
+      <div className="flex-1 overflow-auto">
+        <div className="pb-28 md:pb-6">
+          {activeTab === "home" && <SupervisorHome selectedSite={selectedSite} user={user} />}
+          {activeTab === "expenses" && (
+            <ExpenseManagement selectedSite={selectedSite} user={user} />
+          )}
+          {activeTab === "attendance" && (
+            <AttendanceManagement selectedSite={selectedSite} user={user} />
+          )}
+        </div>
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white px-2 py-3 safe-area-bottom md:sticky md:bottom-auto">

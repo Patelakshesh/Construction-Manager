@@ -95,7 +95,7 @@ function ExpenseManagement({ selectedSite, user }) {
         }
       }
     } catch (error) {
-      toast.error("Failed to load expenses data");
+      toast.error(error?.message || "Failed to load expenses data");
     } finally {
       setIsLoading(false);
     }

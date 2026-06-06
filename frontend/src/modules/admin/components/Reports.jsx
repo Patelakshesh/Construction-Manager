@@ -24,6 +24,16 @@ const reportTemplates = [
 ];
 
 function Reports() {
+  const [reports, setReports] = useState(() => {
+    return reportTemplates.map(r => {
+      const savedDate = localStorage.getItem(`report_last_generated_${r.id}`);
+      return {
+        ...r,
+        lastGenerated: savedDate || "Never"
+      };
+    });
+  });
+
   const [sites, setSites] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedSite, setSelectedSite] = useState("All");
@@ -63,6 +73,7 @@ function Reports() {
         }
       } catch (error) {
         console.error("Failed to load report filters", error);
+        toast.error(error?.message || "Failed to load report filters");
       } finally {
         setIsLoadingFilters(false);
       }
@@ -148,6 +159,9 @@ function Reports() {
           XLSX.utils.book_append_sheet(wb, ws, "Expenses");
           XLSX.writeFile(wb, "Credit_Debit_Report.xlsx");
         }
+        const todayStr = new Date().toISOString().split("T")[0];
+        localStorage.setItem("report_last_generated_1", todayStr);
+        setReports(prev => prev.map(r => r.id === "1" ? { ...r, lastGenerated: todayStr } : r));
         toast.success("Report downloaded!", { id: "report" });
       } else if (reportName === "Workforce Attendance Report") {
         toast.loading("Generating report...", { id: "report" });
@@ -220,15 +234,18 @@ function Reports() {
           XLSX.utils.book_append_sheet(wb, ws, "Attendance");
           XLSX.writeFile(wb, "Workforce_Attendance_Report.xlsx");
         }
+        const todayStr = new Date().toISOString().split("T")[0];
+        localStorage.setItem("report_last_generated_2", todayStr);
+        setReports(prev => prev.map(r => r.id === "2" ? { ...r, lastGenerated: todayStr } : r));
         toast.success("Report downloaded!", { id: "report" });
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to generate report", { id: "report" });
+      toast.error(error?.message || "Failed to generate report", { id: "report" });
     }
   };
 
-  const filteredReports = reportTemplates;
+  const filteredReports = reports;
 
   return (
     <div className="p-4 md:p-8">

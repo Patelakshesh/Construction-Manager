@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { Calendar, Users } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import Pagination from "../../../shared/components/Pagination";
@@ -96,6 +97,7 @@ function Attendance() {
       }
     } catch (error) {
       console.error("Failed to load metadata", error);
+      toast.error(error?.message || "Failed to load metadata");
     }
   };
 
@@ -162,6 +164,7 @@ function Attendance() {
       }
     } catch (error) {
       console.error("Failed to load attendances page", error);
+      toast.error(error?.message || "Failed to load attendance data");
     } finally {
       setIsLoading(false);
     }

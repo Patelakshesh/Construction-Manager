@@ -55,6 +55,17 @@ const DELETE_CATEGORY_MUTATION = `
 `;
 
 function Category() {
+  const getActorName = () => {
+    const storedUser = localStorage.getItem("authUser");
+    if (!storedUser) return "system";
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      return parsedUser?.name || "system";
+    } catch {
+      return "system";
+    }
+  };
+
   const [categories, setCategories] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [overallActiveCount, setOverallActiveCount] = useState(0);
@@ -178,7 +189,7 @@ function Category() {
               name: category.name,
               description: category.description,
               enable: !category.enable,
-              modifiedBy: "system"
+              modifiedBy: getActorName()
             }
           },
         },
@@ -193,7 +204,7 @@ function Category() {
       toast.success(`Category marked as ${!category.enable ? 'Active' : 'Inactive'}`);
       loadData(false);
     } catch (err) {
-      toast.error("Failed to update status.");
+      toast.error(err?.message || "Failed to update status.");
     }
   };
 
@@ -219,7 +230,7 @@ function Category() {
       toast.success("Category deleted successfully.");
       loadData(false);
     } catch (err) {
-      toast.error("Failed to delete category.");
+      toast.error(err?.message || "Failed to delete category.");
     } finally {
       setItemToDelete(null);
     }
@@ -250,7 +261,7 @@ function Category() {
                 name: formData.name,
                 description: formData.description,
                 enable: formData.enable,
-                modifiedBy: "system",
+                modifiedBy: getActorName(),
               },
             },
           },
@@ -273,7 +284,7 @@ function Category() {
                 name: formData.name,
                 description: formData.description,
                 enable: formData.enable,
-                createdBy: "system",
+                createdBy: getActorName(),
               },
             },
           },
@@ -290,7 +301,7 @@ function Category() {
       setIsModalOpen(false);
       loadData(false);
     } catch (err) {
-      toast.error("Failed to save category.");
+      toast.error(err?.message || "Failed to save category.");
     }
   };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import {
   Activity,
   MapPin,
@@ -23,13 +24,14 @@ import apiClient from "../../../shared/services/apiClient";
 function DashboardHome() {
   const [filterSite, setFilterSite] = useState("all");
   const [filterDate, setFilterDate] = useState("last7days");
+  const [siteOptions, setSiteOptions] = useState(["all"]);
   
   const [dashboardData, setDashboardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [filterSite, filterDate]);
 
   const loadDashboardData = async () => {
     try {
@@ -38,8 +40,8 @@ function DashboardHome() {
         "/graphql",
         {
           query: `
-            query GetDashboard {
-              dashboardStats {
+            query GetDashboard($dateFilter: String, $siteName: String) {
+              dashboardStats(dateFilter: $dateFilter, siteName: $siteName) {
                 totalBudget
                 totalExpenses
                 remainingBudget
@@ -56,21 +58,38 @@ function DashboardHome() {
                 }
               }
             }
-          `
+          `,
+          variables: {
+            dateFilter: filterDate,
+            siteName: filterSite
+          }
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response?.data?.data?.dashboardStats) {
-        setDashboardData(response.data.data.dashboardStats);
+        const stats = response.data.data.dashboardStats;
+        setDashboardData(stats);
+        if (siteOptions.length <= 1 && stats.budgetComparisons) {
+          const loadedSites = stats.budgetComparisons.map((i) => i.site) || [];
+          setSiteOptions(["all", ...new Set(loadedSites)]);
+        }
       }
     } catch (error) {
       console.error("Failed to load dashboard data", error);
+      toast.error(error?.message || "Failed to load dashboard data");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const sites = ["all", ...new Set(dashboardData?.budgetComparisons?.map((i) => i.site) || [])];
+  const sites = siteOptions;
+
+  const totalBudget = dashboardData?.totalBudget || 0;
+  const totalExpenses = dashboardData?.totalExpenses || 0;
+  const remainingBudget = dashboardData?.remainingBudget || 0;
+
+  const spentPercentage = totalBudget > 0 ? ((totalExpenses / totalBudget) * 100).toFixed(1) : "0.0";
+  const remainingPercentage = totalBudget > 0 ? ((remainingBudget / totalBudget) * 100).toFixed(1) : "0.0";
 
   if (isLoading) {
     return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>;
@@ -131,10 +150,10 @@ function DashboardHome() {
             </div>
             <div className="flex items-center gap-1 text-sm text-green-600">
               <TrendingUp className="h-4 w-4" />
-              <span>12%</span>
+              <span>100%</span>
             </div>
           </div>
-          <h3 className="mb-1 text-gray-900">₹{dashboardData?.totalBudget?.toLocaleString() || 0}</h3>
+          <h3 className="mb-1 text-gray-900">₹{totalBudget?.toLocaleString() || 0}</h3>
           <p className="text-sm text-gray-500">Total Budget</p>
         </div>
 
@@ -143,11 +162,12 @@ function DashboardHome() {
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-50">
               <TrendingDown className="h-6 w-6 text-red-600" />
             </div>
-            <div className="flex items-center gap-1 text-sm text-gray-600">
-              <span>85%</span>
+            <div className="flex items-center gap-1 text-sm text-red-600">
+              <TrendingDown className="h-4 w-4" />
+              <span>{spentPercentage}%</span>
             </div>
           </div>
-          <h3 className="mb-1 text-gray-900">₹{dashboardData?.totalExpenses?.toLocaleString() || 0}</h3>
+          <h3 className="mb-1 text-gray-900">₹{totalExpenses?.toLocaleString() || 0}</h3>
           <p className="text-sm text-gray-500">Total Expenses</p>
         </div>
 
@@ -158,10 +178,10 @@ function DashboardHome() {
             </div>
             <div className="flex items-center gap-1 text-sm text-green-600">
               <TrendingUp className="h-4 w-4" />
-              <span>15%</span>
+              <span>{remainingPercentage}%</span>
             </div>
           </div>
-          <h3 className="mb-1 text-gray-900">₹{dashboardData?.remainingBudget?.toLocaleString() || 0}</h3>
+          <h3 className="mb-1 text-gray-900">₹{remainingBudget?.toLocaleString() || 0}</h3>
           <p className="text-sm text-gray-500">Remaining Budget</p>
         </div>
 
