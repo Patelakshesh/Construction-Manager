@@ -70,6 +70,7 @@ function Category() {
   const [totalCount, setTotalCount] = useState(0);
   const [overallActiveCount, setOverallActiveCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
   const [pageNumber, setPageNumber] = useState(1);
@@ -211,6 +212,7 @@ function Category() {
   const confirmDelete = async () => {
     if (!itemToDelete) return;
 
+    setIsSaving(true);
     const token = localStorage.getItem("authToken");
     try {
       const response = await apiClient.post(
@@ -232,6 +234,7 @@ function Category() {
     } catch (err) {
       toast.error(err?.message || "Failed to delete category.");
     } finally {
+      setIsSaving(false);
       setItemToDelete(null);
     }
   };
@@ -248,6 +251,7 @@ function Category() {
   const handleSave = async () => {
     if (!validateForm()) return;
 
+    setIsSaving(true);
     const token = localStorage.getItem("authToken");
     try {
       if (editingCategory) {
@@ -270,6 +274,7 @@ function Category() {
 
         if (response.data.errors) {
           toast.error(response.data.errors[0].message);
+          setIsSaving(false);
           return;
         }
 
@@ -293,6 +298,7 @@ function Category() {
 
         if (response.data.errors) {
           toast.error(response.data.errors[0].message);
+          setIsSaving(false);
           return;
         }
 
@@ -302,6 +308,8 @@ function Category() {
       loadData(false);
     } catch (err) {
       toast.error(err?.message || "Failed to save category.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -608,15 +616,17 @@ function Category() {
               <button
                 type="button"
                 onClick={handleSave}
-                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
+                disabled={isSaving}
+                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: "#3D36BE" }}
               >
-                {editingCategory ? "Update" : "Create"} Category
+                {isSaving ? "Saving..." : editingCategory ? "Update" : "Create"} Category
               </button>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
+                disabled={isSaving}
+                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -632,6 +642,7 @@ function Category() {
         confirmText="Delete"
         onConfirm={confirmDelete}
         onCancel={() => setItemToDelete(null)}
+        isLoading={isSaving}
       />
     </div>
   );

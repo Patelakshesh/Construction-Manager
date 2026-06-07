@@ -88,6 +88,7 @@ function Contractor() {
   const [overallActiveCount, setOverallActiveCount] = useState(0);
   const [overallInactiveCount, setOverallInactiveCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
   const [pageNumber, setPageNumber] = useState(1);
@@ -234,6 +235,8 @@ function Contractor() {
   };
 
   const toggleStatus = async (contractor) => {
+    if (isSaving) return;
+    setIsSaving(true);
     const token = localStorage.getItem("authToken");
     try {
       const response = await apiClient.post(
@@ -264,12 +267,15 @@ function Contractor() {
       loadData(false);
     } catch (err) {
       toast.error(err?.message || "Failed to update status.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const confirmDelete = async () => {
     if (!itemToDelete) return;
 
+    setIsSaving(true);
     const token = localStorage.getItem("authToken");
     try {
       const response = await apiClient.post(
@@ -291,6 +297,7 @@ function Contractor() {
     } catch (err) {
       toast.error(err?.message || "Failed to delete contractor.");
     } finally {
+      setIsSaving(false);
       setItemToDelete(null);
     }
   };
@@ -325,6 +332,7 @@ function Contractor() {
   const handleSave = async () => {
     if (!validateForm()) return;
 
+    setIsSaving(true);
     const token = localStorage.getItem("authToken");
     const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
     const sitesString = formData.assignedSites.join(", ");
@@ -387,6 +395,8 @@ function Contractor() {
       loadData(false);
     } catch (err) {
       toast.error(err?.message || "Failed to save contractor.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -756,15 +766,17 @@ function Contractor() {
               <button
                 type="button"
                 onClick={handleSave}
-                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
+                disabled={isSaving}
+                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: "#3D36BE" }}
               >
-                {editingContractor ? "Update" : "Create"} Contractor
+                {isSaving ? "Saving..." : editingContractor ? "Update" : "Create"} Contractor
               </button>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
+                disabled={isSaving}
+                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -781,6 +793,7 @@ function Contractor() {
         confirmText="Delete"
         onConfirm={confirmDelete}
         onCancel={() => setItemToDelete(null)}
+        isLoading={isSaving}
       />
     </div>
   );

@@ -296,8 +296,12 @@ function AttendanceManagement({ selectedSite, user }) {
 
   if (!selectedSite) {
     return (
-      <div className="flex h-full items-center justify-center p-8 text-gray-500">
-        Please select a site to manage attendance.
+      <div className="flex h-full items-center justify-center p-8">
+        <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+          <p className="text-sm font-medium text-red-800">
+            You are not assigned to any site. Please contact your administrator.
+          </p>
+        </div>
       </div>
     );
   }
@@ -572,7 +576,8 @@ function AttendanceManagement({ selectedSite, user }) {
                       setIsAdding(false);
                       setFormErrors({});
                     }}
-                    className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300"
+                    disabled={isSubmitting}
+                    className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>

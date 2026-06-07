@@ -110,6 +110,7 @@ function SupervisorCredit() {
   const [editingCredit, setEditingCredit] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [formErrors, setFormErrors] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const renderFieldError = (message) =>
     message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
@@ -290,6 +291,7 @@ function SupervisorCredit() {
   const confirmDelete = async () => {
     if (!itemToDelete) return;
 
+    setIsSaving(true);
     const token = localStorage.getItem("authToken");
     try {
       const response = await apiClient.post(
@@ -311,6 +313,7 @@ function SupervisorCredit() {
     } catch (err) {
       toast.error(err?.message || "Failed to delete credit.");
     } finally {
+      setIsSaving(false);
       setItemToDelete(null);
     }
   };
@@ -324,7 +327,7 @@ function SupervisorCredit() {
     }
 
     setFormErrors({});
-    setIsLoading(true);
+    setIsSaving(true);
 
     const token = localStorage.getItem("authToken");
     
@@ -389,7 +392,7 @@ function SupervisorCredit() {
     } catch (err) {
       toast.error(err?.message || "Failed to save credit.");
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -768,10 +771,11 @@ function SupervisorCredit() {
               <button
                 type="button"
                 onClick={handleSave}
-                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
+                disabled={isSaving}
+                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: "#3D36BE" }}
               >
-                {editingCredit ? "Update" : "Add"} Credit
+                {isSaving ? "Saving..." : editingCredit ? "Update" : "Add"} Credit
               </button>
               <button
                 type="button"
@@ -779,7 +783,8 @@ function SupervisorCredit() {
                   setIsModalOpen(false);
                   setFormErrors({});
                 }}
-                className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
+                disabled={isSaving}
+                className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -796,6 +801,7 @@ function SupervisorCredit() {
         confirmText="Delete"
         onConfirm={confirmDelete}
         onCancel={() => setItemToDelete(null)}
+        isLoading={isSaving}
       />
     </div>
   );

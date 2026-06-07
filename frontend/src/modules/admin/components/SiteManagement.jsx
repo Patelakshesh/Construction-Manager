@@ -17,7 +17,7 @@ import ConfirmModal from "../../../shared/components/ConfirmModal";
 // ─── GraphQL queries ────────────────────────────────────────────────────────
 
 const LOAD_QUERY =
-  "query GetSitesAndUsers($pageNumber: Int!, $pageSize: Int!, $search: String) { sitesPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id siteName address contactPerson enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } users { id name enable roleId } roles { id roleName } allSites: sites { siteName address contactPerson enable } }";
+  "query GetSitesAndUsers($pageNumber: Int!, $pageSize: Int!, $search: String) { sitesPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id siteName address contactPerson enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } users { id name enable roleId } roles { id roleName } allSites: sites { id siteName address contactPerson enable } }";
 
 const CREATE_SITE_MUTATION =
   "mutation CreateSite($input: CreateSiteInput!) { createSite(input: $input) { id siteName address contactPerson enable createdOn createdBy modifiedOn modifiedBy } }";
@@ -94,6 +94,7 @@ function validateForm(formData) {
 
 function SiteManagement() {
   const [sites, setSites] = useState([]);
+  const [allSitesList, setAllSitesList] = useState([]);
   const [supervisorOptions, setSupervisorOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -175,6 +176,7 @@ function SiteManagement() {
 
       if (response?.data?.data?.allSites) {
         let allS = response.data.data.allSites;
+        setAllSitesList(allS);
         const searchLower = trimmedSearch.toLowerCase();
         if (searchLower) {
           allS = allS.filter(s =>
@@ -260,6 +262,7 @@ function SiteManagement() {
   const confirmDelete = async () => {
     if (!itemToDelete) return;
 
+    setIsSaving(true);
     try {
       await submitMutation(DELETE_SITE_MUTATION, {
         id: Number(itemToDelete.id),
@@ -270,6 +273,7 @@ function SiteManagement() {
     } catch (error) {
       toast.error(error?.message || "Unable to delete site.");
     } finally {
+      setIsSaving(false);
       setItemToDelete(null);
     }
   };
@@ -350,6 +354,25 @@ function SiteManagement() {
 
   const displayStart = totalCount ? (pageNumber - 1) * pageSize + 1 : 0;
   const displayEnd = Math.min(pageNumber * pageSize, totalCount);
+
+  // Compute list of supervisors assigned to other active sites
+  const assignedSupervisors = new Set();
+  allSitesList.forEach(site => {
+    if (site.enable && (!editingSite || String(site.id) !== String(editingSite.id))) {
+      if (site.contactPerson) {
+        site.contactPerson.split(",").forEach(n => {
+          const name = n.trim().toLowerCase();
+          if (name) {
+            assignedSupervisors.add(name);
+          }
+        });
+      }
+    }
+  });
+
+  const filteredSupervisorOptions = supervisorOptions.filter(
+    name => !assignedSupervisors.has(name.toLowerCase())
+  );
 
   // ── Render helpers ───────────────────────────────────────────────────────────
 
@@ -679,29 +702,29 @@ function SiteManagement() {
 
                   {isSupervisorDropdownOpen && (
                     <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                      {supervisorOptions.length === 0 && (
+                      {filteredSupervisorOptions.length === 0 && (
                         <p className="px-4 py-2 text-sm text-gray-500">
                           No users available
                         </p>
                       )}
-                      {supervisorOptions.map((name) => (
+                      {filteredSupervisorOptions.map((name) => (
                         <label
                           key={name}
                           className="flex cursor-pointer items-center gap-3 px-4 py-2 hover:bg-gray-50"
                         >
                           <input
-                            type="checkbox"
+                            type="radio"
+                            name="assignedSupervisor"
                             checked={formData.supervisor.includes(name)}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
+                            onChange={() => {}}
+                            onClick={() => {
+                              const isSelected = formData.supervisor.includes(name);
                               setFormData({
                                 ...formData,
-                                supervisor: checked
-                                  ? [...formData.supervisor, name]
-                                  : formData.supervisor.filter((s) => s !== name),
+                                supervisor: isSelected ? [] : [name],
                               });
                             }}
-                            className="h-4 w-4 rounded border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
+                            className="h-4 w-4 rounded-full border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
                           />
                           <span className="text-gray-700">{name}</span>
                         </label>
@@ -768,6 +791,7 @@ function SiteManagement() {
         confirmText="Delete"
         onConfirm={confirmDelete}
         onCancel={() => setItemToDelete(null)}
+        isLoading={isSaving}
       />
     </div>
   );

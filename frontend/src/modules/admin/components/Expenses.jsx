@@ -6,6 +6,8 @@ import {
   ReceiptIndianRupee,
   Trash2,
   X,
+  Eye,
+  Camera,
 } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
@@ -17,10 +19,12 @@ function Expenses() {
   const [sites, setSites] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [filterSite, setFilterSite] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 400);
   const [pageNumber, setPageNumber] = useState(1);
+  const [viewingImage, setViewingImage] = useState(null);
   const pageSize = 10;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,7 +38,38 @@ function Expenses() {
     date: new Date().toISOString().split("T")[0],
     paymentMode: "Cash",
     transactionId: "",
+    receiptImage: "",
   });
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate type is image
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (PNG, JPG, JPEG, WEBP)");
+      return;
+    }
+
+    // Validate size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image size must be less than 2MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({
+        ...prev,
+        receiptImage: reader.result
+      }));
+      toast.success("Image uploaded successfully!");
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read image file");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const [totalCount, setTotalCount] = useState(0);
   const [allTransactions, setAllTransactions] = useState([]);
@@ -98,6 +133,7 @@ function Expenses() {
                   transactionId
                   date
                   type
+                  receiptImage
                 }
                 totalCount
               }
@@ -107,6 +143,7 @@ function Expenses() {
                 title
                 category { name }
                 transactionId
+                receiptImage
               }
             }
           `,
@@ -159,6 +196,7 @@ function Expenses() {
       date: new Date().toISOString().split("T")[0],
       paymentMode: "Cash",
       transactionId: "",
+      receiptImage: "",
     });
     setIsModalOpen(true);
   };
@@ -174,6 +212,7 @@ function Expenses() {
       date: transaction.date.split("T")[0],
       paymentMode: transaction.paymentMode || "Cash",
       transactionId: transaction.transactionId || "",
+      receiptImage: transaction.receiptImage || "",
     });
     setIsModalOpen(true);
   };
@@ -199,6 +238,8 @@ function Expenses() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+
+    setIsSaving(true);
     try {
       const token = localStorage.getItem("authToken");
       const isIncome = modalType === "Income";
@@ -210,7 +251,8 @@ function Expenses() {
           categoryId: (!isIncome && formData.categoryId) ? parseInt(formData.categoryId) : null,
           amount: parseFloat(formData.amount),
           type: modalType,
-          date: new Date(formData.date).toISOString()
+          date: new Date(formData.date).toISOString(),
+          receiptImage: formData.receiptImage || null
         }
       };
       
@@ -234,6 +276,8 @@ function Expenses() {
       loadData();
     } catch (error) {
       toast.error(error?.message || "Failed to save record");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -345,7 +389,13 @@ function Expenses() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {transactions.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                    Loading income and expenses...
+                  </td>
+                </tr>
+              ) : transactions.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                     No data available
@@ -388,10 +438,21 @@ function Expenses() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
+                        {transaction.receiptImage && (
+                          <button
+                            type="button"
+                            onClick={() => setViewingImage(transaction.receiptImage)}
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                            title="View Receipt"
+                          >
+                            <Eye className="h-5 w-5 text-[#3D36BE]" />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleEdit(transaction)}
                           className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                          title="Edit"
                         >
                           <Edit className="h-5 w-5 text-gray-600" />
                         </button>
@@ -399,6 +460,7 @@ function Expenses() {
                           type="button"
                           onClick={() => handleDelete(transaction.id)}
                           className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                          title="Delete"
                         >
                           <Trash2 className="h-5 w-5 text-red-500" />
                         </button>
@@ -601,25 +663,92 @@ function Expenses() {
                     />
                   </div>
                 )}
+
+                {/* Upload Receipt (Admin) */}
+                {formData.paymentMode === "Online" && (
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Upload Bill/Receipt
+                    </label>
+                    <p className="mb-2 text-xs text-gray-500">
+                      Supported formats: PNG, JPG, JPEG, WEBP (Max size: 2MB)
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE] hover:bg-gray-50">
+                        <Camera className="h-5 w-5 text-gray-500" />
+                        <span className="text-sm text-gray-600 font-medium">
+                          {formData.receiptImage ? "Change Photo / Image" : "Upload Image"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/png, image/jpeg, image/jpg, image/webp"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </label>
+                      
+                      {formData.receiptImage && (
+                        <div className="relative mt-1 w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                          <img
+                            src={formData.receiptImage}
+                            alt="Receipt preview"
+                            className="h-auto w-full max-h-48 object-contain bg-gray-50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, receiptImage: "" }))}
+                            className="absolute top-2 right-2 rounded-full bg-red-600 p-1 text-white hover:bg-red-700 transition-colors shadow"
+                            title="Remove image"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="mt-8 flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
+                  disabled={isSaving}
+                  className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#3D36BE" }}
                 >
-                  {editingItem ? "Update" : "Add"} {modalType}
+                  {isSaving ? "Saving..." : `${editingItem ? "Update" : "Add"} ${modalType}`}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
+                  disabled={isSaving}
+                  className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
               </div>
             </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {viewingImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="relative max-w-3xl w-full overflow-hidden rounded-lg bg-white p-2 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setViewingImage(null)}
+              className="absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors z-10"
+              title="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center justify-center p-4 bg-gray-50 min-h-[300px]">
+              <img
+                src={viewingImage}
+                alt="Receipt Bill"
+                className="max-h-[80vh] w-auto max-w-full object-contain rounded"
+              />
             </div>
           </div>
         </div>

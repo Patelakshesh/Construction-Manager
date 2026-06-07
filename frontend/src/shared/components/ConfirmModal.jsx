@@ -7,7 +7,8 @@ export default function ConfirmModal({
   onConfirm, 
   onCancel, 
   confirmText = "Confirm", 
-  cancelText = "Cancel" 
+  cancelText = "Cancel",
+  isLoading = false
 }) {
   if (!isOpen) return null;
 
@@ -24,16 +25,18 @@ export default function ConfirmModal({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
+            disabled={isLoading}
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {cancelText}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white transition-opacity hover:bg-red-700"
+            disabled={isLoading}
+            className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white transition-opacity hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {confirmText}
+            {isLoading ? "Deleting..." : confirmText}
           </button>
         </div>
       </div>

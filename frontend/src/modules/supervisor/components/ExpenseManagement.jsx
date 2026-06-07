@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Camera, Plus, ReceiptIndianRupee, X, Filter } from "lucide-react";
+import { Camera, Plus, ReceiptIndianRupee, X, Filter, Eye } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
 import Pagination from "../../../shared/components/Pagination";
@@ -23,6 +23,7 @@ function ExpenseManagement({ selectedSite, user }) {
   const [pageNumber, setPageNumber] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [totalExpensesAmount, setTotalExpensesAmount] = useState(0);
+  const [viewingImage, setViewingImage] = useState(null);
   const pageSize = 10;
 
   const [formData, setFormData] = useState({
@@ -32,7 +33,51 @@ function ExpenseManagement({ selectedSite, user }) {
     date: new Date().toISOString().split("T")[0],
     paymentMode: "Cash",
     transactionId: "",
+    receiptImage: null,
   });
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate type is image
+    if (!file.type.startsWith("image/")) {
+      setFormErrors(prev => ({
+        ...prev,
+        receiptImage: "File must be an image (PNG, JPG, JPEG, WEBP)."
+      }));
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    // Validate size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setFormErrors(prev => ({
+        ...prev,
+        receiptImage: "Image size exceeds the 2MB limit."
+      }));
+      toast.error("Image size must be less than 2MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({
+        ...prev,
+        receiptImage: reader.result
+      }));
+      setFormErrors(prev => {
+        const copy = { ...prev };
+        delete copy.receiptImage;
+        return copy;
+      });
+      toast.success("Image uploaded successfully!");
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read image file");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const loadData = async () => {
     if (!selectedSite) return;
@@ -56,6 +101,7 @@ function ExpenseManagement({ selectedSite, user }) {
                   transactionId
                   date
                   type
+                  receiptImage
                 }
                 totalCount
               }
@@ -120,7 +166,7 @@ function ExpenseManagement({ selectedSite, user }) {
       errors.categoryId = "Category is required.";
     }
     if (!formData.title.trim()) {
-      errors.title = "Description is required.";
+      errors.title = "Title is required.";
     }
     if (!formData.date) {
       errors.date = "Date is required.";
@@ -130,6 +176,7 @@ function ExpenseManagement({ selectedSite, user }) {
         formData.paymentMode === "Check" ? "Check ID" : "Transaction ID"
       } is required.`;
     }
+    // Receipt image is optional
     return errors;
   };
 
@@ -173,6 +220,7 @@ function ExpenseManagement({ selectedSite, user }) {
               date: new Date(formData.date).toISOString(),
               type: "Expense", // Default to expense for supervisor
               createdBy: user?.name || "supervisor",
+              receiptImage: formData.receiptImage,
             },
           },
         },
@@ -193,6 +241,7 @@ function ExpenseManagement({ selectedSite, user }) {
         date: new Date().toISOString().split("T")[0],
         paymentMode: "Cash",
         transactionId: "",
+        receiptImage: null,
       });
       loadData();
     } catch (error) {
@@ -204,8 +253,12 @@ function ExpenseManagement({ selectedSite, user }) {
 
   if (!selectedSite) {
     return (
-      <div className="flex h-full items-center justify-center p-8 text-gray-500">
-        Please select a site to manage expenses.
+      <div className="flex h-full items-center justify-center p-8">
+        <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+          <p className="text-sm font-medium text-red-800">
+            You are not assigned to any site. Please contact your administrator.
+          </p>
+        </div>
       </div>
     );
   }
@@ -276,9 +329,19 @@ function ExpenseManagement({ selectedSite, user }) {
                     <p className="mb-1 text-gray-900 font-medium">{expense.title}</p>
                     <p className="text-sm text-gray-500">{new Date(expense.date).toLocaleDateString()}</p>
                     {expense.paymentMode !== "Cash" && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        {expense.paymentMode} • {expense.transactionId}
-                      </p>
+                      <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                        <span>{expense.paymentMode} • {expense.transactionId}</span>
+                        {expense.receiptImage && (
+                          <button
+                            type="button"
+                            onClick={() => setViewingImage(expense.receiptImage)}
+                            className="inline-flex items-center gap-1 text-[#3D36BE] hover:underline"
+                          >
+                            <Eye className="h-3 w-3" />
+                            <span>View Receipt</span>
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="text-right">
@@ -320,7 +383,26 @@ function ExpenseManagement({ selectedSite, user }) {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Row 1 */}
+
+                  {/* Col 1: Title */}
+                  <div>
+                    <label className="mb-2 block text-gray-700">
+                      Title <span className="text-[#EC3F3F]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(event) =>
+                        setFormData({ ...formData, title: event.target.value })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.title))}
+                      placeholder="e.g. Cement Purchase"
+                      required
+                    />
+                    {renderFieldError(formErrors.title)}
+                  </div>
+
+                  {/* Col 2: Amount */}
                   <div>
                     <label className="mb-2 block text-gray-700">
                       Amount (₹) <span className="text-[#EC3F3F]">*</span>
@@ -339,6 +421,7 @@ function ExpenseManagement({ selectedSite, user }) {
                     {renderFieldError(formErrors.amount)}
                   </div>
 
+                  {/* Col 1: Category */}
                   <div>
                     <label className="mb-2 block text-gray-700">
                       Category <span className="text-[#EC3F3F]">*</span>
@@ -346,10 +429,7 @@ function ExpenseManagement({ selectedSite, user }) {
                     <select
                       value={formData.categoryId}
                       onChange={(event) =>
-                        setFormData({
-                          ...formData,
-                          categoryId: event.target.value,
-                        })
+                        setFormData({ ...formData, categoryId: event.target.value })
                       }
                       className={getFieldClassName(Boolean(formErrors.categoryId))}
                       required
@@ -364,28 +444,7 @@ function ExpenseManagement({ selectedSite, user }) {
                     {renderFieldError(formErrors.categoryId)}
                   </div>
 
-                  {/* Row 2 */}
-                  <div className="md:col-span-2">
-                    <label className="mb-2 block text-gray-700">
-                      Description <span className="text-[#EC3F3F]">*</span>
-                    </label>
-                    <textarea
-                      value={formData.title}
-                      onChange={(event) =>
-                        setFormData({
-                          ...formData,
-                          title: event.target.value,
-                        })
-                      }
-                      className={getFieldClassName(Boolean(formErrors.title))}
-                      placeholder="Enter description of expense"
-                      rows={2}
-                      required
-                    />
-                    {renderFieldError(formErrors.title)}
-                  </div>
-
-                  {/* Row 3 */}
+                  {/* Col 2: Date */}
                   <div>
                     <label className="mb-2 block text-gray-700">
                       Date <span className="text-[#EC3F3F]">*</span>
@@ -402,6 +461,7 @@ function ExpenseManagement({ selectedSite, user }) {
                     {renderFieldError(formErrors.date)}
                   </div>
 
+                  {/* Col 1: Payment Mode */}
                   <div>
                     <label className="mb-2 block text-gray-700">
                       Payment Mode <span className="text-[#EC3F3F]">*</span>
@@ -412,10 +472,7 @@ function ExpenseManagement({ selectedSite, user }) {
                         setFormData({
                           ...formData,
                           paymentMode: event.target.value,
-                          transactionId:
-                            event.target.value === "Cash"
-                              ? ""
-                              : formData.transactionId,
+                          transactionId: event.target.value === "Cash" ? "" : formData.transactionId,
                         })
                       }
                       className={getFieldClassName(Boolean(formErrors.paymentMode))}
@@ -427,20 +484,18 @@ function ExpenseManagement({ selectedSite, user }) {
                     {renderFieldError(formErrors.paymentMode)}
                   </div>
 
-                  {/* Row 4 (Conditional Transaction ID) */}
-                  {(formData.paymentMode === "Check" || formData.paymentMode === "Online") && (
-                    <div className="md:col-span-2">
+                  {/* Col 2: Check Number / Transaction ID (only if not Cash) */}
+                  {(formData.paymentMode === "Check" || formData.paymentMode === "Online") ? (
+                    <div>
                       <label className="mb-2 block text-gray-700">
-                        {formData.paymentMode === "Check" ? "Check Number" : "Transaction ID"} <span className="text-[#EC3F3F]">*</span>
+                        {formData.paymentMode === "Check" ? "Check Number" : "Transaction ID"}{" "}
+                        <span className="text-[#EC3F3F]">*</span>
                       </label>
                       <input
                         type="text"
                         value={formData.transactionId}
                         onChange={(event) =>
-                          setFormData({
-                            ...formData,
-                            transactionId: event.target.value,
-                          })
+                          setFormData({ ...formData, transactionId: event.target.value })
                         }
                         className={getFieldClassName(Boolean(formErrors.transactionId))}
                         placeholder={
@@ -452,23 +507,53 @@ function ExpenseManagement({ selectedSite, user }) {
                       />
                       {renderFieldError(formErrors.transactionId)}
                     </div>
+                  ) : (
+                    <div /> /* empty spacer to keep grid alignment */
                   )}
 
-                  {/* Upload Receipt */}
-                  <div className="md:col-span-2 mt-2">
-                    <label className="mb-2 block text-gray-700">
-                      Upload Bill/Receipt
+                  {/* Upload Receipt — full width, always last */}
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-gray-700 font-medium">
+                      Upload Bill/Receipt{" "}
+                      <span className="text-sm font-normal text-gray-400">(Optional)</span>
                     </label>
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE]"
-                    >
-                      <Camera className="h-5 w-5 text-gray-600" />
-                      <span className="text-gray-600">
-                        Take Photo / Upload Image
-                      </span>
-                    </button>
+                    <p className="mb-2 text-xs text-gray-500">
+                      Supported formats: PNG, JPG, JPEG, WEBP (Max size: 2MB)
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE] hover:bg-gray-50">
+                        <Camera className="h-5 w-5 text-gray-500" />
+                        <span className="text-sm text-gray-600 font-medium">
+                          {formData.receiptImage ? "Change Photo / Image" : "Take Photo / Upload Image"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/png, image/jpeg, image/jpg, image/webp"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </label>
+                      {renderFieldError(formErrors.receiptImage)}
+                      {formData.receiptImage && (
+                        <div className="relative mt-2 w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                          <img
+                            src={formData.receiptImage}
+                            alt="Receipt preview"
+                            className="h-auto w-full max-h-48 object-contain bg-gray-50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, receiptImage: null }))}
+                            className="absolute top-2 right-2 rounded-full bg-red-600 p-1.5 text-white hover:bg-red-700 transition-colors shadow"
+                            title="Remove image"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
+
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -485,13 +570,36 @@ function ExpenseManagement({ selectedSite, user }) {
                     onClick={() => {
                       setIsAdding(false);
                       setFormErrors({});
+                      setFormData(prev => ({ ...prev, receiptImage: null }));
                     }}
-                    className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300"
+                    disabled={isSubmitting}
+                    className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {viewingImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="relative max-w-3xl w-full overflow-hidden rounded-lg bg-white p-2 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setViewingImage(null)}
+              className="absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors z-10"
+              title="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center justify-center p-4 bg-gray-50 min-h-[300px]">
+              <img
+                src={viewingImage}
+                alt="Receipt Bill"
+                className="max-h-[80vh] w-auto max-w-full object-contain rounded"
+              />
             </div>
           </div>
         </div>

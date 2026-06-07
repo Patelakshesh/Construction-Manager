@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import {
   Calendar,
+  Eye,
   Receipt,
   ReceiptIndianRupee,
   TrendingDown,
+  X,
 } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
@@ -12,10 +14,9 @@ function SupervisorHome({ selectedSite, user }) {
   const [recentExpenses, setRecentExpenses] = useState([]);
   const [recentAttendance, setRecentAttendance] = useState([]);
   const [totalExpenses, setTotalExpenses] = useState(0);
+  const [totalBudget, setTotalBudget] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Hardcoded for now until budget is dynamically retrieved from site
-  const totalBudget = 500000;
+  const [viewingImage, setViewingImage] = useState(null);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -37,6 +38,10 @@ function SupervisorHome({ selectedSite, user }) {
                     date
                     title
                     siteId
+                    type
+                    paymentMode
+                    transactionId
+                    receiptImage
                   }
                 }
               }
@@ -71,12 +76,18 @@ function SupervisorHome({ selectedSite, user }) {
 
         const [expensesRes, attendanceRes] = await Promise.all([expensesResponse, attendanceResponse]);
 
-        // Process Expenses for the selected site
+        // Process Expenses and Income for the selected site
         if (expensesRes.data?.data?.expensesPage?.items) {
-          const siteExpenses = expensesRes.data.data.expensesPage.items;
-          const total = siteExpenses.reduce((sum, e) => sum + e.amount, 0);
-          setTotalExpenses(total);
-          setRecentExpenses(siteExpenses.slice(0, 5));
+          const siteItems = expensesRes.data.data.expensesPage.items;
+          const expensesList = siteItems.filter(e => e.type === "Expense");
+          const incomeList = siteItems.filter(e => e.type === "Income");
+
+          const totalExp = expensesList.reduce((sum, e) => sum + e.amount, 0);
+          const totalInc = incomeList.reduce((sum, e) => sum + e.amount, 0);
+
+          setTotalExpenses(totalExp);
+          setTotalBudget(totalInc);
+          setRecentExpenses(expensesList.slice(0, 5));
         }
 
         // Process Attendance for the selected site
@@ -95,12 +106,16 @@ function SupervisorHome({ selectedSite, user }) {
   }, [selectedSite]);
 
   const remaining = totalBudget - totalExpenses;
-  const budgetPercentage = Math.min((totalExpenses / totalBudget) * 100, 100).toFixed(1);
+  const budgetPercentage = totalBudget > 0 ? Math.min((totalExpenses / totalBudget) * 100, 100).toFixed(1) : "0.0";
 
   if (!selectedSite) {
     return (
-      <div className="flex h-full items-center justify-center p-8 text-gray-500">
-        Please select a site from the top menu to view the dashboard.
+      <div className="flex h-full items-center justify-center p-8">
+        <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+          <p className="text-sm font-medium text-red-800">
+            You are not assigned to any site. Please contact your administrator.
+          </p>
+        </div>
       </div>
     );
   }
@@ -216,6 +231,16 @@ function SupervisorHome({ selectedSite, user }) {
                         {new Date(expense.date).toLocaleDateString()}
                       </span>
                     </div>
+                    {expense.receiptImage && (
+                      <button
+                        type="button"
+                        onClick={() => setViewingImage(expense.receiptImage)}
+                        className="mt-1 inline-flex items-center gap-1 text-xs text-[#3D36BE] hover:underline"
+                      >
+                        <Eye className="h-3 w-3" />
+                        View Receipt
+                      </button>
+                    )}
                   </div>
                   <p className="text-gray-900 font-semibold">
                     ₹{expense.amount.toLocaleString("en-IN")}
@@ -260,6 +285,28 @@ function SupervisorHome({ selectedSite, user }) {
           )}
         </div>
       </div>
+
+      {viewingImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="relative max-w-3xl w-full overflow-hidden rounded-lg bg-white p-2 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setViewingImage(null)}
+              className="absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors z-10"
+              title="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center justify-center p-4 bg-gray-50 min-h-[300px]">
+              <img
+                src={viewingImage}
+                alt="Receipt Bill"
+                className="max-h-[80vh] w-auto max-w-full object-contain rounded"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

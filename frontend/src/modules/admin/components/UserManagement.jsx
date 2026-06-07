@@ -916,7 +916,7 @@ function UserManagement() {
                 className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
                 style={{ backgroundColor: "#3D36BE" }}
               >
-                {editingUser ? "Update" : "Create"} User
+                {isSaving ? "Saving..." : editingUser ? "Update User" : "Create User"}
               </button>
               <button
                 type="button"
@@ -924,7 +924,8 @@ function UserManagement() {
                   setIsModalOpen(false);
                   setShowPassword(false);
                 }}
-                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
+                disabled={isSaving}
+                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 Cancel
               </button>
@@ -941,6 +942,7 @@ function UserManagement() {
         confirmText="Delete"
         onConfirm={confirmDelete}
         onCancel={() => setItemToDelete(null)}
+        isLoading={isSaving}
       />
     </div>
   );

@@ -73,23 +73,14 @@ function SupervisorApp({ user, onLogout }) {
             <h2 className="truncate text-lg text-white font-semibold hidden md:block">
               Supervision Portal
             </h2>
-            <div className="flex items-center gap-2 bg-[#3F4149] rounded-lg px-3 py-1.5 flex-1 max-w-sm">
-              <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
+            <div className="flex items-center gap-1.5 bg-[#3F4149]/60 rounded-md px-2.5 py-1 text-gray-300 shrink-0">
+              <MapPin className="h-3.5 w-3.5 text-[#3D36BE] shrink-0" />
               {isLoading ? (
-                <span className="text-gray-400 text-sm">Loading sites...</span>
+                <span className="text-xs">Loading...</span>
               ) : (
-                <select
-                  value={selectedSiteId}
-                  onChange={(e) => setSelectedSiteId(e.target.value)}
-                  className="bg-transparent text-white text-sm focus:outline-none w-full"
-                >
-                  {sites.length === 0 && <option value="" disabled>No sites available</option>}
-                  {sites.map(site => (
-                    <option key={site.id} value={site.id} className="text-black">
-                      {site.siteName}
-                    </option>
-                  ))}
-                </select>
+                <span className="text-xs font-semibold text-white uppercase tracking-wider">
+                  {selectedSite ? selectedSite.siteName : "No Site Assigned"}
+                </span>
               )}
             </div>
           </div>

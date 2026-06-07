@@ -13,7 +13,7 @@ const apiClient = axios.create({
     (shouldUseEnv ? envBaseUrl : runtimeBaseUrl) ||
     envBaseUrl ||
     "https://jsonplaceholder.typicode.com",
-  timeout: 10000,
+  timeout: 120000,
 });
 
 // ── Request interceptor: attach token from localStorage on every call
