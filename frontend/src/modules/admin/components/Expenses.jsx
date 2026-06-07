@@ -373,104 +373,195 @@ function Expenses() {
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px]">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-gray-700">Title</th>
-                <th className="px-6 py-4 text-left text-gray-700">Site</th>
-                <th className="px-6 py-4 text-left text-gray-700">Category</th>
-                <th className="px-6 py-4 text-left text-gray-700">Amount</th>
-                <th className="px-6 py-4 text-left text-gray-700">
-                  Payment Mode
-                </th>
-                <th className="px-6 py-4 text-left text-gray-700">Date</th>
-                <th className="px-6 py-4 text-left text-gray-700">Type</th>
-                <th className="px-6 py-4 text-left text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {isLoading ? (
+          <div className="hidden md:block">
+            <table className="w-full min-w-[860px]">
+              <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
-                    Loading income and expenses...
-                  </td>
+                  <th className="px-6 py-4 text-left text-gray-700">Title</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Site</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Category</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Amount</th>
+                  <th className="px-6 py-4 text-left text-gray-700">
+                    Payment Mode
+                  </th>
+                  <th className="px-6 py-4 text-left text-gray-700">Date</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Type</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Actions</th>
                 </tr>
-              ) : transactions.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
-                    No data available
-                  </td>
-                </tr>
-              ) : (
-                transactions.map((transaction) => (
-                  <tr
-                    key={transaction.id}
-                    className="transition-colors hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4 text-gray-900">
-                      {transaction.title}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {transaction.site?.siteName || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {transaction.category?.name || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      Rs. {Number(transaction.amount).toLocaleString("en-IN")}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {transaction.paymentMode}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {transaction.date.split("T")[0]}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          transaction.type === "Income"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {transaction.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        {transaction.receiptImage && (
-                          <button
-                            type="button"
-                            onClick={() => setViewingImage(transaction.receiptImage)}
-                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                            title="View Receipt"
-                          >
-                            <Eye className="h-5 w-5 text-[#3D36BE]" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(transaction)}
-                          className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                          title="Edit"
-                        >
-                          <Edit className="h-5 w-5 text-gray-600" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(transaction.id)}
-                          className="rounded-lg p-2 transition-colors hover:bg-red-50"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-5 w-5 text-red-500" />
-                        </button>
-                      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                      Loading income and expenses...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                      No data available
+                    </td>
+                  </tr>
+                ) : (
+                  transactions.map((transaction) => (
+                    <tr
+                      key={transaction.id}
+                      className="transition-colors hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 text-gray-900">
+                        {transaction.title}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {transaction.site?.siteName || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {transaction.category?.name || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        Rs. {Number(transaction.amount).toLocaleString("en-IN")}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {transaction.paymentMode}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {transaction.date.split("T")[0]}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            transaction.type === "Income"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {transaction.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {transaction.receiptImage && (
+                            <button
+                              type="button"
+                              onClick={() => setViewingImage(transaction.receiptImage)}
+                              className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                              title="View Receipt"
+                            >
+                              <Eye className="h-5 w-5 text-[#3D36BE]" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(transaction)}
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                            title="Edit"
+                          >
+                            <Edit className="h-5 w-5 text-gray-600" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(transaction.id)}
+                            className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-5 w-5 text-red-500" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="block md:hidden">
+            {isLoading ? (
+              <div className="p-6 text-center text-gray-500">
+                Loading income and expenses...
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                No data available
+              </div>
+            ) : (
+              transactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="border-b border-gray-200 p-4 last:border-0 hover:bg-gray-50"
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 capitalize">
+                        {transaction.title}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {transaction.site?.siteName || "—"}
+                      </p>
+                    </div>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        transaction.type === "Income"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {transaction.type}
+                    </span>
+                  </div>
+
+                  <div className="mb-4 space-y-2 text-sm text-gray-600">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Category:</span>
+                      <span>{transaction.category?.name || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Amount:</span>
+                      <span className="font-semibold text-gray-900">
+                        Rs. {Number(transaction.amount).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Payment Mode:</span>
+                      <span>{transaction.paymentMode}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Date:</span>
+                      <span>{transaction.date.split("T")[0]}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                    {transaction.receiptImage && (
+                      <button
+                        type="button"
+                        onClick={() => setViewingImage(transaction.receiptImage)}
+                        className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                        title="View Receipt"
+                      >
+                        <Eye className="h-5 w-5 text-[#3D36BE]" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(transaction)}
+                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                      title="Edit"
+                    >
+                      <Edit className="h-5 w-5 text-gray-600" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(transaction.id)}
+                      className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-5 w-5 text-red-500" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
         {/* Pagination */}
         <div className="border-t border-gray-200 px-6 py-4">

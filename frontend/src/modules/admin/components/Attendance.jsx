@@ -281,75 +281,139 @@ function Attendance() {
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px]">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-gray-700">Date</th>
-                <th className="px-6 py-4 text-left text-gray-700">Site</th>
-                <th className="px-6 py-4 text-left text-gray-700">
-                  Contractor
-                </th>
-                <th className="px-6 py-4 text-left text-gray-700">
-                  Supervisor
-                </th>
-                <th className="px-6 py-4 text-left text-gray-700">Skills Workers</th>
-                <th className="px-6 py-4 text-left text-gray-700">Semi-Skills Workers</th>
-                <th className="px-6 py-4 text-left text-gray-700">Unskills Workers</th>
-                <th className="px-6 py-4 text-left text-gray-700">Start Time</th>
-                <th className="px-6 py-4 text-left text-gray-700">End Time</th>
-                <th className="px-6 py-4 text-left text-gray-700">Total Hours</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {isLoading ? (
+          <div className="hidden md:block">
+            <table className="w-full min-w-[980px]">
+              <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
-                    Loading attendance...
-                  </td>
+                  <th className="px-6 py-4 text-left text-gray-700">Date</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Site</th>
+                  <th className="px-6 py-4 text-left text-gray-700">
+                    Contractor
+                  </th>
+                  <th className="px-6 py-4 text-left text-gray-700">
+                    Supervisor
+                  </th>
+                  <th className="px-6 py-4 text-left text-gray-700">Skills Workers</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Semi-Skills Workers</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Unskills Workers</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Start Time</th>
+                  <th className="px-6 py-4 text-left text-gray-700">End Time</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Total Hours</th>
                 </tr>
-              ) : attendances.length === 0 ? (
-                <tr>
-                  <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
-                    No data available
-                  </td>
-                </tr>
-              ) : (
-                attendances.map((record) => (
-                  <tr
-                    key={record.id}
-                    className="transition-colors hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4 text-gray-900">{record.date.split("T")[0]}</td>
-                    <td className="px-6 py-4 text-gray-900">{record.site?.siteName || "—"}</td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {record.contractor?.contractorName || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {record.supervisor?.name || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {record.skilledWorkers}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {record.semiSkilledWorkers}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {record.unskilledWorkers}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {formatDuration(record.startTime)}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900">
-                      {formatDuration(record.endTime)}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900 font-medium">
-                      {calculateHours(record.startTime, record.endTime) || "—"}
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
+                      Loading attendance...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : attendances.length === 0 ? (
+                  <tr>
+                    <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
+                      No data available
+                    </td>
+                  </tr>
+                ) : (
+                  attendances.map((record) => (
+                    <tr
+                      key={record.id}
+                      className="transition-colors hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 text-gray-900">{record.date.split("T")[0]}</td>
+                      <td className="px-6 py-4 text-gray-900">{record.site?.siteName || "—"}</td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {record.contractor?.contractorName || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {record.supervisor?.name || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {record.skilledWorkers}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {record.semiSkilledWorkers}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {record.unskilledWorkers}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {formatDuration(record.startTime)}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {formatDuration(record.endTime)}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900 font-medium">
+                        {calculateHours(record.startTime, record.endTime) || "—"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="block md:hidden">
+            {isLoading ? (
+              <div className="p-6 text-center text-gray-500">
+                Loading attendance...
+              </div>
+            ) : attendances.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                No data available
+              </div>
+            ) : (
+              attendances.map((record) => (
+                <div
+                  key={record.id}
+                  className="border-b border-gray-200 p-4 last:border-0 hover:bg-gray-50"
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 capitalize">
+                        {record.site?.siteName || "—"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {record.date.split("T")[0]}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                      {calculateHours(record.startTime, record.endTime) || "—"} hrs
+                    </span>
+                  </div>
+
+                  <div className="mb-4 space-y-2 text-sm text-gray-600">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Contractor:</span>
+                      <span>{record.contractor?.contractorName || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Supervisor:</span>
+                      <span>{record.supervisor?.name || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Skilled Workers:</span>
+                      <span>{record.skilledWorkers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Semi-Skilled Workers:</span>
+                      <span>{record.semiSkilledWorkers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Unskilled Workers:</span>
+                      <span>{record.unskilledWorkers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Timing:</span>
+                      <span>
+                        {formatDuration(record.startTime)} - {formatDuration(record.endTime)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
         {/* Pagination */}
         <div className="border-t border-gray-200 px-6 py-4">

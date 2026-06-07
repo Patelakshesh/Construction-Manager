@@ -337,62 +337,110 @@ function AttendanceManagement({ selectedSite, user }) {
       </button>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="divide-y divide-gray-100">
-          {isLoading ? (
-             <div className="p-4 text-center text-gray-500">Loading attendance...</div>
-          ) : sortedDates.length === 0 ? (
-             <div className="p-4 text-center text-gray-500">No attendance recorded for this site yet.</div>
-          ) : (
-            sortedDates.map((date) => (
-              <div key={date} className="p-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-600" />
-                  <h4 className="text-gray-900">{new Date(date).toLocaleDateString()}</h4>
-                  <span className="text-sm text-gray-500">
-                    (
-                    {groupedByDate[date].reduce(
-                      (sum, record) => sum + (record.skilledWorkers || 0) + (record.semiSkilledWorkers || 0) + (record.unskilledWorkers || 0),
-                      0,
-                    )}{" "}
-                    workers)
-                  </span>
-                </div>
+        {isLoading ? (
+          <div className="p-4 text-center text-gray-500">Loading attendance...</div>
+        ) : attendance.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">No attendance recorded for this site yet.</div>
+        ) : (
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full min-w-[800px]">
+                <thead className="border-b border-gray-200 bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-gray-700">Date</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Contractor</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Skilled Workers</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Semi-Skilled Workers</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Unskilled Workers</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Start Time</th>
+                    <th className="px-6 py-4 text-left text-gray-700">End Time</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Total Hours</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {attendance.map((record) => (
+                    <tr
+                      key={record.id}
+                      className="transition-colors hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 text-gray-900">
+                        {record.date.split("T")[0]}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900 font-medium">
+                        {record.contractor?.contractorName || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {record.skilledWorkers}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {record.semiSkilledWorkers}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {record.unskilledWorkers}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {formatDuration(record.startTime)}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {formatDuration(record.endTime)}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900 font-semibold">
+                        {calculateHours(record.startTime, record.endTime) || "—"} hrs
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                <div className="space-y-2">
-                  {groupedByDate[date].map((record) => {
-                    const total = (record.skilledWorkers || 0) + (record.semiSkilledWorkers || 0) + (record.unskilledWorkers || 0);
-                    const startTime = formatDuration(record.startTime);
-                    const endTime = formatDuration(record.endTime);
-                    const hrs = calculateHours(record.startTime, record.endTime);
-                    const hrsDisplay = hrs ? ` (${hrs})` : "";
-                    return (
-                      <div
-                        key={record.id}
-                        className="rounded-lg border border-gray-100 bg-gray-50 p-3"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <p className="mb-1 text-gray-900 font-medium">{record.contractor?.contractorName || "Unknown Contractor"}</p>
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-500 mt-2">
-                              <div className="flex items-center gap-1">
-                                <UsersIcon className="h-4 w-4" />
-                                <span>{total} workers total</span>
-                              </div>
-                              <span className="bg-white border border-gray-200 px-2 py-1 rounded text-xs">
-                                {startTime} to {endTime}{hrsDisplay}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+            {/* Mobile Card View */}
+            <div className="block md:hidden divide-y divide-gray-100">
+              {attendance.map((record) => (
+                <div
+                  key={record.id}
+                  className="p-4 transition-colors hover:bg-gray-50"
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 capitalize">
+                        {record.contractor?.contractorName || "Unknown Contractor"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {record.date.split("T")[0]}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                      {calculateHours(record.startTime, record.endTime) || "—"} hrs
+                    </span>
+                  </div>
+
+                  <div className="mb-4 space-y-2 text-sm text-gray-600">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Skilled Workers:</span>
+                      <span>{record.skilledWorkers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Semi-Skilled Workers:</span>
+                      <span>{record.semiSkilledWorkers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Unskilled Workers:</span>
+                      <span>{record.unskilledWorkers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Timing:</span>
+                      <span>
+                        {formatDuration(record.startTime)} - {formatDuration(record.endTime)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-        
+              ))}
+            </div>
+          </>
+        )}
+
         {/* Pagination */}
         <div className="border-t border-gray-200 px-4 py-3">
           <Pagination

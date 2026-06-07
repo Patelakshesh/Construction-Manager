@@ -291,24 +291,95 @@ function ExpenseManagement({ selectedSite, user }) {
         <Plus className="h-5 w-5" />
         Add New Expense
       </button>
-
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="divide-y divide-gray-100">
-          {isLoading ? (
-            <div className="p-4 text-center text-gray-500">Loading expenses...</div>
-          ) : expenses.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">No expenses found for this site.</div>
-          ) : (
-            expenses.map((expense) => (
-              <div
-                key={expense.id}
-                className="p-4 transition-colors hover:bg-gray-50"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="mb-2 flex items-center gap-2">
+        {isLoading ? (
+          <div className="p-4 text-center text-gray-500">Loading expenses...</div>
+        ) : expenses.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">No expenses found for this site.</div>
+        ) : (
+          <>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full min-w-[760px]">
+                <thead className="border-b border-gray-200 bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-gray-700">Title</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Category</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Amount</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Payment Mode</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Date</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Type</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {expenses.map((expense) => (
+                    <tr
+                      key={expense.id}
+                      className="transition-colors hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 text-gray-900 font-medium">
+                        {expense.title}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {expense.category?.name || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900 font-semibold">
+                        ₹{expense.amount.toLocaleString("en-IN")}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {expense.paymentMode} {expense.transactionId ? `(${expense.transactionId})` : ""}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {new Date(expense.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900">
+                        <span
+                          className="rounded px-2.5 py-0.5 text-xs font-medium"
+                          style={{
+                            backgroundColor:
+                              expense.type === "Income"
+                                ? "#DCFCE7"
+                                : "#FEE2E2",
+                            color:
+                              expense.type === "Income"
+                                ? "#15803D"
+                                : "#DC2626",
+                          }}
+                        >
+                          {expense.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {expense.receiptImage && (
+                          <button
+                            type="button"
+                            onClick={() => setViewingImage(expense.receiptImage)}
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                            title="View Receipt"
+                          >
+                            <Eye className="h-5 w-5 text-[#3D36BE]" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="block md:hidden divide-y divide-gray-100">
+              {expenses.map((expense) => (
+                <div
+                  key={expense.id}
+                  className="p-4 transition-colors hover:bg-gray-50"
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 capitalize">
+                        {expense.title}
+                      </p>
                       <span
-                        className="rounded px-2 py-1 text-xs"
+                        className="rounded px-2 py-0.5 text-xs font-medium"
                         style={{
                           backgroundColor:
                             expense.type === "Income"
@@ -322,39 +393,51 @@ function ExpenseManagement({ selectedSite, user }) {
                       >
                         {expense.type}
                       </span>
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                        {expense.category?.name || "Uncategorized"}
-                      </span>
                     </div>
-                    <p className="mb-1 text-gray-900 font-medium">{expense.title}</p>
-                    <p className="text-sm text-gray-500">{new Date(expense.date).toLocaleDateString()}</p>
-                    {expense.paymentMode !== "Cash" && (
-                      <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
-                        <span>{expense.paymentMode} • {expense.transactionId}</span>
-                        {expense.receiptImage && (
-                          <button
-                            type="button"
-                            onClick={() => setViewingImage(expense.receiptImage)}
-                            className="inline-flex items-center gap-1 text-[#3D36BE] hover:underline"
-                          >
-                            <Eye className="h-3 w-3" />
-                            <span>View Receipt</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-right">
                     <p className="text-lg text-gray-900 font-semibold">
                       ₹{expense.amount.toLocaleString("en-IN")}
                     </p>
                   </div>
+
+                  <div className="mb-4 space-y-2 text-sm text-gray-600">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Category:</span>
+                      <span>{expense.category?.name || "Uncategorized"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Payment Mode:</span>
+                      <span>{expense.paymentMode}</span>
+                    </div>
+                    {expense.transactionId && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Transaction ID:</span>
+                        <span>{expense.transactionId}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="font-medium">Date:</span>
+                      <span>{new Date(expense.date).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  {expense.receiptImage && (
+                    <div className="flex items-center justify-end border-t border-gray-100 pt-3">
+                      <button
+                        type="button"
+                        onClick={() => setViewingImage(expense.receiptImage)}
+                        className="inline-flex items-center gap-1 rounded bg-[#3D36BE]/10 px-3 py-1.5 text-xs font-medium text-[#3D36BE] hover:bg-[#3D36BE]/20"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span>View Receipt</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-        
+              ))}
+            </div>
+          </>
+        )}
+
         {/* Pagination */}
         <div className="border-t border-gray-200 px-4 py-3">
           <Pagination
