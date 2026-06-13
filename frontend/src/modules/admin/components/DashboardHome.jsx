@@ -232,23 +232,27 @@ function DashboardHome() {
 
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6">
           <h3 className="mb-4 text-gray-900">Budget vs Actual by Site</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dashboardData?.budgetComparisons || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis
-                dataKey="site"
-                stroke="#6B7280"
-                angle={-20}
-                textAnchor="end"
-                height={80}
-              />
-              <YAxis stroke="#6B7280" />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="budget" fill="#3D36BE" name="Budget" />
-              <Bar dataKey="actual" fill="#2B2D33" name="Actual" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full overflow-x-auto">
+            <div style={{ minWidth: Math.max(600, (dashboardData?.budgetComparisons?.length || 0) * 120), height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dashboardData?.budgetComparisons || []}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis
+                    dataKey="site"
+                    stroke="#6B7280"
+                    angle={-20}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis stroke="#6B7280" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="budget" fill="#3D36BE" name="Budget" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="actual" fill="#EF4444" name="Actual Expenses" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
       </div>
 

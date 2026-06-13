@@ -503,7 +503,6 @@ function UserManagement() {
           <h1 className="mb-2 text-2xl font-semibold text-gray-900 md:text-3xl">
             User Management
           </h1>
-          <p className="text-gray-600">Manage supervisors</p>
         </div>
         <button
           type="button"

@@ -107,7 +107,7 @@ function SupervisorApp({ user, onLogout }) {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white px-2 py-3 safe-area-bottom md:sticky md:bottom-auto">
+      <div className="border-t border-gray-200 bg-white px-2 py-2 safe-area-bottom shrink-0 md:sticky md:bottom-auto">
         <div className="mx-auto flex max-w-md items-center justify-around">
           {menuItems.map((item) => {
             const Icon = item.icon;

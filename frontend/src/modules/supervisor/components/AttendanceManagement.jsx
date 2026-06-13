@@ -1,14 +1,29 @@
 import { useState, useEffect } from "react";
-import { Calendar, Plus, Users as UsersIcon, X } from "lucide-react";
+import { Calendar, Plus, Users as UsersIcon, X, Edit, Trash2 } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
 import Pagination from "../../../shared/components/Pagination";
+import ConfirmModal from "../../../shared/components/ConfirmModal";
 
 const CREATE_ATTENDANCE_MUTATION = `
   mutation CreateAttendance($input: CreateAttendanceInput!) {
     createAttendance(input: $input) {
       id
     }
+  }
+`;
+
+const UPDATE_ATTENDANCE_MUTATION = `
+  mutation UpdateAttendance($input: UpdateAttendanceInput!) {
+    updateAttendance(input: $input) {
+      id
+    }
+  }
+`;
+
+const DELETE_ATTENDANCE_MUTATION = `
+  mutation DeleteAttendance($id: Int!) {
+    deleteAttendance(id: $id)
   }
 `;
 
@@ -77,6 +92,9 @@ function AttendanceManagement({ selectedSite, user }) {
   const [formErrors, setFormErrors] = useState({});
   const [pageNumber, setPageNumber] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [editingItem, setEditingItem] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const pageSize = 10;
 
   const [formData, setFormData] = useState({
@@ -203,6 +221,53 @@ function AttendanceManagement({ selectedSite, user }) {
   const renderFieldError = (message) =>
     message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
 
+  const handleEdit = (record) => {
+    setEditingItem(record);
+    setFormData({
+      contractorId: record.contractorId || "",
+      skilledWorkers: String(record.skilledWorkers),
+      semiSkilledWorkers: String(record.semiSkilledWorkers),
+      unskilledWorkers: String(record.unskilledWorkers),
+      startTime: formatDuration(record.startTime),
+      endTime: formatDuration(record.endTime),
+      date: record.date.split("T")[0],
+    });
+    setIsAdding(true);
+  };
+
+  const handleDelete = (id) => {
+    setItemToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query: DELETE_ATTENDANCE_MUTATION,
+          variables: { id: Number(itemToDelete) },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.errors) {
+        toast.error(response.data.errors[0].message);
+        return;
+      }
+
+      toast.success("Attendance deleted successfully.");
+      loadData();
+    } catch (error) {
+      toast.error(error?.message || "Failed to delete attendance");
+    } finally {
+      setIsDeleting(false);
+      setItemToDelete(null);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -221,24 +286,29 @@ function AttendanceManagement({ selectedSite, user }) {
       const startTimeIso = toIsoDuration(formData.startTime);
       const endTimeIso = toIsoDuration(formData.endTime);
 
+      const isEdit = !!editingItem;
+      const mutation = isEdit ? UPDATE_ATTENDANCE_MUTATION : CREATE_ATTENDANCE_MUTATION;
+      const variables = {
+        input: {
+          ...(isEdit ? { id: Number(editingItem.id) } : {}),
+          date: new Date(formData.date).toISOString(),
+          siteId: Number(selectedSite.id),
+          contractorId: Number(formData.contractorId),
+          supervisorId: Number(user.id),
+          skilledWorkers: formData.skilledWorkers === "" ? 0 : Number(formData.skilledWorkers),
+          semiSkilledWorkers: formData.semiSkilledWorkers === "" ? 0 : Number(formData.semiSkilledWorkers),
+          unskilledWorkers: formData.unskilledWorkers === "" ? 0 : Number(formData.unskilledWorkers),
+          startTime: startTimeIso,
+          endTime: endTimeIso,
+          ...(isEdit ? { modifiedBy: user.name } : { createdBy: user.name }),
+        },
+      };
+
       const response = await apiClient.post(
         "/graphql",
         {
-          query: CREATE_ATTENDANCE_MUTATION,
-          variables: {
-            input: {
-              date: new Date(formData.date).toISOString(),
-              siteId: Number(selectedSite.id),
-              contractorId: Number(formData.contractorId),
-              supervisorId: Number(user.id),
-              skilledWorkers: formData.skilledWorkers === "" ? 0 : Number(formData.skilledWorkers),
-              semiSkilledWorkers: formData.semiSkilledWorkers === "" ? 0 : Number(formData.semiSkilledWorkers),
-              unskilledWorkers: formData.unskilledWorkers === "" ? 0 : Number(formData.unskilledWorkers),
-              startTime: startTimeIso,
-              endTime: endTimeIso,
-              createdBy: user.name,
-            },
-          },
+          query: mutation,
+          variables,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -248,8 +318,9 @@ function AttendanceManagement({ selectedSite, user }) {
         return;
       }
 
-      toast.success("Attendance added successfully!");
+      toast.success(isEdit ? "Attendance updated successfully!" : "Attendance added successfully!");
       setIsAdding(false);
+      setEditingItem(null);
       setFormData({
         contractorId: "",
         skilledWorkers: "0",
@@ -261,7 +332,7 @@ function AttendanceManagement({ selectedSite, user }) {
       });
       loadData();
     } catch (error) {
-      toast.error(error?.message || "Failed to add attendance");
+      toast.error(error?.message || "Failed to save attendance");
     } finally {
       setIsSubmitting(false);
     }
@@ -356,6 +427,7 @@ function AttendanceManagement({ selectedSite, user }) {
                     <th className="px-6 py-4 text-left text-gray-700">Start Time</th>
                     <th className="px-6 py-4 text-left text-gray-700">End Time</th>
                     <th className="px-6 py-4 text-left text-gray-700">Total Hours</th>
+                    <th className="px-6 py-4 text-left text-gray-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -387,6 +459,26 @@ function AttendanceManagement({ selectedSite, user }) {
                       </td>
                       <td className="px-6 py-4 text-gray-900 font-semibold">
                         {calculateHours(record.startTime, record.endTime) || "—"} hrs
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(record)}
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                            title="Edit"
+                          >
+                            <Edit className="h-5 w-5 text-gray-600" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(record.id)}
+                            className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-5 w-5 text-red-500" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -435,6 +527,24 @@ function AttendanceManagement({ selectedSite, user }) {
                       </span>
                     </div>
                   </div>
+                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(record)}
+                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                      title="Edit"
+                    >
+                      <Edit className="h-5 w-5 text-gray-600" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(record.id)}
+                      className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-5 w-5 text-red-500" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -453,14 +563,26 @@ function AttendanceManagement({ selectedSite, user }) {
       </div>
 
       {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto md:items-center">
+          <div className="my-auto w-full max-w-2xl rounded-lg bg-white shadow-xl">
             <div className="p-6">
               <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-gray-900">Add Daily Attendance</h3>
+                <h3 className="text-gray-900">{editingItem ? "Edit Daily Attendance" : "Add Daily Attendance"}</h3>
                 <button
                   type="button"
-                  onClick={() => setIsAdding(false)}
+                  onClick={() => {
+                    setIsAdding(false);
+                    setEditingItem(null);
+                    setFormData({
+                      contractorId: "",
+                      skilledWorkers: "0",
+                      semiSkilledWorkers: "0",
+                      unskilledWorkers: "0",
+                      startTime: "09:00",
+                      endTime: "17:00",
+                      date: new Date().toISOString().split("T")[0],
+                    });
+                  }}
                   className="rounded-lg p-2 hover:bg-gray-100"
                 >
                   <X className="h-5 w-5 text-gray-600" />
@@ -616,13 +738,23 @@ function AttendanceManagement({ selectedSite, user }) {
                     className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ backgroundColor: "#3D36BE" }}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit Attendance"}
+                    {isSubmitting ? "Submitting..." : editingItem ? "Update Attendance" : "Submit Attendance"}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setIsAdding(false);
+                      setEditingItem(null);
                       setFormErrors({});
+                      setFormData({
+                        contractorId: "",
+                        skilledWorkers: "0",
+                        semiSkilledWorkers: "0",
+                        unskilledWorkers: "0",
+                        startTime: "09:00",
+                        endTime: "17:00",
+                        date: new Date().toISOString().split("T")[0],
+                      });
                     }}
                     disabled={isSubmitting}
                     className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -635,6 +767,15 @@ function AttendanceManagement({ selectedSite, user }) {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        title="Delete Attendance"
+        message="Are you sure you want to delete this attendance record? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setItemToDelete(null)}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

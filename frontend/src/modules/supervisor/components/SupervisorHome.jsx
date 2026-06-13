@@ -25,12 +25,28 @@ function SupervisorHome({ selectedSite, user }) {
       try {
         const token = localStorage.getItem("authToken");
 
-        const expensesResponse = apiClient.post(
+        const statsPromise = apiClient.post(
           "/graphql",
           {
             query: `
-              query GetRecentExpenses($pageSize: Int!, $siteId: Int) {
-                expensesPage(pageNumber: 1, pageSize: $pageSize, siteId: $siteId) {
+              query GetSiteStats($siteName: String) {
+                dashboardStats(siteName: $siteName) {
+                  totalBudget
+                  totalExpenses
+                }
+              }
+            `,
+            variables: { siteName: selectedSite.siteName },
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const expensesPromise = apiClient.post(
+          "/graphql",
+          {
+            query: `
+              query GetRecentExpenses($siteId: Int) {
+                expensesPage(pageNumber: 1, pageSize: 5, siteId: $siteId) {
                   items {
                     id
                     amount
@@ -46,12 +62,12 @@ function SupervisorHome({ selectedSite, user }) {
                 }
               }
             `,
-            variables: { pageSize: 1000, siteId: parseInt(selectedSite.id) },
+            variables: { siteId: parseInt(selectedSite.id) },
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const attendanceResponse = apiClient.post(
+        const attendancePromise = apiClient.post(
           "/graphql",
           {
             query: `
@@ -74,20 +90,24 @@ function SupervisorHome({ selectedSite, user }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const [expensesRes, attendanceRes] = await Promise.all([expensesResponse, attendanceResponse]);
+        const [statsRes, expensesRes, attendanceRes] = await Promise.all([
+          statsPromise,
+          expensesPromise,
+          attendancePromise,
+        ]);
 
-        // Process Expenses and Income for the selected site
+        // Process Stats
+        if (statsRes.data?.data?.dashboardStats) {
+          const stats = statsRes.data.data.dashboardStats;
+          setTotalBudget(stats.totalBudget || 0);
+          setTotalExpenses(stats.totalExpenses || 0);
+        }
+
+        // Process Expenses for the selected site
         if (expensesRes.data?.data?.expensesPage?.items) {
           const siteItems = expensesRes.data.data.expensesPage.items;
           const expensesList = siteItems.filter(e => e.type === "Expense");
-          const incomeList = siteItems.filter(e => e.type === "Income");
-
-          const totalExp = expensesList.reduce((sum, e) => sum + e.amount, 0);
-          const totalInc = incomeList.reduce((sum, e) => sum + e.amount, 0);
-
-          setTotalExpenses(totalExp);
-          setTotalBudget(totalInc);
-          setRecentExpenses(expensesList.slice(0, 5));
+          setRecentExpenses(expensesList);
         }
 
         // Process Attendance for the selected site

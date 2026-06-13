@@ -1,14 +1,29 @@
 import { useState, useEffect } from "react";
-import { Camera, Plus, ReceiptIndianRupee, X, Filter, Eye } from "lucide-react";
+import { Camera, Plus, ReceiptIndianRupee, X, Filter, Eye, Edit, Trash2 } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
 import Pagination from "../../../shared/components/Pagination";
+import ConfirmModal from "../../../shared/components/ConfirmModal";
 
 const CREATE_EXPENSE_MUTATION = `
   mutation CreateExpense($input: CreateExpenseInput!) {
     createExpense(input: $input) {
       id
     }
+  }
+`;
+
+const UPDATE_EXPENSE_MUTATION = `
+  mutation UpdateExpense($input: UpdateExpenseInput!) {
+    updateExpense(input: $input) {
+      id
+    }
+  }
+`;
+
+const DELETE_EXPENSE_MUTATION = `
+  mutation DeleteExpense($id: Int!) {
+    deleteExpense(id: $id)
   }
 `;
 
@@ -24,6 +39,9 @@ function ExpenseManagement({ selectedSite, user }) {
   const [totalCount, setTotalCount] = useState(0);
   const [totalExpensesAmount, setTotalExpensesAmount] = useState(0);
   const [viewingImage, setViewingImage] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const pageSize = 10;
 
   const [formData, setFormData] = useState({
@@ -88,7 +106,7 @@ function ExpenseManagement({ selectedSite, user }) {
         "/graphql",
         {
           query: `
-            query GetExpensesAndCategories($pageNumber: Int!, $pageSize: Int!, $siteId: Int) {
+            query GetExpensesAndCategories($pageNumber: Int!, $pageSize: Int!, $siteId: Int, $siteName: String) {
               expensesPage(pageNumber: $pageNumber, pageSize: $pageSize, siteId: $siteId) {
                 items {
                   id
@@ -105,9 +123,8 @@ function ExpenseManagement({ selectedSite, user }) {
                 }
                 totalCount
               }
-              expenses {
-                amount
-                siteId
+              dashboardStats(siteName: $siteName) {
+                totalExpenses
               }
               categories { id name }
             }
@@ -116,6 +133,7 @@ function ExpenseManagement({ selectedSite, user }) {
             pageNumber,
             pageSize,
             siteId: parseInt(selectedSite.id),
+            siteName: selectedSite.siteName,
           },
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -126,12 +144,8 @@ function ExpenseManagement({ selectedSite, user }) {
         setExpenses(pageItems);
         setTotalCount(response.data.data.expensesPage?.totalCount || 0);
 
-        const allExpenses = response.data.data.expenses || [];
-        const siteExpenses = allExpenses.filter(
-          e => String(e.siteId) === String(selectedSite.id)
-        );
-        const total = siteExpenses.reduce((sum, e) => sum + e.amount, 0);
-        setTotalExpensesAmount(total);
+        const stats = response.data.data.dashboardStats;
+        setTotalExpensesAmount(stats?.totalExpenses || 0);
 
         const loadedCategories = response.data.data.categories || [];
         setCategories(loadedCategories);
@@ -190,6 +204,53 @@ function ExpenseManagement({ selectedSite, user }) {
   const renderFieldError = (message) =>
     message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
 
+  const handleEdit = (expense) => {
+    setEditingItem(expense);
+    setFormData({
+      amount: String(expense.amount),
+      categoryId: expense.categoryId || "",
+      title: expense.title,
+      date: expense.date.split("T")[0],
+      paymentMode: expense.paymentMode || "Cash",
+      transactionId: expense.transactionId || "",
+      receiptImage: expense.receiptImage || null,
+    });
+    setIsAdding(true);
+  };
+
+  const handleDelete = (id) => {
+    setItemToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await apiClient.post(
+        "/graphql",
+        {
+          query: DELETE_EXPENSE_MUTATION,
+          variables: { id: Number(itemToDelete) },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.errors) {
+        toast.error(response.data.errors[0].message);
+        return;
+      }
+
+      toast.success("Expense deleted successfully.");
+      loadData();
+    } catch (error) {
+      toast.error(error?.message || "Failed to delete expense");
+    } finally {
+      setIsDeleting(false);
+      setItemToDelete(null);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     
@@ -205,24 +266,29 @@ function ExpenseManagement({ selectedSite, user }) {
 
     try {
       const token = localStorage.getItem("authToken");
+      const isEdit = !!editingItem;
+      const mutation = isEdit ? UPDATE_EXPENSE_MUTATION : CREATE_EXPENSE_MUTATION;
+      const variables = {
+        input: {
+          ...(isEdit ? { id: Number(editingItem.id) } : {}),
+          title: formData.title,
+          siteId: Number(selectedSite.id),
+          categoryId: Number(formData.categoryId),
+          amount: Number(formData.amount),
+          paymentMode: formData.paymentMode,
+          transactionId: formData.paymentMode === "Cash" ? null : formData.transactionId,
+          date: new Date(formData.date).toISOString(),
+          type: "Expense", // Default to expense for supervisor
+          ...(isEdit ? { modifiedBy: user?.name || "supervisor" } : { createdBy: user?.name || "supervisor" }),
+          receiptImage: formData.receiptImage,
+        },
+      };
+
       const response = await apiClient.post(
         "/graphql",
         {
-          query: CREATE_EXPENSE_MUTATION,
-          variables: {
-            input: {
-              title: formData.title,
-              siteId: Number(selectedSite.id),
-              categoryId: Number(formData.categoryId),
-              amount: Number(formData.amount),
-              paymentMode: formData.paymentMode,
-              transactionId: formData.paymentMode === "Cash" ? null : formData.transactionId,
-              date: new Date(formData.date).toISOString(),
-              type: "Expense", // Default to expense for supervisor
-              createdBy: user?.name || "supervisor",
-              receiptImage: formData.receiptImage,
-            },
-          },
+          query: mutation,
+          variables,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -232,8 +298,9 @@ function ExpenseManagement({ selectedSite, user }) {
         return;
       }
 
-      toast.success("Expense added successfully!");
+      toast.success(isEdit ? "Expense updated successfully!" : "Expense added successfully!");
       setIsAdding(false);
+      setEditingItem(null);
       setFormData({
         amount: "",
         categoryId: categories.length > 0 ? categories[0].id : "",
@@ -245,7 +312,7 @@ function ExpenseManagement({ selectedSite, user }) {
       });
       loadData();
     } catch (error) {
-      toast.error(error?.message || "Failed to add expense");
+      toast.error(error?.message || "Failed to save expense");
     } finally {
       setIsSubmitting(false);
     }
@@ -350,16 +417,34 @@ function ExpenseManagement({ selectedSite, user }) {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        {expense.receiptImage && (
+                        <div className="flex items-center gap-2">
+                          {expense.receiptImage && (
+                            <button
+                              type="button"
+                              onClick={() => setViewingImage(expense.receiptImage)}
+                              className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                              title="View Receipt"
+                            >
+                              <Eye className="h-5 w-5 text-[#3D36BE]" />
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => setViewingImage(expense.receiptImage)}
+                            onClick={() => handleEdit(expense)}
                             className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                            title="View Receipt"
+                            title="Edit"
                           >
-                            <Eye className="h-5 w-5 text-[#3D36BE]" />
+                            <Edit className="h-5 w-5 text-gray-600" />
                           </button>
-                        )}
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(expense.id)}
+                            className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-5 w-5 text-red-500" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -420,18 +505,34 @@ function ExpenseManagement({ selectedSite, user }) {
                     </div>
                   </div>
 
-                  {expense.receiptImage && (
-                    <div className="flex items-center justify-end border-t border-gray-100 pt-3">
+                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                    {expense.receiptImage && (
                       <button
                         type="button"
                         onClick={() => setViewingImage(expense.receiptImage)}
-                        className="inline-flex items-center gap-1 rounded bg-[#3D36BE]/10 px-3 py-1.5 text-xs font-medium text-[#3D36BE] hover:bg-[#3D36BE]/20"
+                        className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                        title="View Receipt"
                       >
-                        <Eye className="h-4 w-4" />
-                        <span>View Receipt</span>
+                        <Eye className="h-5 w-5 text-[#3D36BE]" />
                       </button>
-                    </div>
-                  )}
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(expense)}
+                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                      title="Edit"
+                    >
+                      <Edit className="h-5 w-5 text-gray-600" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(expense.id)}
+                      className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-5 w-5 text-red-500" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -450,14 +551,26 @@ function ExpenseManagement({ selectedSite, user }) {
       </div>
 
       {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto md:items-center">
+          <div className="my-auto w-full max-w-2xl rounded-lg bg-white shadow-xl">
             <div className="p-6">
               <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-gray-900">Add New Expense</h3>
+                <h3 className="text-gray-900">{editingItem ? "Edit Expense" : "Add New Expense"}</h3>
                 <button
                   type="button"
-                  onClick={() => setIsAdding(false)}
+                  onClick={() => {
+                    setIsAdding(false);
+                    setEditingItem(null);
+                    setFormData({
+                      amount: "",
+                      categoryId: categories.length > 0 ? categories[0].id : "",
+                      title: "",
+                      date: new Date().toISOString().split("T")[0],
+                      paymentMode: "Cash",
+                      transactionId: "",
+                      receiptImage: null,
+                    });
+                  }}
                   className="rounded-lg p-2 hover:bg-gray-100"
                 >
                   <X className="h-5 w-5 text-gray-600" />
@@ -646,14 +759,23 @@ function ExpenseManagement({ selectedSite, user }) {
                     className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ backgroundColor: "#3D36BE" }}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit Expense"}
+                    {isSubmitting ? "Submitting..." : editingItem ? "Update Expense" : "Submit Expense"}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setIsAdding(false);
+                      setEditingItem(null);
                       setFormErrors({});
-                      setFormData(prev => ({ ...prev, receiptImage: null }));
+                      setFormData({
+                        amount: "",
+                        categoryId: categories.length > 0 ? categories[0].id : "",
+                        title: "",
+                        date: new Date().toISOString().split("T")[0],
+                        paymentMode: "Cash",
+                        transactionId: "",
+                        receiptImage: null,
+                      });
                     }}
                     disabled={isSubmitting}
                     className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -687,6 +809,15 @@ function ExpenseManagement({ selectedSite, user }) {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        title="Delete Expense"
+        message="Are you sure you want to delete this expense record? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setItemToDelete(null)}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

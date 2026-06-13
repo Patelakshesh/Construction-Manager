@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { CreditCard, Edit, Plus, ReceiptIndianRupee, Trash2, X } from "lucide-react";
+import { CreditCard, Edit, Plus, ReceiptIndianRupee, Trash2, X, Eye, Camera } from "lucide-react";
 import toast from "react-hot-toast";
 import useDebounce from "../../../shared/hooks/useDebounce";
 import apiClient from "../../../shared/services/apiClient";
@@ -23,6 +23,7 @@ const LOAD_CREDITS_QUERY = `
         transactionId
         comment
         date
+        receiptImage
       }
       totalCount
       pageNumber
@@ -35,6 +36,7 @@ const LOAD_CREDITS_QUERY = `
       paymentMode
       comment
       transactionId
+      receiptImage
     }
   }
 `;
@@ -105,6 +107,7 @@ function SupervisorCredit() {
   const [overallTotalAmount, setOverallTotalAmount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 400);
+  const [viewingImage, setViewingImage] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCredit, setEditingCredit] = useState(null);
@@ -150,7 +153,36 @@ function SupervisorCredit() {
     transactionId: "",
     comment: "",
     date: new Date().toISOString().split("T")[0],
+    receiptImage: "",
   });
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (PNG, JPG, JPEG, WEBP)");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image size must be less than 2MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({
+        ...prev,
+        receiptImage: reader.result
+      }));
+      toast.success("Image uploaded successfully!");
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read image file");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const loadData = useCallback(async (showLoadingIndicator = true) => {
     if (showLoadingIndicator) {
@@ -270,6 +302,7 @@ function SupervisorCredit() {
       transactionId: "",
       comment: "",
       date: new Date().toISOString().split("T")[0],
+      receiptImage: "",
     });
     setIsModalOpen(true);
   };
@@ -284,6 +317,7 @@ function SupervisorCredit() {
       transactionId: credit.transactionId || "",
       comment: credit.comment || "",
       date: credit.date.split("T")[0],
+      receiptImage: credit.receiptImage || "",
     });
     setIsModalOpen(true);
   };
@@ -346,6 +380,7 @@ function SupervisorCredit() {
                 transactionId: formData.paymentMode === "Cash" ? null : formData.transactionId,
                 comment: formData.comment,
                 date: new Date(formData.date).toISOString(),
+                receiptImage: formData.receiptImage || null,
                 modifiedBy: getActorName(),
               },
             },
@@ -372,6 +407,7 @@ function SupervisorCredit() {
                 transactionId: formData.paymentMode === "Cash" ? null : formData.transactionId,
                 comment: formData.comment,
                 date: new Date(formData.date).toISOString(),
+                receiptImage: formData.receiptImage || null,
                 createdBy: getActorName(),
               },
             },
@@ -521,10 +557,21 @@ function SupervisorCredit() {
                   <td className="px-6 py-4 text-gray-900">{new Date(credit.date).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
+                      {credit.receiptImage && (
+                        <button
+                          type="button"
+                          onClick={() => setViewingImage(credit.receiptImage)}
+                          className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                          title="View Receipt"
+                        >
+                          <Eye className="h-5 w-5 text-[#3D36BE]" />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleEdit(credit)}
                         className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                        title="Edit"
                       >
                         <Edit className="h-5 w-5 text-gray-600" />
                       </button>
@@ -532,6 +579,7 @@ function SupervisorCredit() {
                         type="button"
                         onClick={() => setItemToDelete(credit)}
                         className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                        title="Delete"
                       >
                         <Trash2 className="h-5 w-5 text-red-600" />
                       </button>
@@ -578,13 +626,24 @@ function SupervisorCredit() {
                 </div>
 
                 <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                  {credit.receiptImage && (
                     <button
                       type="button"
-                      onClick={() => handleEdit(credit)}
+                      onClick={() => setViewingImage(credit.receiptImage)}
                       className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                      title="View Receipt"
                     >
-                      <Edit className="h-5 w-5 text-gray-600" />
+                      <Eye className="h-5 w-5 text-[#3D36BE]" />
                     </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(credit)}
+                    className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                    title="Edit"
+                  >
+                    <Edit className="h-5 w-5 text-gray-600" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => setItemToDelete(credit)}
@@ -765,6 +824,48 @@ function SupervisorCredit() {
                   placeholder="Enter comment or description"
                 />
               </div>
+
+              {/* Upload Receipt (Supervisor Credit) */}
+              <div className="md:col-span-2">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Upload Bill/Receipt <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <p className="mb-2 text-xs text-gray-500">
+                  Supported formats: PNG, JPG, JPEG, WEBP (Max size: 2MB)
+                </p>
+                <div className="flex flex-col gap-3">
+                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE] hover:bg-gray-50">
+                    <Camera className="h-5 w-5 text-gray-500" />
+                    <span className="text-sm text-gray-600 font-medium">
+                      {formData.receiptImage ? "Change Photo / Image" : "Upload Image"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/jpg, image/webp"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                  
+                  {formData.receiptImage && (
+                    <div className="relative mt-1 w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                      <img
+                        src={formData.receiptImage}
+                        alt="Receipt preview"
+                        className="h-auto w-full max-h-48 object-contain bg-gray-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, receiptImage: "" }))}
+                        className="absolute top-2 right-2 rounded-full bg-red-600 p-1 text-white hover:bg-red-700 transition-colors shadow"
+                        title="Remove image"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="mt-6 flex gap-3">
@@ -803,6 +904,29 @@ function SupervisorCredit() {
         onCancel={() => setItemToDelete(null)}
         isLoading={isSaving}
       />
+
+      {/* Image Lightbox Modal */}
+      {viewingImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
+          <div className="relative max-h-full max-w-4xl overflow-hidden rounded-lg bg-white p-2 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setViewingImage(null)}
+              className="absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white hover:bg-black transition-colors"
+              title="Close"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <div className="max-h-[85vh] overflow-auto">
+              <img
+                src={viewingImage}
+                alt="Receipt Full Preview"
+                className="h-auto max-h-[80vh] w-auto max-w-full object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

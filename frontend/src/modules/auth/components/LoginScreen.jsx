@@ -44,7 +44,6 @@ function LoginScreen({ onLogin }) {
 
     if (Object.keys(nextErrors).length > 0) {
       setFormErrors(nextErrors);
-      toast.error("Please fix the errors below.");
       return;
     }
 

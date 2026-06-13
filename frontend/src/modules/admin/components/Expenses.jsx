@@ -13,6 +13,7 @@ import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
 import useDebounce from "../../../shared/hooks/useDebounce";
 import Pagination from "../../../shared/components/Pagination";
+import ConfirmModal from "../../../shared/components/ConfirmModal";
 
 function Expenses() {
   const [transactions, setTransactions] = useState([]);
@@ -40,6 +41,9 @@ function Expenses() {
     transactionId: "",
     receiptImage: "",
   });
+
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -143,7 +147,6 @@ function Expenses() {
                 title
                 category { name }
                 transactionId
-                receiptImage
               }
             }
           `,
@@ -217,15 +220,20 @@ function Expenses() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this record?")) return;
+  const handleDelete = (id) => {
+    setItemToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
     try {
       const token = localStorage.getItem("authToken");
       await apiClient.post(
         "/graphql",
         {
           query: `mutation DeleteExpense($id: Int!) { deleteExpense(id: $id) }`,
-          variables: { id: parseInt(id) }
+          variables: { id: parseInt(itemToDelete) }
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -233,6 +241,9 @@ function Expenses() {
       loadData();
     } catch (error) {
       toast.error(error?.message || "Failed to delete record");
+    } finally {
+      setIsDeleting(false);
+      setItemToDelete(null);
     }
   };
 
@@ -756,48 +767,46 @@ function Expenses() {
                 )}
 
                 {/* Upload Receipt (Admin) */}
-                {formData.paymentMode === "Online" && (
-                  <div className="md:col-span-2">
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Upload Bill/Receipt
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Upload Bill/Receipt <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
+                  <p className="mb-2 text-xs text-gray-500">
+                    Supported formats: PNG, JPG, JPEG, WEBP (Max size: 2MB)
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE] hover:bg-gray-50">
+                      <Camera className="h-5 w-5 text-gray-500" />
+                      <span className="text-sm text-gray-600 font-medium">
+                        {formData.receiptImage ? "Change Photo / Image" : "Upload Image"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/jpg, image/webp"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
                     </label>
-                    <p className="mb-2 text-xs text-gray-500">
-                      Supported formats: PNG, JPG, JPEG, WEBP (Max size: 2MB)
-                    </p>
-                    <div className="flex flex-col gap-3">
-                      <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE] hover:bg-gray-50">
-                        <Camera className="h-5 w-5 text-gray-500" />
-                        <span className="text-sm text-gray-600 font-medium">
-                          {formData.receiptImage ? "Change Photo / Image" : "Upload Image"}
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/png, image/jpeg, image/jpg, image/webp"
-                          onChange={handleFileChange}
-                          className="hidden"
+                    
+                    {formData.receiptImage && (
+                      <div className="relative mt-1 w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                        <img
+                          src={formData.receiptImage}
+                          alt="Receipt preview"
+                          className="h-auto w-full max-h-48 object-contain bg-gray-50"
                         />
-                      </label>
-                      
-                      {formData.receiptImage && (
-                        <div className="relative mt-1 w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-                          <img
-                            src={formData.receiptImage}
-                            alt="Receipt preview"
-                            className="h-auto w-full max-h-48 object-contain bg-gray-50"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, receiptImage: "" }))}
-                            className="absolute top-2 right-2 rounded-full bg-red-600 p-1 text-white hover:bg-red-700 transition-colors shadow"
-                            title="Remove image"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, receiptImage: "" }))}
+                          className="absolute top-2 right-2 rounded-full bg-red-600 p-1 text-white hover:bg-red-700 transition-colors shadow"
+                          title="Remove image"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
               <div className="mt-8 flex gap-3">
@@ -844,6 +853,15 @@ function Expenses() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        title="Delete Record"
+        message="Are you sure you want to delete this record? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setItemToDelete(null)}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

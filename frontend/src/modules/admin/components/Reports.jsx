@@ -126,38 +126,155 @@ function Reports() {
           data = data.filter(e => e.date.split("T")[0] <= dateRange.end);
         }
         
+        // Sort data by date ascending
+        data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        let currentBalance = 0;
+        const statementData = data.map(e => {
+          const isIncome = e.type === "Income";
+          const amount = parseFloat(e.amount) || 0;
+          const credit = isIncome ? amount : 0;
+          const debit = !isIncome ? amount : 0;
+          currentBalance += credit - debit;
+          
+          return {
+            id: e.id,
+            date: e.date.split("T")[0],
+            description: e.title,
+            site: e.site?.siteName || "-",
+            category: e.category?.name || "-",
+            paymentMode: e.paymentMode,
+            credit: credit,
+            debit: debit,
+            balance: currentBalance,
+          };
+        });
+
+        const totalCredit = statementData.reduce((sum, e) => sum + (e.credit || 0), 0);
+        const totalDebit = statementData.reduce((sum, e) => sum + (e.debit || 0), 0);
+        const finalBalance = currentBalance;
+
         if (format === "pdf") {
-          const doc = new jsPDF();
-          doc.text("Credit and Debit Report", 14, 15);
+          const doc = new jsPDF("landscape");
+          
+          const siteName = selectedSite !== "All" ? (sites.find(s => String(s.id) === String(selectedSite))?.siteName || selectedSite) : "All Sites";
+          const reportTitle = selectedSite !== "All" ? `Financial Ledger - ${siteName}` : "Consolidated Financial Ledger";
+
+          doc.setFontSize(18);
+          doc.setTextColor(40, 40, 40);
+          doc.text(reportTitle, 14, 20);
+          
+          doc.setFontSize(10);
+          doc.setTextColor(100, 100, 100);
+          doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+          
+          let yPos = 34;
+          if (selectedSite === "All") {
+            doc.text(`Site: All Sites`, 14, yPos);
+            yPos += 6;
+          }
+          if (dateRange.start || dateRange.end) {
+             doc.text(`Period: ${dateRange.start || 'Start'} to ${dateRange.end || 'Present'}`, 14, yPos);
+             yPos += 6;
+          }
+
+          const formatCurrency = (amt) => {
+            return "Rs. " + amt.toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+          };
+
+          const formatNumber = (amt) => {
+            return amt.toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+          };
+
           autoTable(doc, {
-            startY: 20,
-            head: [["ID", "Title", "Site", "Category", "Amount", "Mode", "Date", "Type"]],
-            body: data.map(e => [
-              e.id, 
-              e.title, 
-              e.site?.siteName || "-", 
-              e.category?.name || "-", 
-              e.amount, 
+            startY: yPos + 4,
+            head: [["Date", "Description", "Site", "Category", "Mode", "Credit (+, Rs.)", "Debit (-, Rs.)", "Balance (Rs.)"]],
+            body: statementData.map(e => [
+              e.date, 
+              e.description, 
+              e.site, 
+              e.category, 
               e.paymentMode, 
-              e.date.split("T")[0], 
-              e.type
+              e.credit ? formatNumber(e.credit) : "-", 
+              e.debit ? formatNumber(e.debit) : "-", 
+              formatNumber(e.balance)
             ]),
+            foot: [[
+              { content: 'TOTAL', colSpan: 5, styles: { halign: 'right' } },
+              { content: formatCurrency(totalCredit), styles: { halign: 'right' } },
+              { content: formatCurrency(totalDebit), styles: { halign: 'right' } },
+              { content: formatCurrency(finalBalance), styles: { halign: 'right' } }
+            ]],
+            theme: 'striped',
+            headStyles: { fillColor: [61, 54, 190] },
+            footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+            showFoot: 'lastPage',
+            styles: { fontSize: 10, cellPadding: 3 },
+            columnStyles: {
+              5: { halign: 'right' },
+              6: { halign: 'right' },
+              7: { halign: 'right', fontStyle: 'bold' }
+            }
           });
-          doc.save("Credit_Debit_Report.pdf");
+          doc.save("Credit and Debit Report.pdf");
         } else if (format === "excel") {
-          const ws = XLSX.utils.json_to_sheet(data.map(e => ({
-            ID: e.id,
-            Title: e.title,
-            Site: e.site?.siteName || "-",
-            Category: e.category?.name || "-",
-            Amount: e.amount,
+          const excelData = statementData.map(e => ({
+            Date: e.date,
+            Description: e.description,
+            Site: e.site,
+            Category: e.category,
             "Payment Mode": e.paymentMode,
-            Date: e.date.split("T")[0],
-            Type: e.type
-          })));
+            "Credit (+)": e.credit,
+            "Debit (-)": e.debit,
+            Balance: e.balance
+          }));
+          
+          excelData.push({
+            Date: "",
+            Description: "TOTAL",
+            Site: "",
+            Category: "",
+            "Payment Mode": "",
+            "Credit (+)": totalCredit,
+            "Debit (-)": totalDebit,
+            Balance: finalBalance
+          });
+
+          const ws = XLSX.utils.json_to_sheet(excelData, { origin: "A6" });
+          
+          // Add Title Headers
+          const siteName = selectedSite !== "All" ? (sites.find(s => String(s.id) === String(selectedSite))?.siteName || selectedSite) : "All Sites";
+          const periodText = (dateRange.start || dateRange.end) ? `${dateRange.start || 'Start'} to ${dateRange.end || 'Present'}` : "All Time";
+          const reportTitle = selectedSite !== "All" ? `FINANCIAL LEDGER - ${siteName.toUpperCase()}` : "CONSOLIDATED FINANCIAL LEDGER";
+          
+          XLSX.utils.sheet_add_aoa(ws, [
+            [reportTitle],
+            [`Generated on: ${new Date().toLocaleDateString()}`],
+            [`Site: ${siteName}`],
+            [`Period: ${periodText}`]
+          ], { origin: "A1" });
+
+          // Format Column Widths
+          ws["!cols"] = [
+            { wch: 15 }, // Date
+            { wch: 40 }, // Description
+            { wch: 25 }, // Site
+            { wch: 25 }, // Category
+            { wch: 15 }, // Mode
+            { wch: 15 }, // Credit
+            { wch: 15 }, // Debit
+            { wch: 20 }  // Balance
+          ];
+
           const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, "Expenses");
-          XLSX.writeFile(wb, "Credit_Debit_Report.xlsx");
+          XLSX.utils.book_append_sheet(wb, ws, "Statement");
+          XLSX.writeFile(wb, "Credit and Debit Report.xlsx");
         }
         const todayStr = new Date().toISOString().split("T")[0];
         localStorage.setItem("report_last_generated_1", todayStr);
@@ -217,6 +334,9 @@ function Reports() {
               a.semiSkilledWorkers, 
               a.unskilledWorkers
             ]),
+            theme: 'striped',
+            headStyles: { fillColor: [61, 54, 190] },
+            styles: { fontSize: 10, cellPadding: 3 }
           });
           doc.save("Workforce_Attendance_Report.pdf");
         } else if (format === "excel") {
