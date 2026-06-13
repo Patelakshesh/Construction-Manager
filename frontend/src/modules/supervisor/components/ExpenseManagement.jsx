@@ -195,10 +195,10 @@ function ExpenseManagement({ selectedSite, user }) {
   };
 
   const getFieldClassName = (hasError) =>
-    `w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 ${
+    `w-full h-12 rounded-lg border px-4 focus:outline-none focus:ring-2 font-sans ${
       hasError
         ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-        : "border-gray-300 focus:ring-[#3D36BE]"
+        : "border-[#C8D9EF] focus:ring-[#3D35BE] text-[#353535]"
     }`;
 
   const renderFieldError = (message) =>
@@ -322,7 +322,7 @@ function ExpenseManagement({ selectedSite, user }) {
     return (
       <div className="flex h-full items-center justify-center p-8">
         <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
-          <p className="text-sm font-medium text-red-800">
+          <p className="text-sm font-medium text-red-800 font-sans">
             You are not assigned to any site. Please contact your administrator.
           </p>
         </div>
@@ -331,231 +331,269 @@ function ExpenseManagement({ selectedSite, user }) {
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <p className="text-xs uppercase tracking-wide text-gray-500">
-          Current Site
-        </p>
-        <h3 className="text-gray-900">{selectedSite.siteName}</h3>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm col-span-2">
-          <div className="mb-1 flex items-center gap-2 text-sm text-gray-600">
-            <ReceiptIndianRupee className="h-4 w-4" />
-            <p>Total Recorded Expenses for Site</p>
+    <div className="space-y-6 p-6 md:p-8 font-sans">
+      {/* Current Site & Total Stats Card */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] px-6 py-5 flex-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#717579] font-sans mb-1">
+            Current Site
+          </p>
+          <h3 className="text-lg font-bold text-[#353535] font-sans">{selectedSite.siteName}</h3>
+        </div>
+        
+        <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] px-6 py-5 flex-1 flex items-center gap-4">
+          <div 
+            className="p-2 rounded-lg border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 44, 
+              height: 44, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
+          >
+            <ReceiptIndianRupee className="h-5 w-5 text-white" />
           </div>
-          <h3 className="text-gray-900">₹{totalExpensesAmount.toLocaleString("en-IN")}</h3>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#717579] font-sans mb-0.5">Total Expenses for Site</p>
+            <h3 className="text-xl font-bold text-[#353535] font-sans truncate">₹{totalExpensesAmount.toLocaleString("en-IN")}</h3>
+          </div>
         </div>
       </div>
 
+      {/* Add New Expense Primary Button */}
       <button
         type="button"
         onClick={() => setIsAdding(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-lg py-4 text-white transition-opacity hover:opacity-90"
-        style={{ backgroundColor: "#3D36BE" }}
+        className="flex w-full items-center justify-center gap-2 rounded-lg py-4 text-white text-base font-bold transition-all shadow-[0px_2px_10px_rgba(61,53,190,0.25)] hover:scale-[1.01] active:scale-[0.99] font-sans"
+        style={{ backgroundColor: "#3D35BE" }}
       >
         <Plus className="h-5 w-5" />
         Add New Expense
       </button>
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        {isLoading ? (
-          <div className="p-4 text-center text-gray-500">Loading expenses...</div>
-        ) : expenses.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">No expenses found for this site.</div>
-        ) : (
-          <>
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full min-w-[760px]">
-                <thead className="border-b border-gray-200 bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-gray-700">Title</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Category</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Amount</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Payment Mode</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Date</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Type</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {expenses.map((expense) => (
-                    <tr
-                      key={expense.id}
-                      className="transition-colors hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 text-gray-900 font-medium">
-                        {expense.title}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {expense.category?.name || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900 font-semibold">
-                        ₹{expense.amount.toLocaleString("en-IN")}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {expense.paymentMode} {expense.transactionId ? `(${expense.transactionId})` : ""}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {new Date(expense.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
+
+      {/* Main Container Card (Table & Actions) */}
+      <div 
+        className="w-full bg-white flex flex-col min-w-0 rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]" 
+        style={{ 
+          paddingLeft: 24, 
+          paddingRight: 24, 
+          paddingTop: 30, 
+          paddingBottom: 30, 
+        }}
+      >
+        <div 
+          className="w-full flex flex-col overflow-hidden rounded-lg min-w-0" 
+          style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
+        >
+          {isLoading ? (
+            <div className="p-8 text-center text-[#717579] font-sans bg-white">Loading expenses...</div>
+          ) : expenses.length === 0 ? (
+            <div className="p-8 text-center text-[#717579] font-sans bg-white">No expenses found for this site.</div>
+          ) : (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto w-full">
+                <table className="w-full min-w-[760px] border-collapse">
+                  <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
+                    <tr className="h-[68px]">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Title</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Category</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Type</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {expenses.map((expense) => (
+                      <tr
+                        key={expense.id}
+                        className="h-[78px] transition-colors hover:bg-gray-50/50"
+                      >
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-semibold font-sans capitalize">
+                          {expense.title}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {expense.category?.name || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#3E424E] font-bold font-sans">
+                          ₹{expense.amount.toLocaleString("en-IN")}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {expense.paymentMode} {expense.transactionId ? `(${expense.transactionId})` : ""}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {new Date(expense.date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className="inline-flex items-center justify-center rounded-lg px-3 py-1 font-sans text-sm font-semibold"
+                            style={{
+                              backgroundColor:
+                                expense.type === "Income"
+                                  ? "#EFFFFE"
+                                  : "#FFF1F0",
+                              border:
+                                expense.type === "Income"
+                                    ? "1px solid #A0EBE5"
+                                    : "1px solid #F5CDD5",
+                              color:
+                                expense.type === "Income"
+                                  ? "#01B6A8"
+                                  : "#F15F7F",
+                            }}
+                          >
+                            {expense.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            {expense.receiptImage && (
+                              <button
+                                type="button"
+                                onClick={() => setViewingImage(expense.receiptImage)}
+                                className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#3D35BE]"
+                                title="View Receipt"
+                              >
+                                <Eye className="h-5 w-5" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(expense)}
+                              className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                              title="Edit"
+                            >
+                              <Edit className="h-5 w-5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(expense.id)}
+                              className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="block md:hidden bg-white divide-y divide-gray-100">
+                {expenses.map((expense) => (
+                  <div
+                    key={expense.id}
+                    className="p-4 hover:bg-gray-50/50 transition-colors"
+                  >
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-[#353535] capitalize text-base font-sans">
+                          {expense.title}
+                        </p>
                         <span
-                          className="rounded px-2.5 py-0.5 text-xs font-medium"
+                          className="inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-xs font-semibold font-sans mt-1"
                           style={{
                             backgroundColor:
                               expense.type === "Income"
-                                ? "#DCFCE7"
-                                : "#FEE2E2",
+                                ? "#EFFFFE"
+                                : "#FFF1F0",
+                            border:
+                              expense.type === "Income"
+                                  ? "1px solid #A0EBE5"
+                                  : "1px solid #F5CDD5",
                             color:
                               expense.type === "Income"
-                                ? "#15803D"
-                                : "#DC2626",
+                                ? "#01B6A8"
+                                : "#F15F7F",
                           }}
                         >
                           {expense.type}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {expense.receiptImage && (
-                            <button
-                              type="button"
-                              onClick={() => setViewingImage(expense.receiptImage)}
-                              className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                              title="View Receipt"
-                            >
-                              <Eye className="h-5 w-5 text-[#3D36BE]" />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(expense)}
-                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                            title="Edit"
-                          >
-                            <Edit className="h-5 w-5 text-gray-600" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(expense.id)}
-                            className="rounded-lg p-2 transition-colors hover:bg-red-50"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-5 w-5 text-red-500" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="block md:hidden divide-y divide-gray-100">
-              {expenses.map((expense) => (
-                <div
-                  key={expense.id}
-                  className="p-4 transition-colors hover:bg-gray-50"
-                >
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900 capitalize">
-                        {expense.title}
-                      </p>
-                      <span
-                        className="rounded px-2 py-0.5 text-xs font-medium"
-                        style={{
-                          backgroundColor:
-                            expense.type === "Income"
-                              ? "#DCFCE7"
-                              : "#FEE2E2",
-                          color:
-                            expense.type === "Income"
-                              ? "#15803D"
-                              : "#DC2626",
-                        }}
-                      >
-                        {expense.type}
-                      </span>
-                    </div>
-                    <p className="text-lg text-gray-900 font-semibold">
-                      ₹{expense.amount.toLocaleString("en-IN")}
-                    </p>
-                  </div>
-
-                  <div className="mb-4 space-y-2 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Category:</span>
-                      <span>{expense.category?.name || "Uncategorized"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Payment Mode:</span>
-                      <span>{expense.paymentMode}</span>
-                    </div>
-                    {expense.transactionId && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Transaction ID:</span>
-                        <span>{expense.transactionId}</span>
                       </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="font-medium">Date:</span>
-                      <span>{new Date(expense.date).toLocaleDateString()}</span>
+                      <p className="text-[17px] text-[#353535] font-bold font-sans">
+                        ₹{expense.amount.toLocaleString("en-IN")}
+                      </p>
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
-                    {expense.receiptImage && (
+                    <div className="mb-4 space-y-2 text-sm text-[#5B6065] font-sans">
+                      <div className="flex justify-between">
+                        <span className="font-medium text-[#717579]">Category:</span>
+                        <span>{expense.category?.name || "Uncategorized"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-[#717579]">Payment Mode:</span>
+                        <span>{expense.paymentMode}</span>
+                      </div>
+                      {expense.transactionId && (
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#717579]">Transaction ID:</span>
+                          <span>{expense.transactionId}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="font-medium text-[#717579]">Date:</span>
+                        <span>{new Date(expense.date).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                      {expense.receiptImage && (
+                        <button
+                          type="button"
+                          onClick={() => setViewingImage(expense.receiptImage)}
+                          className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#3D35BE]"
+                          title="View Receipt"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={() => setViewingImage(expense.receiptImage)}
-                        className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                        title="View Receipt"
+                        onClick={() => handleEdit(expense)}
+                        className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                        title="Edit"
                       >
-                        <Eye className="h-5 w-5 text-[#3D36BE]" />
+                        <Edit className="h-5 w-5" />
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(expense)}
-                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                      title="Edit"
-                    >
-                      <Edit className="h-5 w-5 text-gray-600" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(expense.id)}
-                      className="rounded-lg p-2 transition-colors hover:bg-red-50"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-5 w-5 text-red-500" />
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(expense.id)}
+                        className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+            </>
+          )}
 
-        {/* Pagination */}
-        <div className="border-t border-gray-200 px-4 py-3">
-          <Pagination
-            pageNumber={pageNumber}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            onPageChange={(nextPage) => setPageNumber(nextPage)}
-          />
+          {/* Pagination Footer */}
+          <div className="border-t border-gray-200 px-6 py-4 bg-white">
+            <Pagination
+              pageNumber={pageNumber}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={(nextPage) => setPageNumber(nextPage)}
+            />
+          </div>
         </div>
       </div>
 
       {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto md:items-center">
-          <div className="my-auto w-full max-w-2xl rounded-lg bg-white shadow-xl">
-            <div className="p-6">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto md:items-center">
+          <div className="my-auto w-full max-w-2xl rounded-2xl bg-white shadow-2xl p-6 md:p-8">
+            <div className="p-0">
               <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-gray-900">{editingItem ? "Edit Expense" : "Add New Expense"}</h3>
+                <h3 className="text-xl font-bold text-[#353535] font-sans">
+                  {editingItem ? "Edit Expense" : "Add New Expense"}
+                </h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -571,18 +609,17 @@ function ExpenseManagement({ selectedSite, user }) {
                       receiptImage: null,
                     });
                   }}
-                  className="rounded-lg p-2 hover:bg-gray-100"
+                  className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 transition-colors"
                 >
-                  <X className="h-5 w-5 text-gray-600" />
+                  <X className="h-5 w-5 text-gray-500" />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                   {/* Col 1: Title */}
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Title <span className="text-[#EC3F3F]">*</span>
                     </label>
                     <input
@@ -600,7 +637,7 @@ function ExpenseManagement({ selectedSite, user }) {
 
                   {/* Col 2: Amount */}
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Amount (₹) <span className="text-[#EC3F3F]">*</span>
                     </label>
                     <input
@@ -619,7 +656,7 @@ function ExpenseManagement({ selectedSite, user }) {
 
                   {/* Col 1: Category */}
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Category <span className="text-[#EC3F3F]">*</span>
                     </label>
                     <select
@@ -642,7 +679,7 @@ function ExpenseManagement({ selectedSite, user }) {
 
                   {/* Col 2: Date */}
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Date <span className="text-[#EC3F3F]">*</span>
                     </label>
                     <input
@@ -659,7 +696,7 @@ function ExpenseManagement({ selectedSite, user }) {
 
                   {/* Col 1: Payment Mode */}
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Payment Mode <span className="text-[#EC3F3F]">*</span>
                     </label>
                     <select
@@ -683,7 +720,7 @@ function ExpenseManagement({ selectedSite, user }) {
                   {/* Col 2: Check Number / Transaction ID (only if not Cash) */}
                   {(formData.paymentMode === "Check" || formData.paymentMode === "Online") ? (
                     <div>
-                      <label className="mb-2 block text-gray-700">
+                      <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                         {formData.paymentMode === "Check" ? "Check Number" : "Transaction ID"}{" "}
                         <span className="text-[#EC3F3F]">*</span>
                       </label>
@@ -709,17 +746,17 @@ function ExpenseManagement({ selectedSite, user }) {
 
                   {/* Upload Receipt — full width, always last */}
                   <div className="md:col-span-2">
-                    <label className="mb-1 block text-gray-700 font-medium">
+                    <label className="mb-1 block text-sm font-semibold text-[#5B6065] font-sans">
                       Upload Bill/Receipt{" "}
-                      <span className="text-sm font-normal text-gray-400">(Optional)</span>
+                      <span className="text-xs font-normal text-gray-400 font-sans">(Optional)</span>
                     </label>
-                    <p className="mb-2 text-xs text-gray-500">
+                    <p className="mb-3 text-xs text-[#717579] font-sans">
                       Supported formats: PNG, JPG, JPEG, WEBP (Max size: 2MB)
                     </p>
                     <div className="flex flex-col gap-3">
-                      <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE] hover:bg-gray-50">
-                        <Camera className="h-5 w-5 text-gray-500" />
-                        <span className="text-sm text-gray-600 font-medium">
+                      <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#C8D9EF] py-3 transition-colors hover:border-[#3D35BE] hover:bg-gray-50/50">
+                        <Camera className="h-5 w-5 text-[#717579]" />
+                        <span className="text-sm text-[#5B6065] font-semibold font-sans">
                           {formData.receiptImage ? "Change Photo / Image" : "Take Photo / Upload Image"}
                         </span>
                         <input
@@ -749,15 +786,14 @@ function ExpenseManagement({ selectedSite, user }) {
                       )}
                     </div>
                   </div>
-
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-3 pt-6">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                    style={{ backgroundColor: "#3D36BE" }}
+                    className="flex-1 h-12 rounded-lg text-white font-bold text-base transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: "#3D35BE" }}
                   >
                     {isSubmitting ? "Submitting..." : editingItem ? "Update Expense" : "Submit Expense"}
                   </button>
@@ -778,7 +814,7 @@ function ExpenseManagement({ selectedSite, user }) {
                       });
                     }}
                     disabled={isSubmitting}
-                    className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 h-12 rounded-lg bg-gray-100 text-[#5B6065] font-semibold text-base transition-colors hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
@@ -788,27 +824,29 @@ function ExpenseManagement({ selectedSite, user }) {
           </div>
         </div>
       )}
+
       {viewingImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="relative max-w-3xl w-full overflow-hidden rounded-lg bg-white p-2 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative max-w-3xl w-full overflow-hidden rounded-2xl bg-white p-3 shadow-2xl">
             <button
               type="button"
               onClick={() => setViewingImage(null)}
-              className="absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors z-10"
+              className="absolute top-5 right-5 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors z-10 shadow-lg"
               title="Close"
             >
               <X className="h-5 w-5" />
             </button>
-            <div className="flex items-center justify-center p-4 bg-gray-50 min-h-[300px]">
+            <div className="flex items-center justify-center p-4 bg-gray-50 min-h-[300px] rounded-xl">
               <img
                 src={viewingImage}
                 alt="Receipt Bill"
-                className="max-h-[80vh] w-auto max-w-full object-contain rounded"
+                className="max-h-[80vh] w-auto max-w-full object-contain rounded-lg"
               />
             </div>
           </div>
         </div>
       )}
+
       <ConfirmModal
         isOpen={!!itemToDelete}
         title="Delete Expense"

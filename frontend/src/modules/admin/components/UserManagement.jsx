@@ -139,29 +139,25 @@ function UserManagement() {
       setTotalCount(userPage?.totalCount || 0);
 
       if (response?.data?.data?.allUsers) {
-        let allU = response.data.data.allUsers;
-        const searchLower = trimmedSearch.toLowerCase();
-        if (searchLower) {
-          allU = allU.filter(u => 
-            (u.name?.toLowerCase().includes(searchLower)) ||
-            (u.email?.toLowerCase().includes(searchLower)) ||
-            (u.mobileNumber?.toLowerCase().includes(searchLower))
-          );
-        }
+        const allU = response.data.data.allUsers;
         
-        let overallAdmins = 0;
-        let overallSupervisors = 0;
+        let activeSupervisors = 0;
+        let inactiveSupervisors = 0;
         
         allU.forEach(u => {
-          if (!u.enable) return;
           const roleName = nextRoleLookup[u.roleId]?.roleName || "";
           const normName = normalizeRoleName(roleName);
-          if (normName === "admin") overallAdmins++;
-          if (normName === "supervisor") overallSupervisors++;
+          if (normName === "supervisor") {
+            if (u.enable) {
+              activeSupervisors++;
+            } else {
+              inactiveSupervisors++;
+            }
+          }
         });
         
-        setOverallAdminCount(overallAdmins);
-        setOverallSupervisorCount(overallSupervisors);
+        setOverallSupervisorCount(activeSupervisors);
+        setOverallAdminCount(inactiveSupervisors);
       }
     } catch (error) {
       const apiMessage =
@@ -497,247 +493,290 @@ function UserManagement() {
   const displayEnd = Math.min(pageNumber * pageSize, totalCount);
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="mb-2 text-2xl font-semibold text-gray-900 md:text-3xl">
-            User Management
-          </h1>
+    <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF]">
+      {/* Title */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
+          User Management
+        </h1>
+      </div>
+
+      {/* Stats Cards Section */}
+      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Active Supervisors Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'linear-gradient(0deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.20) 100%), conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <UserCheck className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{overallSupervisorCount}</span>
+            <span className="text-base text-[#4E5159] font-normal">Active Supervisors</span>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleAddNew}
-          disabled={roles.length === 0}
-          className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          style={{ backgroundColor: "#3D36BE" }}
+
+        {/* Inactive Supervisors Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'linear-gradient(0deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.20) 100%), conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <UserX className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{overallAdminCount}</span>
+            <span className="text-base text-[#4E5159] font-normal">Inactive Supervisors</span>
+          </div>
+        </div>
+
+        {/* Total Users Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'linear-gradient(0deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.20) 100%), conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <UserCheck className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{totalCount}</span>
+            <span className="text-base text-[#4E5159] font-normal">Total Users</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Container Card (Table & Actions) */}
+      <div 
+        className="w-full bg-white flex flex-col gap-7 min-w-0" 
+        style={{ 
+          paddingLeft: 24, 
+          paddingRight: 24, 
+          paddingTop: 30, 
+          paddingBottom: 30, 
+          borderTopRightRadius: 20, 
+          borderBottomRightRadius: 20, 
+          borderBottomLeftRadius: 20 
+        }}
+      >
+        {/* Inner layout wrapper styled with purple outline */}
+        <div 
+          className="w-full flex flex-col overflow-hidden rounded-lg min-w-0" 
+          style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
         >
-          <Plus className="h-5 w-5" />
-          Add User
-        </button>
-      </div>
+          {/* Header Row: Search & Add Button */}
+          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+            {/* Search Input */}
+            <div className="w-full sm:max-w-md relative flex items-center">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search by name, mobile, or email..."
+                className="w-full h-12 pl-12 pr-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
+              />
+              <svg className="w-5 h-5 absolute left-4 text-[#717579]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
-              <UserCheck className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Supervisor</p>
-              <h3 className="text-gray-900">{overallSupervisorCount}</h3>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-50">
-              <UserX className="h-6 w-6 text-gray-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Admin</p>
-              <h3 className="text-gray-900">{overallAdminCount}</h3>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#3D36BE20" }}
+            {/* Add Button */}
+            <button
+              type="button"
+              onClick={handleAddNew}
+              disabled={roles.length === 0}
+              className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
             >
-              <UserCheck className="h-6 w-6" style={{ color: "#3D36BE" }} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Users</p>
-              <h3 className="text-gray-900">{totalCount}</h3>
-            </div>
+              <Plus className="h-5 w-5" />
+              Add User
+            </button>
           </div>
-        </div>
-      </div>
 
-      <div className="mb-6">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Search by name, mobile, or email"
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] sm:max-w-sm"
-        />
-      </div>
-
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <div className="hidden md:block">
-            <table className="w-full min-w-[760px]">
-              <thead className="border-b border-gray-200 bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-gray-700">Name</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Phone</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Role</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Status</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Actions</th>
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto w-full">
+            <table className="w-full min-w-[760px] border-collapse">
+              <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
+                <tr className="h-[68px]">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Employee Name</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Role</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Phone</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Email</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Onboarding Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {isLoading && (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="px-6 py-6 text-center text-gray-500"
-                    >
+                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500 font-sans">
                       Loading users...
                     </td>
                   </tr>
                 )}
                 {!isLoading && loadError && (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="px-6 py-6 text-center text-red-600"
-                    >
+                    <td colSpan={7} className="px-6 py-8 text-center text-red-600 font-sans">
                       {loadError}
                     </td>
                   </tr>
                 )}
                 {!isLoading && !loadError && users.length === 0 && (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="px-6 py-6 text-center text-gray-500"
-                    >
+                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500 font-sans">
                       No users found.
                     </td>
                   </tr>
                 )}
-                {!isLoading &&
-                  !loadError &&
-                  users.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="transition-colors hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="text-gray-900 capitalize">{user.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {user.email || "No email"}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">{user.phone}</td>
-                      <td className="px-6 py-4 text-gray-900 capitalize">
-                        {formatRoleName(user.roleName)}
-                      </td>
-                      <td className="px-6 py-4">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(user)}
-                            disabled={user.phone === currentUserMobile}
-                            title={user.phone === currentUserMobile ? "Cannot change your own status" : ""}
-                            className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
-                              user.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
-                            }`}
-                          >
-                            <span className={`absolute text-[10px] font-bold text-white ${user.enable ? 'left-2.5' : 'right-1'}`}>
-                              {user.enable ? "ACTIVE" : "INACTIVE"}
-                            </span>
-                            <span
-                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                user.enable ? "translate-x-[52px]" : "translate-x-1"
-                              }`}
-                            />
-                          </button>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(user)}
-                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                          >
-                            <Edit className="h-5 w-5 text-gray-600" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                {!isLoading && !loadError && users.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="h-[78px] transition-colors hover:bg-gray-50/50"
+                  >
+                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
+                      {user.name}
+                    </td>
+                    <td className="px-6 py-4 text-base text-[#3E424E] font-semibold capitalize font-sans">
+                      {formatRoleName(user.roleName)}
+                    </td>
+                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                      {user.phone}
+                    </td>
+                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal lowercase font-sans">
+                      {user.email || "—"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(user)}
+                        disabled={user.phone === currentUserMobile}
+                        title={user.phone === currentUserMobile ? "Cannot de-activate yourself" : ""}
+                        className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {user.enable ? (
+                          <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-sm font-medium text-[#01B6A8] px-3 py-1 font-sans">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-base font-semibold text-[#F15F7F] px-3 py-1 font-sans">
+                            Inactive
+                          </span>
+                        )}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                      {user.createdOn ? new Date(user.createdOn).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : "—"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(user)}
+                        className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                        title="Edit"
+                      >
+                        <Edit className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
 
-          <div className="block md:hidden">
+          {/* Mobile View */}
+          <div className="block md:hidden bg-white divide-y divide-gray-100">
             {isLoading && (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 Loading users...
               </div>
             )}
             {!isLoading && loadError && (
-              <div className="p-6 text-center text-red-600">
+              <div className="p-6 text-center text-red-600 font-sans">
                 {loadError}
               </div>
             )}
             {!isLoading && !loadError && users.length === 0 && (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 No users found.
               </div>
             )}
-            {!isLoading &&
-              !loadError &&
-              users.map((user) => (
-                <div
-                  key={user.id}
-                  className="border-b border-gray-200 p-4 last:border-0 hover:bg-gray-50"
-                >
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900 capitalize">{user.name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{formatRoleName(user.roleName)}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(user)}
-                      disabled={user.phone === currentUserMobile}
-                      title={user.phone === currentUserMobile ? "Cannot change your own status" : ""}
-                      className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
-                        user.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
-                      }`}
-                    >
-                      <span className={`absolute text-[10px] font-bold text-white ${user.enable ? 'left-2.5' : 'right-1'}`}>
-                        {user.enable ? "ACTIVE" : "INACTIVE"}
+            {!isLoading && !loadError && users.map((user) => (
+              <div
+                key={user.id}
+                className="p-4 hover:bg-gray-50/50 transition-colors"
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-gray-900 capitalize text-base font-sans">{user.name}</p>
+                    <p className="text-xs text-gray-500 capitalize font-sans">{formatRoleName(user.roleName)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(user)}
+                    disabled={user.phone === currentUserMobile}
+                    className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {user.enable ? (
+                      <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans">
+                        Active
                       </span>
-                      <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          user.enable ? "translate-x-[52px]" : "translate-x-1"
-                        }`}
-                      />
-                    </button>
+                    ) : (
+                      <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-xs font-semibold text-[#F15F7F] px-2.5 py-1 font-sans">
+                        Inactive
+                      </span>
+                    )}
+                  </button>
+                </div>
+                
+                <div className="mb-4 space-y-2 text-sm text-[#5B6065]">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-[#3E424E] font-sans">Phone:</span>
+                    <span className="font-sans">{user.phone}</span>
                   </div>
-                  
-                  <div className="mb-4 space-y-2 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Phone:</span>
-                      <span>{user.phone}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Email:</span>
-                      <span className="truncate ml-4">{user.email || "N/A"}</span>
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-[#3E424E] font-sans">Email:</span>
+                    <span className="truncate ml-4 font-sans">{user.email || "—"}</span>
                   </div>
-
-                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(user)}
-                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                    >
-                      <Edit className="h-5 w-5 text-gray-600" />
-                    </button>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-[#3E424E] font-sans">Onboarding:</span>
+                    <span className="font-sans">{user.createdOn ? new Date(user.createdOn).toLocaleDateString() : "—"}</span>
                   </div>
                 </div>
-              ))}
+
+                <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(user)}
+                    className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                    title="Edit"
+                  >
+                    <Edit className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-          {/* Pagination */}
-          <div className="border-t border-gray-200 px-6 py-4">
+
+          {/* Pagination Footer */}
+          <div className="border-t border-gray-200 px-6 py-4 bg-white">
             <Pagination
               pageNumber={pageNumber}
               pageSize={pageSize}
@@ -748,192 +787,195 @@ function UserManagement() {
         </div>
       </div>
 
+      {/* Modal Dialog */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="mb-6 text-gray-900">
-              {editingUser ? "Edit User" : "Add New User"}
-            </h3>
+              <h3 className="mb-6 text-gray-900 font-bold text-xl font-sans">
+                {editingUser ? "Edit User" : "Add New User"}
+              </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Row 1: Full Name | Phone */}
-              <div>
-                <label className="mb-2 block text-gray-700">
-                  Full Name<span className="text-[#EC3F3F]">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(event) =>
-                    setFormData({ ...formData, name: event.target.value })
-                  }
-                  className={getFieldClassName(Boolean(formErrors.name))}
-                  placeholder="Enter full name"
-                  aria-invalid={Boolean(formErrors.name)}
-                />
-                {renderFieldError(formErrors.name)}
-              </div>
-
-              <div>
-                <label className="mb-2 block text-gray-700">
-                  Phone<span className="text-[#EC3F3F]">*</span>
-                </label>
-                <input
-                  type="tel"
-                  maxLength={10}
-                  required
-                  value={formData.phone}
-                  onChange={(event) => {
-                    const val = event.target.value.replace(/\D/g, '').slice(0, 10);
-                    setFormData({ ...formData, phone: val });
-                  }}
-                  className={getFieldClassName(Boolean(formErrors.phone))}
-                  placeholder="Enter 10 digit number"
-                  aria-invalid={Boolean(formErrors.phone)}
-                />
-                {renderFieldError(formErrors.phone)}
-              </div>
-
-              {/* Row 2: Email | Role */}
-              <div>
-                <label className="mb-2 block text-gray-700">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(event) =>
-                    setFormData({ ...formData, email: event.target.value })
-                  }
-                  className={getFieldClassName(Boolean(formErrors.email))}
-                  placeholder="Enter email address"
-                  aria-invalid={Boolean(formErrors.email)}
-                />
-                {renderFieldError(formErrors.email)}
-              </div>
-
-              <div>
-                <label className="mb-2 block text-gray-700">
-                  Role<span className="text-[#EC3F3F]">*</span>
-                </label>
-                <select
-                  value={formData.roleId}
-                  onChange={(event) =>
-                    setFormData({ ...formData, roleId: event.target.value })
-                  }
-                  className={getFieldClassName(Boolean(formErrors.roleId))}
-                  aria-invalid={Boolean(formErrors.roleId)}
-                >
-                  <option value="" disabled>
-                    Select role
-                  </option>
-                  {roles.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {formatRoleName(role.roleName)}
-                    </option>
-                  ))}
-                </select>
-                {renderFieldError(formErrors.roleId)}
-              </div>
-
-              {/* Row 3: Password | Active User */}
-              <div>
-                <label className="mb-2 block text-gray-700">
-                  Password<span className="text-[#EC3F3F]">*</span>
-                </label>
-                <div className="relative">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Row 1: Full Name | Phone */}
+                <div>
+                  <label className="mb-2 block text-gray-700 font-medium font-sans">
+                    Full Name<span className="text-[#EC3F3F]">*</span>
+                  </label>
                   <input
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
+                    type="text"
+                    value={formData.name}
                     onChange={(event) =>
-                      setFormData({ ...formData, password: event.target.value })
+                      setFormData({ ...formData, name: event.target.value })
                     }
-                    className={`${getFieldClassName(Boolean(formErrors.password))} pr-10`}
-                    placeholder="Enter password"
-                    aria-invalid={Boolean(formErrors.password)}
+                    className={`${getFieldClassName(Boolean(formErrors.name))} font-sans`}
+                    placeholder="Enter full name"
+                    aria-invalid={Boolean(formErrors.name)}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
+                  {renderFieldError(formErrors.name)}
                 </div>
-                {renderFieldError(formErrors.password)}
-              </div>
 
-              <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                <span className="text-sm text-gray-500">Status</span>
-                <label className="flex cursor-pointer items-center gap-3">
+                <div>
+                  <label className="mb-2 block text-gray-700 font-medium font-sans">
+                    Phone<span className="text-[#EC3F3F]">*</span>
+                  </label>
                   <input
-                    type="checkbox"
-                    id="activeStatus"
-                    checked={formData.enable}
-                    onChange={(event) =>
-                      setFormData({
-                        ...formData,
-                        enable: event.target.checked,
-                      })
-                    }
-                    className="h-5 w-5 rounded border-gray-300 accent-[#3D36BE]"
+                    type="tel"
+                    maxLength={10}
+                    required
+                    value={formData.phone}
+                    onChange={(event) => {
+                      const val = event.target.value.replace(/\D/g, '').slice(0, 10);
+                      setFormData({ ...formData, phone: val });
+                    }}
+                    className={`${getFieldClassName(Boolean(formErrors.phone))} font-sans`}
+                    placeholder="Enter 10 digit number"
+                    aria-invalid={Boolean(formErrors.phone)}
                   />
-                  <span className="text-gray-700">Active User</span>
-                </label>
+                  {renderFieldError(formErrors.phone)}
+                </div>
+
+                {/* Row 2: Email | Role */}
+                <div>
+                  <label className="mb-2 block text-gray-700 font-medium font-sans">Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(event) =>
+                      setFormData({ ...formData, email: event.target.value })
+                    }
+                    className={`${getFieldClassName(Boolean(formErrors.email))} font-sans`}
+                    placeholder="Enter email address"
+                    aria-invalid={Boolean(formErrors.email)}
+                  />
+                  {renderFieldError(formErrors.email)}
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-gray-700 font-medium font-sans">
+                    Role<span className="text-[#EC3F3F]">*</span>
+                  </label>
+                  <select
+                    value={formData.roleId}
+                    onChange={(event) =>
+                      setFormData({ ...formData, roleId: event.target.value })
+                    }
+                    className={`${getFieldClassName(Boolean(formErrors.roleId))} font-sans`}
+                    aria-invalid={Boolean(formErrors.roleId)}
+                  >
+                    <option value="" disabled>
+                      Select role
+                    </option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {formatRoleName(role.roleName)}
+                      </option>
+                    ))}
+                  </select>
+                  {renderFieldError(formErrors.roleId)}
+                </div>
+
+                {/* Row 3: Password | Active User */}
+                <div>
+                  <label className="mb-2 block text-gray-700 font-medium font-sans">
+                    Password<span className="text-[#EC3F3F]">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(event) =>
+                        setFormData({ ...formData, password: event.target.value })
+                      }
+                      className={`${getFieldClassName(Boolean(formErrors.password))} pr-10 font-sans`}
+                      placeholder="Enter password"
+                      aria-invalid={Boolean(formErrors.password)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  {renderFieldError(formErrors.password)}
+                </div>
+
+                <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                  <span className="text-sm text-gray-500 font-sans font-medium">Status</span>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="activeStatus"
+                      checked={formData.enable}
+                      onChange={(event) =>
+                        setFormData({
+                          ...formData,
+                          enable: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5 rounded border-gray-300 accent-[#3D36BE]"
+                    />
+                    <span className="text-gray-700 font-sans">Active User</span>
+                  </label>
+                </div>
+
+                {/* Row 4: Address (full width, last) */}
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-gray-700 font-medium font-sans">
+                    Address<span className="text-[#EC3F3F]">*</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formData.address}
+                    onChange={(event) =>
+                      setFormData({ ...formData, address: event.target.value })
+                    }
+                    className={`${getFieldClassName(Boolean(formErrors.address))} font-sans`}
+                    placeholder="Enter address"
+                    aria-invalid={Boolean(formErrors.address)}
+                  />
+                  {renderFieldError(formErrors.address)}
+                </div>
               </div>
 
-              {/* Row 4: Address (full width, last) */}
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-gray-700">
-                  Address<span className="text-[#EC3F3F]">*</span>
-                </label>
-                <textarea
-                  rows={2}
-                  value={formData.address}
-                  onChange={(event) =>
-                    setFormData({ ...formData, address: event.target.value })
-                  }
-                  className={getFieldClassName(Boolean(formErrors.address))}
-                  placeholder="Enter address"
-                  aria-invalid={Boolean(formErrors.address)}
-                />
-                {renderFieldError(formErrors.address)}
+              {/* Action buttons inside the modal */}
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex-1 rounded-lg px-4 py-2.5 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70 font-bold font-sans"
+                  style={{ backgroundColor: "#3D35BE" }}
+                >
+                  {isSaving ? "Saving..." : editingUser ? "Update User" : "Create User"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setShowPassword(false);
+                  }}
+                  disabled={isSaving}
+                  className="flex-1 rounded-lg bg-gray-200 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70 font-bold font-sans"
+                >
+                  Cancel
+                </button>
               </div>
-            </div>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-                style={{ backgroundColor: "#3D36BE" }}
-              >
-                {isSaving ? "Saving..." : editingUser ? "Update User" : "Create User"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setShowPassword(false);
-                }}
-                disabled={isSaving}
-                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                Cancel
-              </button>
-            </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Confirm deletion modal */}
       <ConfirmModal
         isOpen={!!itemToDelete}
         title="Delete User"

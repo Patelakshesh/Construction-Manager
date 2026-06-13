@@ -388,22 +388,21 @@ function SiteManagement() {
   // ── JSX ──────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
       {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="mb-2 text-2xl font-semibold text-gray-900 md:text-3xl">
+          <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
             Site Management
           </h1>
-          <p className="text-gray-600">
+          <p className="text-[#4E5159] mt-1 text-base font-normal">
             Manage construction sites, budgets, and supervisors
           </p>
         </div>
         <button
           type="button"
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#3D36BE" }}
+          className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
         >
           <Plus className="h-5 w-5" />
           Add Site
@@ -411,91 +410,134 @@ function SiteManagement() {
       </div>
 
       {/* Stats cards */}
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
-              <UserCheck className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Active</p>
-              <h3 className="text-gray-900">{overallActiveSiteCount}</h3>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-50">
-              <UserX className="h-6 w-6 text-gray-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Inactive</p>
-              <h3 className="text-gray-900">{overallInactiveSiteCount}</h3>
+      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Total Active Sites Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <UserCheck className="h-6 w-6 text-white" />
             </div>
           </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{overallActiveSiteCount}</span>
+            <span className="text-base text-[#4E5159] font-normal">Active Sites</span>
+          </div>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#3D36BE20" }}
-            >
-              <MapPin className="h-6 w-6" style={{ color: "#3D36BE" }} />
+
+        {/* Total Inactive Sites Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3C368D 0deg, #857FF4 100%)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <UserX className="h-6 w-6 text-white" />
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Sites</p>
-              <h3 className="text-gray-900">{totalCount}</h3>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{overallInactiveSiteCount}</span>
+            <span className="text-base text-[#4E5159] font-normal">Inactive Sites</span>
+          </div>
+        </div>
+
+        {/* Total Sites Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <MapPin className="h-6 w-6 text-white" />
             </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{totalCount}</span>
+            <span className="text-base text-[#4E5159] font-normal">Total Sites</span>
           </div>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <input
-          type="text"
-          placeholder="Search by site, location or supervisor..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setPageNumber(1);
-          }}
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-        />
-      </div>
+      {/* Main Container Card (Table & Actions) */}
+      <div 
+        className="w-full bg-white flex flex-col gap-7 min-w-0" 
+        style={{ 
+          paddingLeft: 24, 
+          paddingRight: 24, 
+          paddingTop: 30, 
+          paddingBottom: 30, 
+          borderTopRightRadius: 20, 
+          borderBottomRightRadius: 20, 
+          borderBottomLeftRadius: 20 
+        }}
+      >
+        <div 
+          className="w-full flex flex-col overflow-hidden rounded-lg min-w-0" 
+          style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
+        >
+          {/* Header Row: Search Input */}
+          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+            <div className="w-full sm:max-w-md relative flex items-center">
+              <input
+                type="text"
+                placeholder="Search by site, location or supervisor..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPageNumber(1);
+                }}
+                className="w-full h-12 pl-12 pr-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
+              />
+              <svg className="w-5 h-5 absolute left-4 text-[#717579]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <div className="hidden md:block">
-            <table className="w-full min-w-[780px]">
-              <thead className="border-b border-gray-200 bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-gray-700">Site</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Location</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Supervisor</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Status</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Actions</th>
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto w-full">
+            <table className="w-full min-w-[760px] border-collapse">
+              <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
+                <tr className="h-[68px]">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Site</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Location</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Supervisor</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {isLoading && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-6 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500 font-sans">
                       Loading sites...
                     </td>
                   </tr>
                 )}
                 {!isLoading && loadError && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-6 text-center text-red-600">
+                    <td colSpan={5} className="px-6 py-8 text-center text-red-600 font-sans">
                       {loadError}
                     </td>
                   </tr>
                 )}
                 {!isLoading && !loadError && sites.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-6 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500 font-sans">
                       No sites found.
                     </td>
                   </tr>
@@ -505,44 +547,44 @@ function SiteManagement() {
                   sites.map((site) => (
                     <tr
                       key={site.id}
-                      className="transition-colors hover:bg-gray-50"
+                      className="h-[78px] transition-colors hover:bg-gray-50/50"
                     >
-                      <td className="px-6 py-4">
-                        <p className="text-gray-900 capitalize">{site.name}</p>
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
+                        {site.name}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">{site.location}</td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {site.supervisor.length > 0
-                          ? site.supervisor.join(", ")
-                          : "—"}
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                        {site.location}
+                      </td>
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                        {site.supervisor.length > 0 ? site.supervisor.join(", ") : "—"}
                       </td>
                       <td className="px-6 py-4">
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(site)}
                           disabled={isSaving}
-                          className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${site.status === "active" ? "bg-[#34A853]" : "bg-[#EA4335]"
-                            }`}
+                          className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <span className={`absolute text-[10px] font-bold text-white ${site.status === "active" ? 'left-2.5' : 'right-1'}`}>
-                            {site.status === "active" ? "ACTIVE" : "INACTIVE"}
-                          </span>
-                          <span
-                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${site.status === "active" ? "translate-x-[52px]" : "translate-x-1"
-                              }`}
-                          />
+                          {site.status === "active" ? (
+                            <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-sm font-medium text-[#01B6A8] px-3 py-1 font-sans">
+                              Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-base font-semibold text-[#F15F7F] px-3 py-1 font-sans">
+                              Inactive
+                            </span>
+                          )}
                         </button>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(site)}
-                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                          >
-                            <Edit className="h-5 w-5 text-gray-600" />
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(site)}
+                          className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                          title="Edit"
+                        >
+                          <Edit className="h-5 w-5" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -550,19 +592,20 @@ function SiteManagement() {
             </table>
           </div>
 
-          <div className="block md:hidden">
+          {/* Mobile View */}
+          <div className="block md:hidden bg-white divide-y divide-gray-100">
             {isLoading && (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 Loading sites...
               </div>
             )}
             {!isLoading && loadError && (
-              <div className="p-6 text-center text-red-600">
+              <div className="p-6 text-center text-red-600 font-sans">
                 {loadError}
               </div>
             )}
             {!isLoading && !loadError && sites.length === 0 && (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 No sites found.
               </div>
             )}
@@ -571,40 +614,39 @@ function SiteManagement() {
               sites.map((site) => (
                 <div
                   key={site.id}
-                  className="border-b border-gray-200 p-4 last:border-0 hover:bg-gray-50"
+                  className="p-4 hover:bg-gray-50/50 transition-colors"
                 >
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900 capitalize">{site.name}</p>
+                      <p className="font-semibold text-gray-900 capitalize text-base font-sans">{site.name}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleToggleStatus(site)}
                       disabled={isSaving}
-                      className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${site.status === "active" ? "bg-[#34A853]" : "bg-[#EA4335]"
-                        }`}
+                      className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className={`absolute text-[10px] font-bold text-white ${site.status === "active" ? 'left-2.5' : 'right-1'}`}>
-                        {site.status === "active" ? "ACTIVE" : "INACTIVE"}
-                      </span>
-                      <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${site.status === "active" ? "translate-x-[52px]" : "translate-x-1"
-                          }`}
-                      />
+                      {site.status === "active" ? (
+                        <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-xs font-semibold text-[#F15F7F] px-2.5 py-1 font-sans">
+                          Inactive
+                        </span>
+                      )}
                     </button>
                   </div>
 
-                  <div className="mb-4 space-y-2 text-sm text-gray-600">
+                  <div className="mb-4 space-y-2 text-sm text-[#5B6065]">
                     <div className="flex justify-between">
-                      <span className="font-medium">Location:</span>
-                      <span className="text-right ml-4">{site.location}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Location:</span>
+                      <span className="font-sans">{site.location}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Supervisors:</span>
-                      <span className="text-right ml-4">
-                        {site.supervisor.length > 0
-                          ? site.supervisor.join(", ")
-                          : "—"}
+                      <span className="font-medium text-[#3E424E] font-sans">Supervisors:</span>
+                      <span className="font-sans">
+                        {site.supervisor.length > 0 ? site.supervisor.join(", ") : "—"}
                       </span>
                     </div>
                   </div>
@@ -613,17 +655,18 @@ function SiteManagement() {
                     <button
                       type="button"
                       onClick={() => handleEdit(site)}
-                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                      className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                      title="Edit"
                     >
-                      <Edit className="h-5 w-5 text-gray-600" />
+                      <Edit className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
               ))}
           </div>
 
-          {/* Pagination */}
-          <div className="border-t border-gray-200 px-6 py-4">
+          {/* Pagination Footer */}
+          <div className="border-t border-gray-200 px-6 py-4 bg-white">
             <Pagination
               pageNumber={pageNumber}
               pageSize={pageSize}
@@ -639,146 +682,148 @@ function SiteManagement() {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="mb-6 text-gray-900">
-              {editingSite ? "Edit Site" : "Add New Site"}
-            </h3>
+              <h3 className="mb-6 text-gray-900 font-bold text-xl font-sans">
+                {editingSite ? "Edit Site" : "Add New Site"}
+              </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Site Name */}
-              <div>
-                <label className="mb-2 block text-gray-700">
-                  Site Name<span className="text-[#EC3F3F]">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className={getFieldClassName(Boolean(formErrors.name))}
-                  placeholder="Enter site name"
-                  aria-invalid={Boolean(formErrors.name)}
-                />
-                {renderFieldError(formErrors.name)}
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="mb-2 block text-gray-700">
-                  Location<span className="text-[#EC3F3F]">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) =>
-                    setFormData({ ...formData, location: e.target.value })
-                  }
-                  className={getFieldClassName(Boolean(formErrors.location))}
-                  placeholder="Enter location"
-                  aria-invalid={Boolean(formErrors.location)}
-                />
-                {renderFieldError(formErrors.location)}
-              </div>
-
-              {/* Assign Supervisor | Status — same row */}
-              <div>
-                <label className="mb-2 block text-gray-700">
-                  Assign Supervisor
-                </label>
-                <div className="relative" ref={dropdownRef}>
-                  <div
-                    className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    onClick={() =>
-                      setIsSupervisorDropdownOpen(!isSupervisorDropdownOpen)
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Site Name */}
+                <div>
+                  <label className="mb-2 block text-gray-700 font-medium font-sans">
+                    Site Name<span className="text-[#EC3F3F]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
                     }
-                  >
-                    <span className="truncate text-gray-700">
-                      {formData.supervisor.length > 0
-                        ? formData.supervisor.join(", ")
-                        : "Select supervisors"}
-                    </span>
-                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-500" />
-                  </div>
+                    className={`${getFieldClassName(Boolean(formErrors.name))} font-sans`}
+                    placeholder="Enter site name"
+                    aria-invalid={Boolean(formErrors.name)}
+                  />
+                  {renderFieldError(formErrors.name)}
+                </div>
 
-                  {isSupervisorDropdownOpen && (
-                    <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                      {filteredSupervisorOptions.length === 0 && (
-                        <p className="px-4 py-2 text-sm text-gray-500">
-                          No users available
-                        </p>
-                      )}
-                      {filteredSupervisorOptions.map((name) => (
-                        <label
-                          key={name}
-                          className="flex cursor-pointer items-center gap-3 px-4 py-2 hover:bg-gray-50"
-                        >
-                          <input
-                            type="radio"
-                            name="assignedSupervisor"
-                            checked={formData.supervisor.includes(name)}
-                            onChange={() => {}}
-                            onClick={() => {
-                              const isSelected = formData.supervisor.includes(name);
-                              setFormData({
-                                ...formData,
-                                supervisor: isSelected ? [] : [name],
-                              });
-                            }}
-                            className="h-4 w-4 rounded-full border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
-                          />
-                          <span className="text-gray-700">{name}</span>
-                        </label>
-                      ))}
+                {/* Location */}
+                <div>
+                  <label className="mb-2 block text-gray-700 font-medium font-sans">
+                    Location<span className="text-[#EC3F3F]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) =>
+                      setFormData({ ...formData, location: e.target.value })
+                    }
+                    className={`${getFieldClassName(Boolean(formErrors.location))} font-sans`}
+                    placeholder="Enter location"
+                    aria-invalid={Boolean(formErrors.location)}
+                  />
+                  {renderFieldError(formErrors.location)}
+                </div>
+
+                {/* Assign Supervisor */}
+                <div>
+                  <label className="mb-2 block text-gray-700 font-medium font-sans">
+                    Assign Supervisor
+                  </label>
+                  <div className="relative font-sans" ref={dropdownRef}>
+                    <div
+                      className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+                      onClick={() =>
+                        setIsSupervisorDropdownOpen(!isSupervisorDropdownOpen)
+                      }
+                    >
+                      <span className="truncate text-gray-700">
+                        {formData.supervisor.length > 0
+                          ? formData.supervisor.join(", ")
+                          : "Select supervisors"}
+                      </span>
+                      <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-500" />
                     </div>
-                  )}
+
+                    {isSupervisorDropdownOpen && (
+                      <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                        {filteredSupervisorOptions.length === 0 && (
+                          <p className="px-4 py-2 text-sm text-gray-500 font-sans">
+                            No users available
+                          </p>
+                        )}
+                        {filteredSupervisorOptions.map((name) => (
+                          <label
+                            key={name}
+                            className="flex cursor-pointer items-center gap-3 px-4 py-2 hover:bg-gray-50 font-sans"
+                          >
+                            <input
+                              type="radio"
+                              name="assignedSupervisor"
+                              checked={formData.supervisor.includes(name)}
+                              onChange={() => {}}
+                              onClick={() => {
+                                const isSelected = formData.supervisor.includes(name);
+                                setFormData({
+                                  ...formData,
+                                  supervisor: isSelected ? [] : [name],
+                                });
+                              }}
+                              className="h-4 w-4 rounded-full border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
+                            />
+                            <span className="text-gray-700 font-sans">{name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status Toggle Box */}
+                <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                  <span className="text-sm text-gray-500 font-sans font-medium">Status</span>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="activeSiteStatus"
+                      checked={formData.status === "active"}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          status: e.target.checked ? "active" : "inactive",
+                        })
+                      }
+                      className="h-5 w-5 rounded border-gray-300 accent-[#3D36BE]"
+                    />
+                    <span className="text-gray-700 font-sans">Active Site</span>
+                  </label>
                 </div>
               </div>
 
-              <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                <span className="text-sm text-gray-500">Status</span>
-                <label className="flex cursor-pointer items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="activeSiteStatus"
-                    checked={formData.status === "active"}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        status: e.target.checked ? "active" : "inactive",
-                      })
-                    }
-                    className="h-5 w-5 rounded border-gray-300 accent-[#3D36BE]"
-                  />
-                  <span className="text-gray-700">Active Site</span>
-                </label>
+              {/* Action Buttons */}
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex-1 rounded-lg px-4 py-2.5 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70 font-bold font-sans"
+                  style={{ backgroundColor: "#3D35BE" }}
+                >
+                  {isSaving ? "Saving..." : editingSite ? "Update Site" : "Create Site"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingSite(null);
+                    setFormData(emptyFormData);
+                    setFormErrors({});
+                    setIsSupervisorDropdownOpen(false);
+                  }}
+                  disabled={isSaving}
+                  className="flex-1 rounded-lg bg-gray-200 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed font-bold font-sans"
+                >
+                  Cancel
+                </button>
               </div>
-            </div>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-                style={{ backgroundColor: "#3D36BE" }}
-              >
-                {isSaving ? "Saving..." : editingSite ? "Update" : "Create"} Site
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setEditingSite(null);
-                  setFormData(emptyFormData);
-                  setFormErrors({});
-                  setIsSupervisorDropdownOpen(false);
-                }}
-                disabled={isSaving}
-                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-            </div>
             </div>
           </div>
         </div>

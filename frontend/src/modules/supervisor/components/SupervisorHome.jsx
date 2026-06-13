@@ -132,7 +132,7 @@ function SupervisorHome({ selectedSite, user }) {
     return (
       <div className="flex h-full items-center justify-center p-8">
         <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
-          <p className="text-sm font-medium text-red-800">
+          <p className="text-sm font-medium text-red-800 font-sans">
             You are not assigned to any site. Please contact your administrator.
           </p>
         </div>
@@ -142,80 +142,95 @@ function SupervisorHome({ selectedSite, user }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center p-8 text-gray-500">
+      <div className="flex h-full items-center justify-center p-8 text-gray-500 font-sans">
         Loading dashboard...
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-gray-900">Budget Overview</h3>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 font-medium">
+    <div className="space-y-6 p-6 md:p-8 font-sans">
+      {/* Budget Overview Card */}
+      <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-[#353535] font-sans">Budget Overview</h3>
+          <span className="rounded-full bg-[#F6F5FF] border border-[#EBE9FD] px-3.5 py-1 text-xs text-[#3D35BE] font-semibold font-sans">
             {selectedSite.siteName}
           </span>
         </div>
 
-        <div className="space-y-4">
-          <div
-            className="flex items-center justify-between rounded-lg p-4"
-            style={{ backgroundColor: "#3D36BE20" }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-lg"
-                style={{ backgroundColor: "#3D36BE" }}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Site Budget Card */}
+            <div className="flex gap-4 p-4 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+              <div 
+                className="p-2 rounded-lg border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+                style={{ 
+                  width: 48, 
+                  height: 48, 
+                  background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+                }}
               >
-                <ReceiptIndianRupee className="h-6 w-6 text-white" />
+                <ReceiptIndianRupee className="h-5 w-5 text-white" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Site Budget</p>
-                <h3 className="text-gray-900">
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="text-sm text-[#717579] font-medium font-sans">Site Budget</span>
+                <span className="text-xl font-bold text-[#353535] font-sans truncate">
                   ₹{totalBudget.toLocaleString("en-IN")}
-                </h3>
+                </span>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-                <TrendingDown className="h-6 w-6 text-red-600" />
+            {/* Total Expenses Card */}
+            <div className="flex gap-4 p-4 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+              <div 
+                className="p-2 rounded-lg border border-[#F5CDD5] flex items-center justify-center shrink-0 bg-[#FFF1F0]" 
+                style={{ 
+                  width: 48, 
+                  height: 48, 
+                }}
+              >
+                <TrendingDown className="h-5 w-5 text-[#F15F7F]" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Expenses</p>
-                <h3 className="text-gray-900">
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="text-sm text-[#717579] font-medium font-sans">Total Expenses</span>
+                <span className="text-xl font-bold text-[#353535] font-sans truncate">
                   ₹{totalExpenses.toLocaleString("en-IN")}
-                </h3>
+                </span>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between rounded-lg bg-green-50 p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                <ReceiptIndianRupee className="h-6 w-6 text-green-600" />
+            {/* Remaining Balance Card */}
+            <div className="flex gap-4 p-4 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+              <div 
+                className="p-2 rounded-lg border border-[#A0EBE5] flex items-center justify-center shrink-0 bg-[#EFFFFE]" 
+                style={{ 
+                  width: 48, 
+                  height: 48, 
+                }}
+              >
+                <ReceiptIndianRupee className="h-5 w-5 text-[#01B6A8]" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Remaining Balance</p>
-                <h3 className="text-gray-900">₹{remaining.toLocaleString("en-IN")}</h3>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="text-sm text-[#717579] font-medium font-sans">Remaining Balance</span>
+                <span className="text-xl font-bold text-[#353535] font-sans truncate">
+                  ₹{remaining.toLocaleString("en-IN")}
+                </span>
               </div>
             </div>
           </div>
 
           <div>
             <div className="mb-2 flex justify-between text-sm">
-              <span className="text-gray-600">Budget Used</span>
-              <span className="text-gray-900 font-medium">{budgetPercentage}%</span>
+              <span className="text-[#5B6065] font-sans font-medium">Budget Used</span>
+              <span className="text-[#353535] font-sans font-bold">{budgetPercentage}%</span>
             </div>
-            <div className="h-3 w-full rounded-full bg-gray-200">
+            <div className="h-3.5 w-full rounded-full bg-[#E5E9F1] overflow-hidden">
               <div
-                className="h-3 rounded-full"
+                className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${budgetPercentage}%`,
-                  backgroundColor: budgetPercentage >= 100 ? "#DC2626" : budgetPercentage > 80 ? "#F59E0B" : "#10B981"
+                  backgroundColor: budgetPercentage >= 100 ? "#F15F7F" : budgetPercentage > 80 ? "#F59E0B" : "#01B6A8"
                 }}
               />
             </div>
@@ -223,31 +238,34 @@ function SupervisorHome({ selectedSite, user }) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gray-200 p-4">
-          <h3 className="text-gray-900">Recent Expenses</h3>
-          <ReceiptIndianRupee className="h-5 w-5 text-gray-400" />
+      {/* Recent Expenses List Card */}
+      <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[#E5E9F1] px-6 py-4 bg-white">
+          <h3 className="text-[17px] font-bold text-[#353535] font-sans">Recent Expenses</h3>
+          <ReceiptIndianRupee className="h-5 w-5 text-[#3D35BE]" />
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-100">
           {recentExpenses.length === 0 ? (
-             <div className="p-4 text-center text-sm text-gray-500">No expenses recorded for this site yet.</div>
+             <div className="p-6 text-center text-sm text-[#717579] font-sans">No expenses recorded for this site yet.</div>
           ) : (
             recentExpenses.map((expense) => (
               <div
                 key={expense.id}
-                className="p-4 transition-colors hover:bg-gray-50"
+                className="px-6 py-4 transition-colors hover:bg-gray-50/50"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="mb-1 text-gray-900 font-medium">{expense.title || "No description"}</p>
-                    <div className="flex items-center gap-2">
+                <div className="flex items-start justify-between min-w-0 gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-1 text-[15px] font-semibold text-[#353535] font-sans truncate">
+                      {expense.title || "No description"}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className="rounded px-2 py-1 text-xs"
-                        style={{ backgroundColor: "#3D36BE20", color: "#3D36BE" }}
+                        className="rounded-md px-2 py-0.5 text-xs font-semibold font-sans"
+                        style={{ backgroundColor: "#3D35BE15", color: "#3D35BE" }}
                       >
                         {expense.category?.name || "Uncategorized"}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-xs text-[#717579] font-sans">
                         {new Date(expense.date).toLocaleDateString()}
                       </span>
                     </div>
@@ -255,14 +273,14 @@ function SupervisorHome({ selectedSite, user }) {
                       <button
                         type="button"
                         onClick={() => setViewingImage(expense.receiptImage)}
-                        className="mt-1 inline-flex items-center gap-1 text-xs text-[#3D36BE] hover:underline"
+                        className="mt-1.5 inline-flex items-center gap-1 text-xs font-bold text-[#3D35BE] hover:underline font-sans"
                       >
                         <Eye className="h-3 w-3" />
                         View Receipt
                       </button>
                     )}
                   </div>
-                  <p className="text-gray-900 font-semibold">
+                  <p className="text-base font-bold text-[#353535] font-sans shrink-0">
                     ₹{expense.amount.toLocaleString("en-IN")}
                   </p>
                 </div>
@@ -272,14 +290,15 @@ function SupervisorHome({ selectedSite, user }) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gray-200 p-4">
-          <h3 className="text-gray-900">Recent Attendance</h3>
-          <Calendar className="h-5 w-5 text-gray-400" />
+      {/* Recent Attendance List Card */}
+      <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[#E5E9F1] px-6 py-4 bg-white">
+          <h3 className="text-[17px] font-bold text-[#353535] font-sans">Recent Attendance</h3>
+          <Calendar className="h-5 w-5 text-[#3D35BE]" />
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-100">
           {recentAttendance.length === 0 ? (
-             <div className="p-4 text-center text-sm text-gray-500">No attendance recorded for this site yet.</div>
+             <div className="p-6 text-center text-sm text-[#717579] font-sans">No attendance recorded for this site yet.</div>
           ) : (
             recentAttendance.map((record) => {
               const totalWorkers = (record.skilledWorkers || 0) + 
@@ -288,15 +307,21 @@ function SupervisorHome({ selectedSite, user }) {
               return (
                 <div
                   key={record.id}
-                  className="p-4 transition-colors hover:bg-gray-50"
+                  className="px-6 py-4 transition-colors hover:bg-gray-50/50"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="mb-1 text-gray-900 font-medium">{record.contractor?.contractorName || "Unknown Contractor"}</p>
-                      <p className="text-sm text-gray-500">{new Date(record.date).toLocaleDateString()}</p>
+                  <div className="flex items-center justify-between min-w-0 gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="mb-1 text-[15px] font-semibold text-[#353535] font-sans truncate">
+                        {record.contractor?.contractorName || "Unknown Contractor"}
+                      </p>
+                      <p className="text-xs text-[#717579] font-sans">
+                        {new Date(record.date).toLocaleDateString()}
+                      </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-gray-900 font-semibold">{totalWorkers} workers</p>
+                    <div className="text-right shrink-0">
+                      <p className="text-base font-bold text-[#353535] font-sans">
+                        {totalWorkers} workers
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -307,21 +332,21 @@ function SupervisorHome({ selectedSite, user }) {
       </div>
 
       {viewingImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="relative max-w-3xl w-full overflow-hidden rounded-lg bg-white p-2 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative max-w-3xl w-full overflow-hidden rounded-2xl bg-white p-3 shadow-2xl">
             <button
               type="button"
               onClick={() => setViewingImage(null)}
-              className="absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors z-10"
+              className="absolute top-5 right-5 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors z-10 shadow-lg"
               title="Close"
             >
               <X className="h-5 w-5" />
             </button>
-            <div className="flex items-center justify-center p-4 bg-gray-50 min-h-[300px]">
+            <div className="flex items-center justify-center p-4 bg-gray-50 min-h-[300px] rounded-xl">
               <img
                 src={viewingImage}
                 alt="Receipt Bill"
-                className="max-h-[80vh] w-auto max-w-full object-contain rounded"
+                className="max-h-[80vh] w-auto max-w-full object-contain rounded-lg"
               />
             </div>
           </div>

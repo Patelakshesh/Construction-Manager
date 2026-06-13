@@ -12,8 +12,8 @@ const SupervisorApp = lazy(
 
 function DashboardLoader() {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#F5F5F5]">
-      <div className="rounded-lg border border-gray-200 bg-white px-6 py-4 text-gray-700 shadow-sm">
+    <div className="flex min-h-dvh items-center justify-center bg-[#F6F5FF] font-sans">
+      <div className="rounded-xl border border-[#EBE9FD] bg-white px-8 py-5 text-[#353535] font-semibold text-sm shadow-[0px_2px_10px_#D9DAE2]">
         Loading dashboard...
       </div>
     </div>

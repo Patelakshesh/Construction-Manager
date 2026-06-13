@@ -368,30 +368,44 @@ function Reports() {
   const filteredReports = reports;
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
+      {/* Title */}
       <div className="mb-8">
-        <h1 className="mb-2 text-2xl font-semibold text-gray-900 md:text-3xl">
+        <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
           Reports
         </h1>
-        <p className="text-gray-600">
-          Generate and download comprehensive reports for your construction
-          projects
+        <p className="text-[#4E5159] mt-1 text-base font-normal">
+          Generate and download comprehensive reports for your construction projects
         </p>
       </div>
 
-      <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <Filter className="h-5 w-5" style={{ color: "#3D36BE" }} />
-          <h3 className="text-gray-900">Filters</h3>
+      {/* Main Container Card for Filters */}
+      <div 
+        className="w-full bg-white flex flex-col gap-6 mb-8" 
+        style={{ 
+          paddingLeft: 24, 
+          paddingRight: 24, 
+          paddingTop: 30, 
+          paddingBottom: 30, 
+          borderTopRightRadius: 20, 
+          borderBottomRightRadius: 20, 
+          borderBottomLeftRadius: 20,
+          border: '1px solid #EBE9FD',
+          boxShadow: '0px 2px 10px #D9DAE2'
+        }}
+      >
+        <div className="flex items-center gap-2 pb-4 border-b border-gray-100">
+          <Filter className="h-5 w-5" style={{ color: "#3D35BE" }} />
+          <h3 className="text-lg font-bold text-[#353535] font-sans">Filters</h3>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           <div>
-            <label className="mb-2 block text-gray-700">Site</label>
+            <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">Site</label>
             <select
               value={selectedSite}
               onChange={(event) => setSelectedSite(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+              className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
             >
               <option value="All">All Sites</option>
               {sites.map((site) => (
@@ -403,11 +417,11 @@ function Reports() {
           </div>
 
           <div>
-            <label className="mb-2 block text-gray-700">Category</label>
+            <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">Category</label>
             <select
               value={selectedCategory}
               onChange={(event) => setSelectedCategory(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+              className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
             >
               <option value="All">All Categories</option>
               {categories.map((category) => (
@@ -419,69 +433,71 @@ function Reports() {
           </div>
 
           <div>
-            <label className="mb-2 block text-gray-700">Start Date</label>
+            <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">Start Date</label>
             <input
               type="date"
               value={dateRange.start}
               onChange={(event) =>
                 setDateRange({ ...dateRange, start: event.target.value })
               }
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+              className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-gray-700">End Date</label>
+            <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">End Date</label>
             <input
               type="date"
               value={dateRange.end}
               onChange={(event) =>
                 setDateRange({ ...dateRange, end: event.target.value })
               }
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+              className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
             />
           </div>
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+      {/* Reports Card Grid */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 mb-8">
         {filteredReports.map((report) => (
           <div
             key={report.id}
-            className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+            className="bg-white p-6 rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] transition-shadow hover:shadow-md flex flex-col justify-between"
           >
-            <div className="mb-4 flex items-start justify-between">
-              <div className="flex flex-1 items-start gap-4">
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: "#3D36BE20" }}
-                >
-                  <FileText className="h-6 w-6" style={{ color: "#3D36BE" }} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="mb-1 text-gray-900">{report.name}</h3>
-                  <p className="mb-2 text-sm text-gray-600">
-                    {report.description}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                    <span className="rounded bg-gray-100 px-2 py-1">
-                      {report.category}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>Last: {report.lastGenerated}</span>
-                    </div>
+            <div className="flex items-start gap-4 mb-6">
+              <div 
+                className="p-3 rounded-lg border border-[#EBE9FD] flex items-center justify-center shadow-sm shrink-0" 
+                style={{ 
+                  width: 52, 
+                  height: 52, 
+                  background: 'rgba(61, 53, 190, 0.1)' 
+                }}
+              >
+                <FileText className="h-6 w-6 text-[#3D35BE]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xl font-bold text-[#353535] mb-1 font-sans truncate">{report.name}</h3>
+                <p className="text-[#717579] text-sm mb-4 font-sans leading-relaxed">
+                  {report.description}
+                </p>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                  <span className="inline-flex items-center justify-center rounded-lg bg-[#F0EFFF] border border-[#EBE9FD] text-xs font-semibold text-[#3D35BE] px-3 py-1 font-sans capitalize">
+                    {report.category}
+                  </span>
+                  <div className="flex items-center gap-1.5 text-sm text-[#717579] font-sans">
+                    <Calendar className="h-4 w-4 text-[#717579]" />
+                    <span>Last: {report.lastGenerated}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-4 border-t border-gray-100 pt-4">
               <button
                 type="button"
                 onClick={() => handleDownload(report.name, "pdf")}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#3D36BE" }}
+                className="h-11 px-6 bg-[#3D35BE] hover:bg-[#322bad] text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2 font-sans flex-1"
               >
                 <Download className="h-4 w-4" />
                 PDF
@@ -489,7 +505,7 @@ function Reports() {
               <button
                 type="button"
                 onClick={() => handleDownload(report.name, "excel")}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-opacity hover:opacity-90"
+                className="h-11 px-6 bg-[#01B6A8] hover:bg-[#009b8f] text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2 font-sans flex-1"
               >
                 <Download className="h-4 w-4" />
                 Excel

@@ -313,129 +313,170 @@ function Category() {
     }
   };
 
-
   const renderFieldError = (message) =>
     message ? <p className="mt-1 text-xs text-[#EC3F3F]">{message}</p> : null;
 
+  const getFieldClassName = (hasError) =>
+    `w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${hasError
+      ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
+      : "border-gray-300 focus:ring-[#3D36BE]"
+    }`;
+
   return (
-    <div className="p-4 md:p-8">
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="mb-2 text-2xl font-semibold text-gray-900 md:text-3xl">
+          <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
             Category Management
           </h1>
-          <p className="text-gray-600">
+          <p className="text-[#4E5159] mt-1 text-base font-normal">
             Manage available project categories
           </p>
         </div>
         <button
           type="button"
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#3D36BE" }}
+          className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
         >
           <Plus className="h-5 w-5" />
           Add Category
         </button>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
-              <Tag className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Results</p>
-              <h3 className="text-gray-900">{totalCount}</h3>
+      {/* Stats Cards Section */}
+      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* Total Categories Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <Shapes className="h-6 w-6 text-white" />
             </div>
           </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{totalCount}</span>
+            <span className="text-base text-[#4E5159] font-normal">Total Categories</span>
+          </div>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50">
-              <Tag className="h-6 w-6 text-blue-600" />
+
+        {/* Total Active Categories Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3C368D 0deg, #857FF4 100%)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <Tag className="h-6 w-6 text-white" />
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Active</p>
-              <h3 className="text-gray-900">{overallActiveCount}</h3>
-            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{overallActiveCount}</span>
+            <span className="text-base text-[#4E5159] font-normal">Active Categories</span>
           </div>
         </div>
       </div>
 
+      {/* Main Container Card (Table & Actions) */}
+      <div 
+        className="w-full bg-white flex flex-col gap-7 min-w-0" 
+        style={{ 
+          paddingLeft: 24, 
+          paddingRight: 24, 
+          paddingTop: 30, 
+          paddingBottom: 30, 
+          borderTopRightRadius: 20, 
+          borderBottomRightRadius: 20, 
+          borderBottomLeftRadius: 20 
+        }}
+      >
+        <div 
+          className="w-full flex flex-col overflow-hidden rounded-lg min-w-0" 
+          style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
+        >
+          {/* Header Row: Search Input */}
+          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+            <div className="w-full sm:max-w-md relative flex items-center">
+              <input
+                type="text"
+                placeholder="Search by category name or description..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="w-full h-12 pl-12 pr-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
+              />
+              <svg className="w-5 h-5 absolute left-4 text-[#717579]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
 
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search by category name or description..."
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] sm:max-w-sm"
-        />
-      </div>
+          {loadError && (
+            <div className="mx-6 mt-4 rounded-lg bg-red-50 p-4 text-red-600 font-sans">
+              {loadError}
+            </div>
+          )}
 
-      {loadError && (
-        <div className="mb-4 rounded-lg bg-red-50 p-4 text-red-600">
-          {loadError}
-        </div>
-      )}
-
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <div className="hidden md:block">
-            <table className="w-full min-w-[820px]">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-gray-700">Name</th>
-                <th className="px-6 py-4 text-left text-gray-700">Description</th>
-                <th className="px-6 py-4 text-left text-gray-700">Status</th>
-                <th className="px-6 py-4 text-left text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {isLoading && (
-                <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
-                    Loading...
-                  </td>
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto w-full">
+            <table className="w-full min-w-[820px] border-collapse">
+              <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
+                <tr className="h-[68px]">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Name</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Description</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                 </tr>
-              )}
-              {!isLoading && categories.length === 0 && (
-                <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
-                    No categories found.
-                  </td>
-                </tr>
-              )}
-              {!isLoading &&
-                categories.map((category) => (
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {isLoading && (
+                  <tr>
+                    <td colSpan="4" className="px-6 py-8 text-center text-gray-500 font-sans">
+                      Loading categories...
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && categories.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="px-6 py-8 text-center text-gray-500 font-sans">
+                      No categories found.
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && categories.map((category) => (
                   <tr
                     key={category.id}
-                    className="transition-colors hover:bg-gray-50"
+                    className="h-[78px] transition-colors hover:bg-gray-50/50"
                   >
-                    <td className="px-6 py-4 text-gray-900 capitalize">{category.name}</td>
-                    <td className="px-6 py-4 text-gray-900">
-                      <div className="max-w-xs truncate" title={category.description}>
-                        {category.description || "-"}
-                      </div>
+                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
+                      {category.name}
+                    </td>
+                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                      {category.description || "—"}
                     </td>
                     <td className="px-6 py-4">
                       <button
                         type="button"
                         onClick={() => toggleStatus(category)}
-                        className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
-                          category.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
-                        }`}
+                        className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <span className={`absolute text-[10px] font-bold text-white ${category.enable ? 'left-2.5' : 'right-1'}`}>
-                          {category.enable ? "ACTIVE" : "INACTIVE"}
-                        </span>
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            category.enable ? "translate-x-[52px]" : "translate-x-1"
-                          }`}
-                        />
+                        {category.enable ? (
+                          <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-sm font-medium text-[#01B6A8] px-3 py-1 font-sans">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-base font-semibold text-[#F15F7F] px-3 py-1 font-sans">
+                            Inactive
+                          </span>
+                        )}
                       </button>
                     </td>
                     <td className="px-6 py-4">
@@ -443,92 +484,96 @@ function Category() {
                         <button
                           type="button"
                           onClick={() => handleEdit(category)}
-                          className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                          className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                          title="Edit"
                         >
-                          <Edit className="h-5 w-5 text-gray-600" />
+                          <Edit className="h-5 w-5" />
                         </button>
                         <button
                           type="button"
                           onClick={() => setItemToDelete(category)}
-                          className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                          className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                          title="Delete"
                         >
-                          <Trash2 className="h-5 w-5 text-red-600" />
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
                     </td>
                   </tr>
                 ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
           </div>
 
-          <div className="block md:hidden">
+          {/* Mobile View */}
+          <div className="block md:hidden bg-white divide-y divide-gray-100">
             {isLoading && (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 Loading...
               </div>
             )}
             {!isLoading && categories.length === 0 && (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 No categories found.
               </div>
             )}
             {!isLoading && categories.map((category) => (
               <div
                 key={category.id}
-                className="border-b border-gray-200 p-4 last:border-0 hover:bg-gray-50"
+                className="p-4 hover:bg-gray-50/50 transition-colors"
               >
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900 capitalize">{category.name}</p>
+                    <p className="font-semibold text-gray-900 capitalize text-base font-sans">{category.name}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => toggleStatus(category)}
-                    className={`relative inline-flex h-7 w-[76px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
-                      category.enable ? "bg-[#34A853]" : "bg-[#EA4335]"
-                    }`}
+                    className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className={`absolute text-[10px] font-bold text-white ${category.enable ? 'left-2.5' : 'right-1'}`}>
-                      {category.enable ? "ACTIVE" : "INACTIVE"}
-                    </span>
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        category.enable ? "translate-x-[52px]" : "translate-x-1"
-                      }`}
-                    />
+                    {category.enable ? (
+                      <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-xs font-semibold text-[#F15F7F] px-2.5 py-1 font-sans">
+                        Inactive
+                      </span>
+                    )}
                   </button>
                 </div>
-                
-                <div className="mb-4 space-y-2 text-sm text-gray-600">
+
+                <div className="mb-4 space-y-2 text-sm text-[#5B6065]">
                   <div className="flex flex-col gap-1">
-                    <span className="font-medium">Description:</span>
-                    <span className="text-gray-500 break-words line-clamp-3">{category.description || "-"}</span>
+                    <span className="font-medium text-[#3E424E] font-sans">Description:</span>
+                    <span className="text-[#5B6065] break-words line-clamp-3 font-sans">{category.description || "—"}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3 font-sans">
                   <button
                     type="button"
                     onClick={() => handleEdit(category)}
-                    className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                    className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                    title="Edit"
                   >
-                    <Edit className="h-5 w-5 text-gray-600" />
+                    <Edit className="h-5 w-5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setItemToDelete(category)}
-                    className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                    className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                    title="Delete"
                   >
-                    <Trash2 className="h-5 w-5 text-red-600" />
+                    <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Pagination */}
-          <div className="border-t border-gray-200 px-6 py-4">
+          {/* Pagination Footer */}
+          <div className="border-t border-gray-200 px-6 py-4 bg-white">
             <Pagination
               pageNumber={pageNumber}
               pageSize={pageSize}
@@ -542,13 +587,13 @@ function Category() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[90vh] overflow-y-auto w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="mb-6 text-gray-900">
+            <h3 className="mb-6 text-gray-900 font-bold text-xl font-sans">
               {editingCategory ? "Edit Category" : "Add New Category"}
             </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-gray-700">
+                <label className="mb-2 block text-gray-700 font-medium font-sans">
                   Category Name <span className="text-[#EC3F3F]">*</span>
                 </label>
                 <input
@@ -558,18 +603,14 @@ function Category() {
                     setFormData({ ...formData, name: event.target.value });
                     if (formErrors.name) setFormErrors({ ...formErrors, name: null });
                   }}
-                  className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
-                    formErrors.name
-                      ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-                      : "border-gray-300 focus:ring-[#3D36BE]"
-                  }`}
+                  className={`${getFieldClassName(formErrors.name)} font-sans`}
                   placeholder="Enter category name"
                 />
                 {renderFieldError(formErrors.name)}
               </div>
 
               <div>
-                <label className="mb-2 block text-gray-700">
+                <label className="mb-2 block text-gray-700 font-medium font-sans">
                   Description <span className="text-[#EC3F3F]">*</span>
                 </label>
                 <textarea
@@ -582,18 +623,14 @@ function Category() {
                     if (formErrors.description) setFormErrors({ ...formErrors, description: null });
                   }}
                   rows={3}
-                  className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
-                    formErrors.description
-                      ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-                      : "border-gray-300 focus:ring-[#3D36BE]"
-                  }`}
+                  className={`${getFieldClassName(formErrors.description)} font-sans`}
                   placeholder="Enter description"
                 />
                 {renderFieldError(formErrors.description)}
               </div>
 
               <div className="flex flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                <span className="text-sm text-gray-500">Status</span>
+                <span className="text-sm text-gray-500 font-sans font-medium">Status</span>
                 <label className="flex cursor-pointer items-center gap-3">
                   <input
                     type="checkbox"
@@ -607,26 +644,26 @@ function Category() {
                     }
                     className="h-5 w-5 rounded border-gray-300 accent-[#3D36BE]"
                   />
-                  <span className="text-gray-700">Active Category</span>
+                  <span className="text-gray-700 font-sans">Active Category</span>
                 </label>
               </div>
             </div>
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex gap-3 font-sans">
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-lg px-4 py-2.5 text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-bold font-sans"
                 style={{ backgroundColor: "#3D36BE" }}
               >
-                {isSaving ? "Saving..." : editingCategory ? "Update" : "Create"} Category
+                {isSaving ? "Saving..." : editingCategory ? "Update Category" : "Create Category"}
               </button>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
                 disabled={isSaving}
-                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-lg bg-gray-200 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold font-sans"
               >
                 Cancel
               </button>
@@ -649,7 +686,3 @@ function Category() {
 }
 
 export default Category;
-
-
-
-

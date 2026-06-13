@@ -66,19 +66,20 @@ function SupervisorApp({ user, onLogout }) {
   const selectedSite = sites.find(s => String(s.id) === selectedSiteId);
 
   return (
-    <div className="flex h-dvh flex-col bg-gray-50">
-      <div className="border-b border-gray-700 bg-[#2B2D33] p-4">
+    <div className="flex h-dvh flex-col bg-[#F6F5FF] font-sans overflow-hidden">
+      {/* Top Header - White Background, Premium Border */}
+      <div className="border-b border-[#E5E9F1] bg-white p-4 shrink-0">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-4 flex-1">
-            <h2 className="truncate text-lg text-white font-semibold hidden md:block">
+            <h2 className="truncate text-lg text-[#353535] font-bold font-sans hidden md:block">
               Supervision Portal
             </h2>
-            <div className="flex items-center gap-1.5 bg-[#3F4149]/60 rounded-md px-2.5 py-1 text-gray-300 shrink-0">
-              <MapPin className="h-3.5 w-3.5 text-[#3D36BE] shrink-0" />
+            <div className="flex items-center gap-1.5 bg-[#F6F5FF] border border-[#EBE9FD] rounded-full px-3 py-1.5 text-gray-600 shrink-0">
+              <MapPin className="h-3.5 w-3.5 text-[#3D35BE] shrink-0" />
               {isLoading ? (
-                <span className="text-xs">Loading...</span>
+                <span className="text-xs font-sans">Loading...</span>
               ) : (
-                <span className="text-xs font-semibold text-white uppercase tracking-wider">
+                <span className="text-xs font-bold text-[#3D35BE] uppercase tracking-wider font-sans">
                   {selectedSite ? selectedSite.siteName : "No Site Assigned"}
                 </span>
               )}
@@ -87,15 +88,15 @@ function SupervisorApp({ user, onLogout }) {
           <button
             type="button"
             onClick={onLogout}
-            className="rounded-lg p-2 transition-colors hover:bg-[#4A4D57] shrink-0"
+            className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#717579] hover:text-red-600 shrink-0"
             aria-label="Logout"
           >
-            <LogOut className="h-5 w-5 text-gray-400" />
+            <LogOut className="h-5 w-5" />
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-[#F6F5FF]">
         <div className="pb-28 md:pb-6">
           {activeTab === "home" && <SupervisorHome selectedSite={selectedSite} user={user} />}
           {activeTab === "expenses" && (
@@ -107,7 +108,7 @@ function SupervisorApp({ user, onLogout }) {
         </div>
       </div>
 
-      <div className="border-t border-gray-200 bg-white px-2 py-2 safe-area-bottom shrink-0 md:sticky md:bottom-auto">
+      <div className="border-t border-[#E5E9F1] bg-white px-2 py-2 safe-area-bottom shrink-0 md:sticky md:bottom-auto">
         <div className="mx-auto flex max-w-md items-center justify-around">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -117,11 +118,11 @@ function SupervisorApp({ user, onLogout }) {
                 key={item.id}
                 type="button"
                 onClick={() => setActiveTab(item.id)}
-                className="flex flex-col items-center gap-1 rounded-lg px-4 py-2 transition-colors"
-                style={{ color: isActive ? "#3D36BE" : "#6B7280" }}
+                className="flex flex-col items-center gap-1 rounded-lg px-4 py-2 transition-colors font-sans"
+                style={{ color: isActive ? "#3D35BE" : "#717579" }}
               >
-                <Icon className="h-6 w-6" />
-                <span className="text-xs">{item.label}</span>
+                <Icon className={`h-6 w-6 ${isActive ? "text-[#3D35BE]" : "text-[#717579]"}`} />
+                <span className="text-xs font-semibold">{item.label}</span>
               </button>
             );
           })}

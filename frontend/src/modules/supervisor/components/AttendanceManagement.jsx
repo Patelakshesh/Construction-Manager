@@ -212,10 +212,10 @@ function AttendanceManagement({ selectedSite, user }) {
   };
 
   const getFieldClassName = (hasError) =>
-    `w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 ${
+    `w-full h-12 rounded-lg border px-4 focus:outline-none focus:ring-2 font-sans ${
       hasError
         ? "border-[#EC3F3F] focus:ring-[#EC3F3F]"
-        : "border-gray-300 focus:ring-[#3D36BE]"
+        : "border-[#C8D9EF] focus:ring-[#3D35BE] text-[#353535]"
     }`;
 
   const renderFieldError = (message) =>
@@ -369,7 +369,7 @@ function AttendanceManagement({ selectedSite, user }) {
     return (
       <div className="flex h-full items-center justify-center p-8">
         <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
-          <p className="text-sm font-medium text-red-800">
+          <p className="text-sm font-medium text-red-800 font-sans">
             You are not assigned to any site. Please contact your administrator.
           </p>
         </div>
@@ -378,196 +378,237 @@ function AttendanceManagement({ selectedSite, user }) {
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <p className="text-xs uppercase tracking-wide text-gray-500">
-          Current Site
-        </p>
-        <h3 className="text-gray-900">{selectedSite.siteName}</h3>
+    <div className="space-y-6 p-6 md:p-8 font-sans">
+      {/* Current Site & Stats Cards */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] px-6 py-5 flex-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#717579] font-sans mb-1">
+            Current Site
+          </p>
+          <h3 className="text-lg font-bold text-[#353535] font-sans">{selectedSite.siteName}</h3>
+        </div>
+
+        <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] px-6 py-5 flex-1 flex items-center gap-4">
+          <div 
+            className="p-2 rounded-lg border border-[#EBE9FD] flex items-center justify-center shrink-0 bg-[#EFFFFE]" 
+            style={{ width: 44, height: 44 }}
+          >
+            <UsersIcon className="h-5 w-5 text-[#01B6A8]" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#717579] font-sans mb-0.5 font-sans">Today's Workers</p>
+            <h3 className="text-xl font-bold text-[#353535] font-sans truncate">{totalWorkersToday}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] px-6 py-5 flex-1 flex items-center gap-4">
+          <div 
+            className="p-2 rounded-lg border border-[#EBE9FD] flex items-center justify-center shrink-0 bg-[#F0EFFF]" 
+            style={{ width: 44, height: 44 }}
+          >
+            <Calendar className="h-5 w-5 text-[#3D35BE]" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#717579] font-sans mb-0.5 font-sans">This Week</p>
+            <h3 className="text-xl font-bold text-[#353535] font-sans truncate">{thisWeekWorkers}</h3>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="mb-1 text-sm text-gray-600">Today&apos;s Workers</p>
-          <h3 className="text-gray-900">{totalWorkersToday}</h3>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="mb-1 text-sm text-gray-600">This Week</p>
-          <h3 className="text-gray-900">{thisWeekWorkers}</h3>
-        </div>
-      </div>
-
+      {/* Add Attendance Button */}
       <button
         type="button"
         onClick={() => setIsAdding(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-lg py-4 text-white transition-opacity hover:opacity-90"
-        style={{ backgroundColor: "#3D36BE" }}
+        className="flex w-full items-center justify-center gap-2 rounded-lg py-4 text-white text-base font-bold transition-all shadow-[0px_2px_10px_rgba(61,53,190,0.25)] hover:scale-[1.01] active:scale-[0.99] font-sans"
+        style={{ backgroundColor: "#3D35BE" }}
       >
         <Plus className="h-5 w-5" />
         Add Attendance
       </button>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        {isLoading ? (
-          <div className="p-4 text-center text-gray-500">Loading attendance...</div>
-        ) : attendance.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">No attendance recorded for this site yet.</div>
-        ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead className="border-b border-gray-200 bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-gray-700">Date</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Contractor</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Skilled Workers</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Semi-Skilled Workers</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Unskilled Workers</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Start Time</th>
-                    <th className="px-6 py-4 text-left text-gray-700">End Time</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Total Hours</th>
-                    <th className="px-6 py-4 text-left text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {attendance.map((record) => (
-                    <tr
-                      key={record.id}
-                      className="transition-colors hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 text-gray-900">
-                        {record.date.split("T")[0]}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900 font-medium">
-                        {record.contractor?.contractorName || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {record.skilledWorkers}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {record.semiSkilledWorkers}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {record.unskilledWorkers}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {formatDuration(record.startTime)}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {formatDuration(record.endTime)}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900 font-semibold">
-                        {calculateHours(record.startTime, record.endTime) || "—"} hrs
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(record)}
-                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                            title="Edit"
-                          >
-                            <Edit className="h-5 w-5 text-gray-600" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(record.id)}
-                            className="rounded-lg p-2 transition-colors hover:bg-red-50"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-5 w-5 text-red-500" />
-                          </button>
-                        </div>
-                      </td>
+      {/* Main Table Container Card */}
+      <div 
+        className="w-full bg-white flex flex-col min-w-0 rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]" 
+        style={{ 
+          paddingLeft: 24, 
+          paddingRight: 24, 
+          paddingTop: 30, 
+          paddingBottom: 30, 
+        }}
+      >
+        <div 
+          className="w-full flex flex-col overflow-hidden rounded-lg min-w-0" 
+          style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
+        >
+          {isLoading ? (
+            <div className="p-8 text-center text-[#717579] font-sans bg-white">Loading attendance...</div>
+          ) : attendance.length === 0 ? (
+            <div className="p-8 text-center text-[#717579] font-sans bg-white">No attendance recorded for this site yet.</div>
+          ) : (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto w-full">
+                <table className="w-full min-w-[800px] border-collapse">
+                  <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
+                    <tr className="h-[68px]">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Contractor</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Skilled Workers</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Semi-Skilled</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Unskilled</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Start Time</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">End Time</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Total Hours</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {attendance.map((record) => (
+                      <tr
+                        key={record.id}
+                        className="h-[78px] transition-colors hover:bg-gray-50/50"
+                      >
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {record.date.split("T")[0]}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-semibold font-sans capitalize">
+                          {record.contractor?.contractorName || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {record.skilledWorkers}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {record.semiSkilledWorkers}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {record.unskilledWorkers}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {formatDuration(record.startTime)}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {formatDuration(record.endTime)}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#3E424E] font-bold font-sans">
+                          {calculateHours(record.startTime, record.endTime) || "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(record)}
+                              className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                              title="Edit"
+                            >
+                              <Edit className="h-5 w-5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(record.id)}
+                              className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-            {/* Mobile Card View */}
-            <div className="block md:hidden divide-y divide-gray-100">
-              {attendance.map((record) => (
-                <div
-                  key={record.id}
-                  className="p-4 transition-colors hover:bg-gray-50"
-                >
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900 capitalize">
-                        {record.contractor?.contractorName || "Unknown Contractor"}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {record.date.split("T")[0]}
-                      </p>
-                    </div>
-                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                      {calculateHours(record.startTime, record.endTime) || "—"} hrs
-                    </span>
-                  </div>
-
-                  <div className="mb-4 space-y-2 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Skilled Workers:</span>
-                      <span>{record.skilledWorkers}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Semi-Skilled Workers:</span>
-                      <span>{record.semiSkilledWorkers}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Unskilled Workers:</span>
-                      <span>{record.unskilledWorkers}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Timing:</span>
-                      <span>
-                        {formatDuration(record.startTime)} - {formatDuration(record.endTime)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(record)}
-                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                      title="Edit"
+              {/* Mobile View */}
+              <div className="block md:hidden bg-white divide-y divide-gray-100">
+                {attendance.map((record) => {
+                  const totalWorkers = (record.skilledWorkers || 0) + 
+                                       (record.semiSkilledWorkers || 0) + 
+                                       (record.unskilledWorkers || 0);
+                  return (
+                    <div
+                      key={record.id}
+                      className="p-4 hover:bg-gray-50/50 transition-colors font-sans"
                     >
-                      <Edit className="h-5 w-5 text-gray-600" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(record.id)}
-                      className="rounded-lg p-2 transition-colors hover:bg-red-50"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-5 w-5 text-red-500" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                      <div className="mb-4 flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-[#353535] capitalize text-base font-sans">
+                            {record.contractor?.contractorName || "Unknown Contractor"}
+                          </p>
+                          <p className="text-xs text-[#717579] font-sans mt-0.5">
+                            {record.date.split("T")[0]}
+                          </p>
+                        </div>
+                        <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] px-2.5 py-1 text-xs font-semibold text-[#01B6A8] font-sans">
+                          {calculateHours(record.startTime, record.endTime) || "—"} hrs
+                        </span>
+                      </div>
 
-        {/* Pagination */}
-        <div className="border-t border-gray-200 px-4 py-3">
-          <Pagination
-            pageNumber={pageNumber}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            onPageChange={(nextPage) => setPageNumber(nextPage)}
-          />
+                      <div className="mb-4 space-y-2 text-sm text-[#5B6065] font-sans">
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#717579]">Skilled Workers:</span>
+                          <span>{record.skilledWorkers}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#717579]">Semi-Skilled Workers:</span>
+                          <span>{record.semiSkilledWorkers}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#717579]">Unskilled Workers:</span>
+                          <span>{record.unskilledWorkers}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#717579]">Timing:</span>
+                          <span>
+                            {formatDuration(record.startTime)} - {formatDuration(record.endTime)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(record)}
+                          className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                          title="Edit"
+                        >
+                          <Edit className="h-5 w-5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(record.id)}
+                          className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Pagination Footer */}
+          <div className="border-t border-gray-200 px-6 py-4 bg-white">
+            <Pagination
+              pageNumber={pageNumber}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={(nextPage) => setPageNumber(nextPage)}
+            />
+          </div>
         </div>
       </div>
 
       {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto md:items-center">
-          <div className="my-auto w-full max-w-2xl rounded-lg bg-white shadow-xl">
-            <div className="p-6">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto md:items-center">
+          <div className="my-auto w-full max-w-2xl rounded-2xl bg-white shadow-2xl p-6 md:p-8">
+            <div className="p-0">
               <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-gray-900">{editingItem ? "Edit Daily Attendance" : "Add Daily Attendance"}</h3>
+                <h3 className="text-xl font-bold text-[#353535] font-sans">
+                  {editingItem ? "Edit Daily Attendance" : "Add Daily Attendance"}
+                </h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -583,9 +624,9 @@ function AttendanceManagement({ selectedSite, user }) {
                       date: new Date().toISOString().split("T")[0],
                     });
                   }}
-                  className="rounded-lg p-2 hover:bg-gray-100"
+                  className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 transition-colors"
                 >
-                  <X className="h-5 w-5 text-gray-600" />
+                  <X className="h-5 w-5 text-gray-500" />
                 </button>
               </div>
 
@@ -593,7 +634,7 @@ function AttendanceManagement({ selectedSite, user }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Row 1 */}
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Date <span className="text-[#EC3F3F]">*</span>
                     </label>
                     <input
@@ -609,7 +650,7 @@ function AttendanceManagement({ selectedSite, user }) {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Contractor Name <span className="text-[#EC3F3F]">*</span>
                     </label>
                     <select
@@ -635,13 +676,13 @@ function AttendanceManagement({ selectedSite, user }) {
 
                   {/* Row 2 */}
                   <div className="md:col-span-2">
-                    <label className="mb-2 block text-gray-700 font-medium border-b pb-2">
+                    <label className="mb-2 block text-base font-bold text-[#353535] font-sans border-b border-[#E5E9F1] pb-2 mt-4">
                       Worker Breakdown
                     </label>
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Skilled Workers
                     </label>
                     <input
@@ -658,7 +699,7 @@ function AttendanceManagement({ selectedSite, user }) {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Semi-Skilled Workers
                     </label>
                     <input
@@ -675,7 +716,7 @@ function AttendanceManagement({ selectedSite, user }) {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Unskilled Workers
                     </label>
                     <input
@@ -693,13 +734,13 @@ function AttendanceManagement({ selectedSite, user }) {
 
                   {/* Row 3 */}
                   <div className="md:col-span-2">
-                    <label className="mb-2 block text-gray-700 font-medium border-b pb-2">
+                    <label className="mb-2 block text-base font-bold text-[#353535] font-sans border-b border-[#E5E9F1] pb-2 mt-4">
                       Work Hours
                     </label>
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       Start Time <span className="text-[#EC3F3F]">*</span>
                     </label>
                     <input
@@ -715,7 +756,7 @@ function AttendanceManagement({ selectedSite, user }) {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
                       End Time <span className="text-[#EC3F3F]">*</span>
                     </label>
                     <input
@@ -735,8 +776,8 @@ function AttendanceManagement({ selectedSite, user }) {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 rounded-lg px-4 py-3 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                    style={{ backgroundColor: "#3D36BE" }}
+                    className="flex-1 h-12 rounded-lg text-white font-bold text-base transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                    style={{ backgroundColor: "#3D35BE" }}
                   >
                     {isSubmitting ? "Submitting..." : editingItem ? "Update Attendance" : "Submit Attendance"}
                   </button>
@@ -757,7 +798,7 @@ function AttendanceManagement({ selectedSite, user }) {
                       });
                     }}
                     disabled={isSubmitting}
-                    className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 h-12 rounded-lg bg-gray-100 text-[#5B6065] font-semibold text-base transition-colors hover:bg-gray-200 disabled:opacity-50"
                   >
                     Cancel
                   </button>

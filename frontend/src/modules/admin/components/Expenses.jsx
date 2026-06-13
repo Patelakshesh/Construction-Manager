@@ -186,8 +186,6 @@ function Expenses() {
   const totalIncome = filteredAll.filter((t) => t.type === "Income").length;
   const totalExpense = filteredAll.filter((t) => t.type === "Expense").length;
 
-  const paginatedTransactions = transactions;
-
   const handleAddNew = (type) => {
     setModalType(type);
     setEditingItem(null);
@@ -293,13 +291,13 @@ function Expenses() {
   };
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
+      <div className="mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h1 className="mb-2 text-2xl font-semibold text-gray-900 md:text-3xl">
+          <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
             Income and Expense
           </h1>
-          <p className="text-gray-600">
+          <p className="text-[#4E5159] mt-1 text-base font-normal">
             View all recorded project income and expenses across sites
           </p>
         </div>
@@ -307,7 +305,7 @@ function Expenses() {
           <button
             type="button"
             onClick={() => handleAddNew("Income")}
-            className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-opacity hover:opacity-90"
+            className="h-11 px-8 bg-[#01B6A8] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
           >
             <Plus className="h-5 w-5" />
             Add Income
@@ -315,8 +313,7 @@ function Expenses() {
           <button
             type="button"
             onClick={() => handleAddNew("Expense")}
-            className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#3D36BE" }}
+            className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
           >
             <Plus className="h-5 w-5" />
             Add Expense
@@ -324,92 +321,119 @@ function Expenses() {
         </div>
       </div>
 
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <input
-          type="text"
-          placeholder="Search by ID, title, or category..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-        />
-        <select
-          value={filterSite}
-          onChange={(e) => setFilterSite(e.target.value)}
-          className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] sm:w-48"
+      {/* Stats Cards Section */}
+      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* Total Income Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #01B6A8 0deg, #01B6A8 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <CreditCard className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{totalIncome}</span>
+            <span className="text-base text-[#4E5159] font-normal">Total Income Records</span>
+          </div>
+        </div>
+
+        {/* Total Expenses Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <ReceiptIndianRupee className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{totalExpense}</span>
+            <span className="text-base text-[#4E5159] font-normal">Total Expense Records</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Container Card (Table & Actions) */}
+      <div 
+        className="w-full bg-white flex flex-col gap-7" 
+        style={{ 
+          paddingLeft: 24, 
+          paddingRight: 24, 
+          paddingTop: 30, 
+          paddingBottom: 30, 
+          borderTopRightRadius: 20, 
+          borderBottomRightRadius: 20, 
+          borderBottomLeftRadius: 20 
+        }}
+      >
+        <div 
+          className="w-full flex flex-col overflow-hidden rounded-lg" 
+          style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
         >
-          <option value="all">All Sites</option>
-          {sites.map((site) => (
-            <option key={site.id} value={site.id}>
-              {site.siteName}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
-              <CreditCard className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Income</p>
-              <h3 className="text-gray-900">
-                {totalIncome}
-              </h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#3D36BE20" }}
-            >
-              <ReceiptIndianRupee
-                className="h-6 w-6"
-                style={{ color: "#3D36BE" }}
+          {/* Header Row: Search & Site Filter */}
+          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+            <div className="w-full sm:max-w-md relative flex items-center">
+              <input
+                type="text"
+                placeholder="Search by title, or category..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-12 pl-12 pr-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
               />
+              <svg className="w-5 h-5 absolute left-4 text-[#717579]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Expenses</p>
-              <h3 className="text-gray-900">
-                {totalExpense}
-              </h3>
-            </div>
+            <select
+              value={filterSite}
+              onChange={(e) => setFilterSite(e.target.value)}
+              className="rounded-lg border border-[#C8D9EF] bg-white px-4 py-2.5 text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans font-medium w-full sm:w-48"
+            >
+              <option value="all">All Sites</option>
+              {sites.map((site) => (
+                <option key={site.id} value={site.id}>
+                  {site.siteName}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-      </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <div className="hidden md:block">
-            <table className="w-full min-w-[860px]">
-              <thead className="border-b border-gray-200 bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-gray-700">Title</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Site</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Category</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Amount</th>
-                  <th className="px-6 py-4 text-left text-gray-700">
-                    Payment Mode
-                  </th>
-                  <th className="px-6 py-4 text-left text-gray-700">Date</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Type</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Actions</th>
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto w-full font-sans">
+            <table className="w-full min-w-[860px] border-collapse">
+              <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
+                <tr className="h-[68px]">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Title</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Site</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Category</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {isLoading ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500 font-sans">
                       Loading income and expenses...
                     </td>
                   </tr>
                 ) : transactions.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500 font-sans">
                       No data available
                     </td>
                   </tr>
@@ -417,36 +441,36 @@ function Expenses() {
                   transactions.map((transaction) => (
                     <tr
                       key={transaction.id}
-                      className="transition-colors hover:bg-gray-50"
+                      className="h-[78px] transition-colors hover:bg-gray-50/50"
                     >
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
                         {transaction.title}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {transaction.site?.siteName || "—"}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {transaction.category?.name || "—"}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        Rs. {Number(transaction.amount).toLocaleString("en-IN")}
+                      <td className="px-6 py-4 text-base text-[#3E424E] font-semibold font-sans">
+                        ₹{Number(transaction.amount).toLocaleString("en-IN")}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {transaction.paymentMode}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {transaction.date.split("T")[0]}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            transaction.type === "Income"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {transaction.type}
-                        </span>
+                      <td className="px-6 py-4">
+                        {transaction.type === "Income" ? (
+                          <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-sm font-medium text-[#01B6A8] px-3 py-1 font-sans">
+                            Income
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-base font-semibold text-[#F15F7F] px-3 py-1 font-sans">
+                            Expense
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -454,27 +478,27 @@ function Expenses() {
                             <button
                               type="button"
                               onClick={() => setViewingImage(transaction.receiptImage)}
-                              className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                              className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#3D35BE]"
                               title="View Receipt"
                             >
-                              <Eye className="h-5 w-5 text-[#3D36BE]" />
+                              <Eye className="h-5 w-5" />
                             </button>
                           )}
                           <button
                             type="button"
                             onClick={() => handleEdit(transaction)}
-                            className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
                             title="Edit"
                           >
-                            <Edit className="h-5 w-5 text-gray-600" />
+                            <Edit className="h-5 w-5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(transaction.id)}
-                            className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                            className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
                             title="Delete"
                           >
-                            <Trash2 className="h-5 w-5 text-red-500" />
+                            <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
                       </td>
@@ -485,59 +509,60 @@ function Expenses() {
             </table>
           </div>
 
-          <div className="block md:hidden">
+          {/* Mobile View */}
+          <div className="block md:hidden bg-white divide-y divide-gray-100 font-sans">
             {isLoading ? (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 Loading income and expenses...
               </div>
             ) : transactions.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 No data available
               </div>
             ) : (
               transactions.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="border-b border-gray-200 p-4 last:border-0 hover:bg-gray-50"
+                  className="p-4 hover:bg-gray-50/50 transition-colors"
                 >
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900 capitalize">
+                      <p className="font-semibold text-gray-900 capitalize text-base font-sans">
                         {transaction.title}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 font-sans">
                         {transaction.site?.siteName || "—"}
                       </p>
                     </div>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        transaction.type === "Income"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {transaction.type}
-                    </span>
+                    {transaction.type === "Income" ? (
+                      <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans">
+                        Income
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-xs font-semibold text-[#F15F7F] px-2.5 py-1 font-sans">
+                        Expense
+                      </span>
+                    )}
                   </div>
 
-                  <div className="mb-4 space-y-2 text-sm text-gray-600">
+                  <div className="mb-4 space-y-2 text-sm text-[#5B6065]">
                     <div className="flex justify-between">
-                      <span className="font-medium">Category:</span>
-                      <span>{transaction.category?.name || "—"}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Category:</span>
+                      <span className="font-sans">{transaction.category?.name || "—"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Amount:</span>
-                      <span className="font-semibold text-gray-900">
-                        Rs. {Number(transaction.amount).toLocaleString("en-IN")}
+                      <span className="font-medium text-[#3E424E] font-sans">Amount:</span>
+                      <span className="font-semibold text-gray-900 font-sans">
+                        ₹{Number(transaction.amount).toLocaleString("en-IN")}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Payment Mode:</span>
-                      <span>{transaction.paymentMode}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Payment Mode:</span>
+                      <span className="font-sans">{transaction.paymentMode}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Date:</span>
-                      <span>{transaction.date.split("T")[0]}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Date:</span>
+                      <span className="font-sans">{transaction.date.split("T")[0]}</span>
                     </div>
                   </div>
 
@@ -546,42 +571,43 @@ function Expenses() {
                       <button
                         type="button"
                         onClick={() => setViewingImage(transaction.receiptImage)}
-                        className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                        className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#3D35BE]"
                         title="View Receipt"
                       >
-                        <Eye className="h-5 w-5 text-[#3D36BE]" />
+                        <Eye className="h-5 w-5" />
                       </button>
                     )}
                     <button
                       type="button"
                       onClick={() => handleEdit(transaction)}
-                      className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                      className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
                       title="Edit"
                     >
-                      <Edit className="h-5 w-5 text-gray-600" />
+                      <Edit className="h-5 w-5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(transaction.id)}
-                      className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                      className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
                       title="Delete"
                     >
-                      <Trash2 className="h-5 w-5 text-red-500" />
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
               ))
             )}
           </div>
-        </div>
-        {/* Pagination */}
-        <div className="border-t border-gray-200 px-6 py-4">
-          <Pagination
-            pageNumber={pageNumber}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            onPageChange={(nextPage) => setPageNumber(nextPage)}
-          />
+
+          {/* Pagination Footer */}
+          <div className="border-t border-gray-200 px-6 py-4 bg-white">
+            <Pagination
+              pageNumber={pageNumber}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={(nextPage) => setPageNumber(nextPage)}
+            />
+          </div>
         </div>
       </div>
 
@@ -589,87 +615,105 @@ function Expenses() {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-gray-200 p-6">
-              <h3 className="text-xl font-semibold text-gray-900">
-                {editingItem ? `Edit ${modalType}` : `Add ${modalType}`}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="rounded-lg p-2 hover:bg-gray-100"
-              >
-                <X className="h-5 w-5 text-gray-500" />
-              </button>
-            </div>
+              <div className="flex items-center justify-between border-b border-gray-200 p-6">
+                <h3 className="text-xl font-bold text-gray-900 font-sans">
+                  {editingItem ? `Edit ${modalType}` : `Add ${modalType}`}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-lg p-2 hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
 
-            <form onSubmit={handleSave} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    placeholder={
-                      modalType === "Expense"
-                        ? "e.g. Cement Purchase"
-                        : "e.g. Client Payment Advance"
-                    }
-                  />
-                </div>
+              <form onSubmit={handleSave} className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
+                      Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
+                      placeholder={
+                        modalType === "Expense"
+                          ? "e.g. Cement Purchase"
+                          : "e.g. Client Payment Advance"
+                      }
+                    />
+                  </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Site <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.siteId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, siteId: e.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                  >
-                    <option value="" disabled>
-                      Select site
-                    </option>
-                    {sites.map((site) => (
-                      <option key={site.id} value={site.id}>
-                        {site.siteName}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
+                      Site <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.siteId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, siteId: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
+                    >
+                      <option value="" disabled>
+                        Select site
                       </option>
-                    ))}
-                  </select>
-                </div>
-
-                {modalType === "Expense" ? (
-                  <>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Category <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        required
-                        value={formData.categoryId}
-                        onChange={(e) =>
-                          setFormData({ ...formData, categoryId: e.target.value })
-                        }
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                      >
-                        <option value="" disabled>
-                          Select category
+                      {sites.map((site) => (
+                        <option key={site.id} value={site.id}>
+                          {site.siteName}
                         </option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
+                      ))}
+                    </select>
+                  </div>
+
+                  {modalType === "Expense" ? (
+                    <>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
+                          Category <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.categoryId}
+                          onChange={(e) =>
+                            setFormData({ ...formData, categoryId: e.target.value })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
+                        >
+                          <option value="" disabled>
+                            Select category
+                          </option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
+                          Amount <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          min="0"
+                          value={formData.amount}
+                          onChange={(e) =>
+                            setFormData({ ...formData, amount: e.target.value })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
+                          placeholder="Amount in Rs."
+                        />
+                      </div>
+                    </>
+                  ) : (
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                      <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
                         Amount <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -680,158 +724,141 @@ function Expenses() {
                         onChange={(e) =>
                           setFormData({ ...formData, amount: e.target.value })
                         }
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
                         placeholder="Amount in Rs."
                       />
                     </div>
-                  </>
-                ) : (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Amount <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      value={formData.amount}
-                      onChange={(e) =>
-                        setFormData({ ...formData, amount: e.target.value })
-                      }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                      placeholder="Amount in Rs."
-                    />
-                  </div>
-                )}
+                  )}
 
-                <>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Payment Mode <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={formData.paymentMode}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          paymentMode: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    >
-                      <option value="Cash">Cash</option>
-                      <option value="Online">Online</option>
-                      <option value="Check">Check</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Date <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, date: e.target.value })
-                      }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                    />
-                  </div>
-                </>
-
-                {(formData.paymentMode === "Check" ||
-                  formData.paymentMode === "Online") && (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Transaction ID / Check Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.transactionId}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          transactionId: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-                      placeholder={
-                        formData.paymentMode === "Check"
-                          ? "e.g. CHK98765"
-                          : "e.g. TXN123456"
-                      }
-                    />
-                  </div>
-                )}
-
-                {/* Upload Receipt (Admin) */}
-                <div className="md:col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Upload Bill/Receipt <span className="text-gray-400 font-normal">(Optional)</span>
-                  </label>
-                  <p className="mb-2 text-xs text-gray-500">
-                    Supported formats: PNG, JPG, JPEG, WEBP (Max size: 2MB)
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE] hover:bg-gray-50">
-                      <Camera className="h-5 w-5 text-gray-500" />
-                      <span className="text-sm text-gray-600 font-medium">
-                        {formData.receiptImage ? "Change Photo / Image" : "Upload Image"}
-                      </span>
+                  <>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
+                        Payment Mode <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.paymentMode}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            paymentMode: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
+                      >
+                        <option value="Cash">Cash</option>
+                        <option value="Online">Online</option>
+                        <option value="Check">Check</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
+                        Date <span className="text-red-500">*</span>
+                      </label>
                       <input
-                        type="file"
-                        accept="image/png, image/jpeg, image/jpg, image/webp"
-                        onChange={handleFileChange}
-                        className="hidden"
+                        type="date"
+                        required
+                        value={formData.date}
+                        onChange={(e) =>
+                          setFormData({ ...formData, date: e.target.value })
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
                       />
+                    </div>
+                  </>
+
+                  {(formData.paymentMode === "Check" ||
+                    formData.paymentMode === "Online") && (
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
+                        Transaction ID / Check Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.transactionId}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            transactionId: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
+                        placeholder={
+                          formData.paymentMode === "Check"
+                            ? "e.g. CHK98765"
+                            : "e.g. TXN123456"
+                        }
+                      />
+                    </div>
+                  )}
+
+                  {/* Upload Receipt */}
+                  <div className="md:col-span-2 font-sans">
+                    <label className="mb-1 block text-sm font-medium text-gray-700 font-sans">
+                      Upload Bill/Receipt <span className="text-gray-400 font-normal font-sans">(Optional)</span>
                     </label>
-                    
-                    {formData.receiptImage && (
-                      <div className="relative mt-1 w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-                        <img
-                          src={formData.receiptImage}
-                          alt="Receipt preview"
-                          className="h-auto w-full max-h-48 object-contain bg-gray-50"
+                    <p className="mb-2 text-xs text-gray-500 font-sans">
+                      Supported formats: PNG, JPG, JPEG, WEBP (Max size: 2MB)
+                    </p>
+                    <div className="flex flex-col gap-3 font-sans">
+                      <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 transition-colors hover:border-[#3D36BE] hover:bg-gray-50 font-sans">
+                        <Camera className="h-5 w-5 text-gray-500" />
+                        <span className="text-sm text-gray-600 font-medium font-sans">
+                          {formData.receiptImage ? "Change Photo / Image" : "Upload Image"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/png, image/jpeg, image/jpg, image/webp"
+                          onChange={handleFileChange}
+                          className="hidden"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, receiptImage: "" }))}
-                          className="absolute top-2 right-2 rounded-full bg-red-600 p-1 text-white hover:bg-red-700 transition-colors shadow"
-                          title="Remove image"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
+                      </label>
+                      
+                      {formData.receiptImage && (
+                        <div className="relative mt-1 w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                          <img
+                            src={formData.receiptImage}
+                            alt="Receipt preview"
+                            className="h-auto w-full max-h-48 object-contain bg-gray-50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, receiptImage: "" }))}
+                            className="absolute top-2 right-2 rounded-full bg-red-600 p-1 text-white hover:bg-red-700 transition-colors shadow"
+                            title="Remove image"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-8 flex gap-3">
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="flex-1 rounded-lg px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: "#3D36BE" }}
-                >
-                  {isSaving ? "Saving..." : `${editingItem ? "Update" : "Add"} ${modalType}`}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  disabled={isSaving}
-                  className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+                <div className="mt-8 flex gap-3 font-sans">
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="flex-1 rounded-lg px-4 py-2.5 text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-bold font-sans"
+                    style={{ backgroundColor: "#3D36BE" }}
+                  >
+                    {isSaving ? "Saving..." : `${editingItem ? "Update" : "Add"} ${modalType}`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    disabled={isSaving}
+                    className="flex-1 rounded-lg bg-gray-100 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold font-sans"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
       )}
+
       {viewingImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="relative max-w-3xl w-full overflow-hidden rounded-lg bg-white p-2 shadow-2xl">
@@ -853,6 +880,7 @@ function Expenses() {
           </div>
         </div>
       )}
+
       <ConfirmModal
         isOpen={!!itemToDelete}
         title="Delete Record"
@@ -867,7 +895,3 @@ function Expenses() {
 }
 
 export default Expenses;
-
-
-
-

@@ -49,7 +49,6 @@ const calculateHours = (startIso, endIso) => {
   return `${h}h ${m}m`;
 };
 
-
 function Attendance() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -178,8 +177,6 @@ function Attendance() {
     return matchesSite && matchesStart && matchesEnd;
   });
 
-  const paginatedAttendance = attendances;
-
   const todayStr = new Date().toISOString().split("T")[0];
   const todayRecords = filteredAll.filter(
     (record) => record.date.split("T")[0] === todayStr,
@@ -194,123 +191,161 @@ function Attendance() {
   );
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
+      {/* Title */}
       <div className="mb-8">
-        <h1 className="mb-2 text-2xl font-semibold text-gray-900 md:text-3xl">
-          Attendance
+        <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
+          Attendance Records
         </h1>
-        <p className="text-gray-600">
+        <p className="text-[#4E5159] mt-1 text-base font-normal">
           View daily worker attendance records from all sites
         </p>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50">
-              <Calendar className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Today Records</p>
-              <h3 className="text-gray-900">{todayRecords.length}</h3>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
-              <Users className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Workers</p>
-              <h3 className="text-gray-900">{totalWorkers}</h3>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-lg"
-              style={{ backgroundColor: "#3D36BE20" }}
-            >
-              <Calendar className="h-6 w-6" style={{ color: "#3D36BE" }} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Entries</p>
-              <h3 className="text-gray-900">{filteredAll.length}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-8 grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:grid-cols-3">
-        <div>
-          <label className="mb-2 block text-sm text-gray-700">Start Date</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(event) => setStartDate(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-          />
-        </div>
-        <div>
-          <label className="mb-2 block text-sm text-gray-700">End Date</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(event) => setEndDate(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
-          />
-        </div>
-        <div>
-          <label className="mb-2 block text-sm text-gray-700">Site</label>
-          <select
-            value={selectedSite}
-            onChange={(event) => setSelectedSite(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE]"
+      {/* Stats Cards Section */}
+      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Today Records Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
           >
-            <option value="all">All Sites</option>
-            {sites.map((site) => (
-              <option key={site.id} value={site.id}>
-                {site.siteName}
-              </option>
-            ))}
-          </select>
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <Calendar className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{todayRecords.length}</span>
+            <span className="text-base text-[#4E5159] font-normal">Today's Records</span>
+          </div>
+        </div>
+
+        {/* Total Workers Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #01B6A8 0deg, #01B6A8 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <Users className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{totalWorkers}</span>
+            <span className="text-base text-[#4E5159] font-normal">Total Workers</span>
+          </div>
+        </div>
+
+        {/* Total Entries Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3C368D 0deg, #857FF4 100%)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <Calendar className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">{filteredAll.length}</span>
+            <span className="text-base text-[#4E5159] font-normal">Total Entries</span>
+          </div>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <div className="hidden md:block">
-            <table className="w-full min-w-[980px]">
-              <thead className="border-b border-gray-200 bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-gray-700">Date</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Site</th>
-                  <th className="px-6 py-4 text-left text-gray-700">
-                    Contractor
-                  </th>
-                  <th className="px-6 py-4 text-left text-gray-700">
-                    Supervisor
-                  </th>
-                  <th className="px-6 py-4 text-left text-gray-700">Skills Workers</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Semi-Skills Workers</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Unskills Workers</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Start Time</th>
-                  <th className="px-6 py-4 text-left text-gray-700">End Time</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Total Hours</th>
+      {/* Main Container Card (Table & Actions) */}
+      <div 
+        className="w-full bg-white flex flex-col gap-7 min-w-0" 
+        style={{ 
+          paddingLeft: 24, 
+          paddingRight: 24, 
+          paddingTop: 30, 
+          paddingBottom: 30, 
+          borderTopRightRadius: 20, 
+          borderBottomRightRadius: 20, 
+          borderBottomLeftRadius: 20 
+        }}
+      >
+        <div 
+          className="w-full flex flex-col overflow-hidden rounded-lg min-w-0" 
+          style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
+        >
+          {/* Header Row: Filters */}
+          <div className="w-full bg-white p-6 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-center gap-4">
+            <div>
+              <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(event) => setStartDate(event.target.value)}
+                className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">End Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(event) => setEndDate(event.target.value)}
+                className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">Site</label>
+              <select
+                value={selectedSite}
+                onChange={(event) => setSelectedSite(event.target.value)}
+                className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans font-medium"
+              >
+                <option value="all">All Sites</option>
+                {sites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.siteName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto w-full font-sans">
+            <table className="w-full min-w-[980px] border-collapse">
+              <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
+                <tr className="h-[68px]">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Site</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Contractor</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Supervisor</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans text-center">Skilled</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans text-center">Semi-Skilled</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans text-center">Unskilled</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">In Time</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Out Time</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Total Hours</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {isLoading ? (
                   <tr>
-                    <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan="10" className="px-6 py-8 text-center text-gray-500 font-sans">
                       Loading attendance...
                     </td>
                   </tr>
                 ) : attendances.length === 0 ? (
                   <tr>
-                    <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan="10" className="px-6 py-8 text-center text-gray-500 font-sans">
                       No data available
                     </td>
                   </tr>
@@ -318,32 +353,36 @@ function Attendance() {
                   attendances.map((record) => (
                     <tr
                       key={record.id}
-                      className="transition-colors hover:bg-gray-50"
+                      className="h-[78px] transition-colors hover:bg-gray-50/50"
                     >
-                      <td className="px-6 py-4 text-gray-900">{record.date.split("T")[0]}</td>
-                      <td className="px-6 py-4 text-gray-900">{record.site?.siteName || "—"}</td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                        {record.date.split("T")[0]}
+                      </td>
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                        {record.site?.siteName || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans capitalize">
                         {record.contractor?.contractorName || "—"}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans capitalize">
                         {record.supervisor?.name || "—"}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans text-center">
                         {record.skilledWorkers}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans text-center">
                         {record.semiSkilledWorkers}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans text-center">
                         {record.unskilledWorkers}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {formatDuration(record.startTime)}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {formatDuration(record.endTime)}
                       </td>
-                      <td className="px-6 py-4 text-gray-900 font-medium">
+                      <td className="px-6 py-4 text-base text-[#3E424E] font-semibold font-sans">
                         {calculateHours(record.startTime, record.endTime) || "—"}
                       </td>
                     </tr>
@@ -353,59 +392,60 @@ function Attendance() {
             </table>
           </div>
 
-          <div className="block md:hidden">
+          {/* Mobile View */}
+          <div className="block md:hidden bg-white divide-y divide-gray-100 font-sans">
             {isLoading ? (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 Loading attendance...
               </div>
             ) : attendances.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 font-sans">
                 No data available
               </div>
             ) : (
               attendances.map((record) => (
                 <div
                   key={record.id}
-                  className="border-b border-gray-200 p-4 last:border-0 hover:bg-gray-50"
+                  className="p-4 hover:bg-gray-50/50 transition-colors"
                 >
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900 capitalize">
+                      <p className="font-semibold text-gray-900 capitalize text-base font-sans">
                         {record.site?.siteName || "—"}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 font-sans">
                         {record.date.split("T")[0]}
                       </p>
                     </div>
-                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                      {calculateHours(record.startTime, record.endTime) || "—"} hrs
+                    <span className="inline-flex items-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans">
+                      {calculateHours(record.startTime, record.endTime) || "—"}
                     </span>
                   </div>
 
-                  <div className="mb-4 space-y-2 text-sm text-gray-600">
+                  <div className="mb-4 space-y-2 text-sm text-[#5B6065]">
                     <div className="flex justify-between">
-                      <span className="font-medium">Contractor:</span>
-                      <span>{record.contractor?.contractorName || "—"}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Contractor:</span>
+                      <span className="font-sans">{record.contractor?.contractorName || "—"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Supervisor:</span>
-                      <span>{record.supervisor?.name || "—"}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Supervisor:</span>
+                      <span className="font-sans">{record.supervisor?.name || "—"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Skilled Workers:</span>
-                      <span>{record.skilledWorkers}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Skilled Workers:</span>
+                      <span className="font-sans">{record.skilledWorkers}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Semi-Skilled Workers:</span>
-                      <span>{record.semiSkilledWorkers}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Semi-Skilled Workers:</span>
+                      <span className="font-sans">{record.semiSkilledWorkers}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Unskilled Workers:</span>
-                      <span>{record.unskilledWorkers}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Unskilled Workers:</span>
+                      <span className="font-sans">{record.unskilledWorkers}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Timing:</span>
-                      <span>
+                      <span className="font-medium text-[#3E424E] font-sans">Timing:</span>
+                      <span className="font-sans">
                         {formatDuration(record.startTime)} - {formatDuration(record.endTime)}
                       </span>
                     </div>
@@ -414,15 +454,16 @@ function Attendance() {
               ))
             )}
           </div>
-        </div>
-        {/* Pagination */}
-        <div className="border-t border-gray-200 px-6 py-4">
-          <Pagination
-            pageNumber={pageNumber}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            onPageChange={(nextPage) => setPageNumber(nextPage)}
-          />
+
+          {/* Pagination Footer */}
+          <div className="border-t border-gray-200 px-6 py-4 bg-white">
+            <Pagination
+              pageNumber={pageNumber}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={(nextPage) => setPageNumber(nextPage)}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -430,7 +471,3 @@ function Attendance() {
 }
 
 export default Attendance;
-
-
-
-
