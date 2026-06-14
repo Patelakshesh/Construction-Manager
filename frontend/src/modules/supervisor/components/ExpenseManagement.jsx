@@ -788,11 +788,11 @@ function ExpenseManagement({ selectedSite, user }) {
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-6">
+                <div className="flex flex-col sm:flex-row gap-3 pt-6">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 h-12 rounded-lg text-white font-bold text-base transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full sm:flex-1 h-12 rounded-lg text-white font-bold text-base transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed font-sans"
                     style={{ backgroundColor: "#3D35BE" }}
                   >
                     {isSubmitting ? "Submitting..." : editingItem ? "Update Expense" : "Submit Expense"}
@@ -814,7 +814,7 @@ function ExpenseManagement({ selectedSite, user }) {
                       });
                     }}
                     disabled={isSubmitting}
-                    className="flex-1 h-12 rounded-lg bg-gray-100 text-[#5B6065] font-semibold text-base transition-colors hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full sm:flex-1 h-12 rounded-lg border border-[#3D35BE] bg-white text-[#3D35BE] font-semibold text-base transition-all hover:bg-[#F0EFFF] disabled:opacity-50 disabled:cursor-not-allowed font-sans"
                   >
                     Cancel
                   </button>
