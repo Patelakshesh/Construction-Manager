@@ -505,7 +505,7 @@ function Reports() {
               <button
                 type="button"
                 onClick={() => handleDownload(report.name, "excel")}
-                className="h-11 px-6 bg-[#3D35BE] hover:bg-[#322bad] text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2 font-sans flex-1"
+                className="h-11 px-6 border border-[#3D35BE] bg-white text-[#3D35BE] hover:bg-[#F0EFFF] text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2 font-sans flex-1"
               >
                 <Download className="h-4 w-4" />
                 Excel
