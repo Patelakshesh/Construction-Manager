@@ -4,6 +4,7 @@ import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
 import Pagination from "../../../shared/components/Pagination";
 import ConfirmModal from "../../../shared/components/ConfirmModal";
+import { createPortal } from "react-dom";
 
 const CREATE_EXPENSE_MUTATION = `
   mutation CreateExpense($input: CreateExpenseInput!) {
@@ -26,6 +27,24 @@ const DELETE_EXPENSE_MUTATION = `
     deleteExpense(id: $id)
   }
 `;
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  let s = dateStr;
+  if (typeof s !== "string") {
+    try {
+      s = new Date(s).toISOString();
+    } catch {
+      return "—";
+    }
+  }
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}-${month}-${year}`;
+  }
+  return "—";
+};
 
 function ExpenseManagement({ selectedSite, user }) {
   const [expenses, setExpenses] = useState([]);
@@ -423,7 +442,7 @@ function ExpenseManagement({ selectedSite, user }) {
                           {expense.paymentMode} {expense.transactionId ? `(${expense.transactionId})` : ""}
                         </td>
                         <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
-                          {new Date(expense.date).toLocaleDateString()}
+                          {formatDate(expense.date)}
                         </td>
                         <td className="px-6 py-4">
                           <span
@@ -536,7 +555,7 @@ function ExpenseManagement({ selectedSite, user }) {
                       )}
                       <div className="flex justify-between">
                         <span className="font-medium text-[#717579]">Date:</span>
-                        <span>{new Date(expense.date).toLocaleDateString()}</span>
+                        <span>{formatDate(expense.date)}</span>
                       </div>
                     </div>
 
@@ -586,8 +605,8 @@ function ExpenseManagement({ selectedSite, user }) {
         </div>
       </div>
 
-      {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto md:items-center">
+      {isAdding && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto md:items-center">
           <div className="my-auto w-full max-w-2xl rounded-2xl bg-white shadow-2xl p-6 md:p-8">
             <div className="p-0">
               <div className="mb-6 flex items-center justify-between">
@@ -822,11 +841,12 @@ function ExpenseManagement({ selectedSite, user }) {
               </form>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {viewingImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      {viewingImage && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="relative max-w-3xl w-full overflow-hidden rounded-2xl bg-white p-3 shadow-2xl">
             <button
               type="button"
@@ -844,7 +864,8 @@ function ExpenseManagement({ selectedSite, user }) {
               />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <ConfirmModal

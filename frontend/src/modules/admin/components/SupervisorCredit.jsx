@@ -82,6 +82,24 @@ const DELETE_CREDIT_MUTATION = `
   }
 `;
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  let s = dateStr;
+  if (typeof s !== "string") {
+    try {
+      s = new Date(s).toISOString();
+    } catch {
+      return "—";
+    }
+  }
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}-${month}-${year}`;
+  }
+  return "—";
+};
+
 function SupervisorCredit() {
   const getActorName = () => {
     const storedUser = localStorage.getItem("authUser");
@@ -108,6 +126,63 @@ function SupervisorCredit() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 400);
   const [viewingImage, setViewingImage] = useState(null);
+
+  const [allCredits, setAllCredits] = useState([]);
+  const [allExpenses, setAllExpenses] = useState([]);
+
+  const getFilteredMetrics = () => {
+    const searchLower = searchQuery.toLowerCase().trim();
+    
+    let filteredCredits = allCredits;
+    if (searchLower) {
+      filteredCredits = filteredCredits.filter(c => 
+        (c.supervisorName?.toLowerCase().includes(searchLower)) ||
+        (c.comment?.toLowerCase().includes(searchLower))
+      );
+    }
+    if (selectedSupervisor !== "all") {
+      filteredCredits = filteredCredits.filter(c => c.supervisorName === selectedSupervisor);
+    }
+    if (selectedPaymentMode !== "all") {
+      filteredCredits = filteredCredits.filter(c => c.paymentMode === selectedPaymentMode);
+    }
+    const totalCredit = filteredCredits.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
+    return {
+      totalCredit
+    };
+  };
+
+  const { totalCredit } = getFilteredMetrics();
+
+  const getRemainingAmount = () => {
+    let creditsToSum = allCredits;
+    let expensesToSum = allExpenses.filter(e => e.type?.toLowerCase() === "expense");
+
+    if (selectedSupervisor !== "all") {
+      creditsToSum = allCredits.filter(c => c.supervisorName === selectedSupervisor);
+      expensesToSum = expensesToSum.filter(e => e.createdBy?.toLowerCase() === selectedSupervisor.toLowerCase());
+    } else {
+      const supervisorLowerNames = supervisors.map(s => s.toLowerCase());
+      expensesToSum = expensesToSum.filter(e => e.createdBy && supervisorLowerNames.includes(e.createdBy.toLowerCase()));
+    }
+
+    const totalCred = creditsToSum.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+    const totalExp = expensesToSum.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    
+    return totalCred - totalExp;
+  };
+
+  const getSupervisorRemainingAmount = (supervisorName) => {
+    if (!supervisorName) return 0;
+    const creditsToSum = allCredits.filter(c => c.supervisorName?.toLowerCase() === supervisorName.toLowerCase());
+    const expensesToSum = allExpenses.filter(e => e.type?.toLowerCase() === "expense" && e.createdBy?.toLowerCase() === supervisorName.toLowerCase());
+
+    const totalCred = creditsToSum.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+    const totalExp = expensesToSum.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    
+    return totalCred - totalExp;
+  };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCredit, setEditingCredit] = useState(null);
@@ -225,14 +300,36 @@ function SupervisorCredit() {
       setTotalCount(page.totalCount);
 
       // Compute total sum and supervisors list
-      const [allRes, usersRes, rolesRes] = await Promise.all([
+      const [allRes, usersRes, rolesRes, expensesRes] = await Promise.all([
         apiClient.post("/graphql", { query: `query { supervisorCredits { amount supervisorName paymentMode comment transactionId } }` }, { headers: { Authorization: `Bearer ${token}` } }),
         apiClient.post("/graphql", { query: LOAD_SUPERVISORS_QUERY }, { headers: { Authorization: `Bearer ${token}` } }),
         apiClient.post("/graphql", { query: LOAD_ROLES_QUERY }, { headers: { Authorization: `Bearer ${token}` } }),
+        apiClient.post(
+          "/graphql",
+          {
+            query: `
+              query GetSupervisorExpenses {
+                expensesPage(pageNumber: 1, pageSize: 10000) {
+                  items {
+                    amount
+                    type
+                    createdBy
+                  }
+                }
+              }
+            `
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
       ]);
+
+      if (expensesRes.data?.data?.expensesPage?.items) {
+        setAllExpenses(expensesRes.data.data.expensesPage.items);
+      }
 
       if (allRes.data?.data?.supervisorCredits) {
         const all = allRes.data.data.supervisorCredits;
+        setAllCredits(all);
         const searchLower = trimmedSearch.toLowerCase();
         
         let filteredAll = all;
@@ -249,7 +346,7 @@ function SupervisorCredit() {
           filteredAll = filteredAll.filter(c => c.paymentMode === selectedPaymentMode);
         }
 
-        setOverallTotalAmount(filteredAll.reduce((sum, item) => sum + (item.amount || 0), 0));
+        setOverallTotalAmount(filteredAll.reduce((sum, item) => sum + (Number(item.amount) || 0), 0));
       }
 
       if (usersRes.data?.data?.users && rolesRes.data?.data?.roles) {
@@ -418,28 +515,9 @@ function SupervisorCredit() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
-      {/* Title & Add Button */}
-      <div className="mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
-            Supervisor Credit
-          </h1>
-          <p className="text-[#4E5159] mt-1 text-base font-normal">
-            Manage supervisor credit entries and payment details
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleAddNew}
-          className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
-        >
-          <Plus className="h-5 w-5" />
-          Add Credit
-        </button>
-      </div>
 
       {/* Stats Cards Section */}
-      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Total Records Card */}
         <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
           <div 
@@ -460,7 +538,7 @@ function SupervisorCredit() {
           </div>
         </div>
 
-        {/* Total Amount Card */}
+        {/* Total Credit Card */}
         <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
           <div 
             className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
@@ -475,8 +553,39 @@ function SupervisorCredit() {
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[32px] font-bold text-[#353535] leading-none">₹{overallTotalAmount.toLocaleString("en-IN")}</span>
-            <span className="text-base text-[#4E5159] font-normal">Total Amount (Overall)</span>
+            <span className="text-[32px] font-bold text-[#353535] leading-none">₹{totalCredit.toLocaleString("en-IN")}</span>
+            <span className="text-base text-[#4E5159] font-normal">
+              {selectedSupervisor === "all" ? "Total Credit (Overall)" : `Total Credit (${selectedSupervisor})`}
+            </span>
+          </div>
+        </div>
+
+        {/* Remaining Amount Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg shadow-[2px_4px_10px_rgba(0,38,73.56,0.25)] border border-[#EBE9FD] flex items-center justify-center shrink-0" 
+            style={{ 
+              width: 56, 
+              height: 56, 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <ReceiptIndianRupee className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[32px] font-bold text-[#353535] leading-none">
+              {(() => {
+                const rem = getRemainingAmount();
+                return rem < 0 
+                  ? `-₹${Math.abs(rem).toLocaleString("en-IN")}` 
+                  : `₹${rem.toLocaleString("en-IN")}`;
+              })()}
+            </span>
+            <span className="text-base text-[#4E5159] font-normal">
+              {selectedSupervisor === "all" ? "Remaining Amount (Overall)" : `Remaining Amount (${selectedSupervisor})`}
+            </span>
           </div>
         </div>
       </div>
@@ -499,7 +608,7 @@ function SupervisorCredit() {
           style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
         >
           {/* Header Row: Search & Filters */}
-          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
             <div className="w-full md:max-w-md relative flex items-center">
               <input
                 type="text"
@@ -535,6 +644,14 @@ function SupervisorCredit() {
                 <option value="Check">Check</option>
                 <option value="Online">Online</option>
               </select>
+              <button
+                type="button"
+                onClick={handleAddNew}
+                className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans w-full lg:w-auto shrink-0 whitespace-nowrap"
+              >
+                <Plus className="h-5 w-5" />
+                Add Credit
+              </button>
             </div>
           </div>
 
@@ -549,11 +666,11 @@ function SupervisorCredit() {
             <table className="w-full min-w-[840px] border-collapse">
               <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
                 <tr className="h-[68px]">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Supervisor</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Comment</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                 </tr>
               </thead>
@@ -577,20 +694,20 @@ function SupervisorCredit() {
                     key={credit.id}
                     className="h-[78px] transition-colors hover:bg-gray-50/50"
                   >
+                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                      {formatDate(credit.date)}
+                    </td>
                     <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
                       {credit.supervisorName}
                     </td>
                     <td className="px-6 py-4 text-base text-[#3E424E] font-semibold font-sans">
-                      ₹{credit.amount.toLocaleString("en-IN")}
+                      ₹{Number(credit.amount).toLocaleString("en-IN")}
                     </td>
                     <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                       {credit.paymentMode}
                     </td>
                     <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                       {credit.comment || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
-                      {new Date(credit.date).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -649,11 +766,11 @@ function SupervisorCredit() {
                   <div>
                     <p className="font-semibold text-gray-900 capitalize text-base font-sans">{credit.supervisorName}</p>
                     <p className="text-xs text-gray-500 font-sans">
-                      SC-{credit.id.toString().padStart(3, '0')} • {new Date(credit.date).toLocaleDateString()}
+                      SC-{credit.id.toString().padStart(3, '0')} • {formatDate(credit.date)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900 font-sans">₹{credit.amount.toLocaleString("en-IN")}</p>
+                    <p className="font-semibold text-gray-900 font-sans">₹{Number(credit.amount).toLocaleString("en-IN")}</p>
                     <p className="text-xs text-gray-500 font-sans">{credit.paymentMode}</p>
                   </div>
                 </div>
@@ -744,7 +861,16 @@ function SupervisorCredit() {
                 {/* Amount */}
                 <div>
                   <label className="mb-2 block text-gray-700 font-medium font-sans">
-                    Amount <span className="text-[#EC3F3F]">*</span>
+                    Amount {formData.supervisor && (() => {
+                      const rem = getSupervisorRemainingAmount(formData.supervisor);
+                      const isNeg = rem < 0;
+                      const formatted = isNeg ? `-₹${Math.abs(rem).toLocaleString("en-IN")}` : `₹${rem.toLocaleString("en-IN")}`;
+                      return (
+                        <span className="font-normal text-sm text-[#717579]">
+                          {" "}(Remaining Amount: <span className={isNeg ? "text-[#EC3F3F]" : "text-[#3D35BE]"}>{formatted}</span>)
+                        </span>
+                      );
+                    })()} <span className="text-[#EC3F3F]">*</span>
                   </label>
                   <input
                     type="number"

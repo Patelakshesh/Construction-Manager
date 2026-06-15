@@ -49,6 +49,24 @@ const calculateHours = (startIso, endIso) => {
   return `${h}h ${m}m`;
 };
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  let s = dateStr;
+  if (typeof s !== "string") {
+    try {
+      s = new Date(s).toISOString();
+    } catch {
+      return "—";
+    }
+  }
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}-${month}-${year}`;
+  }
+  return "—";
+};
+
 function Attendance() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -192,15 +210,7 @@ function Attendance() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
-      {/* Title */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
-          Attendance Records
-        </h1>
-        <p className="text-[#4E5159] mt-1 text-base font-normal">
-          View daily worker attendance records from all sites
-        </p>
-      </div>
+
 
       {/* Stats Cards Section */}
       <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -231,7 +241,7 @@ function Attendance() {
             style={{ 
               width: 56, 
               height: 56, 
-              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #01B6A8 0deg, #01B6A8 360deg)' 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
             }}
           >
             <div className="relative w-10 h-10 flex items-center justify-center">
@@ -356,7 +366,7 @@ function Attendance() {
                       className="h-[78px] transition-colors hover:bg-gray-50/50"
                     >
                       <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
-                        {record.date.split("T")[0]}
+                        {formatDate(record.date)}
                       </td>
                       <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {record.site?.siteName || "—"}
@@ -414,7 +424,7 @@ function Attendance() {
                         {record.site?.siteName || "—"}
                       </p>
                       <p className="text-xs text-gray-500 font-sans">
-                        {record.date.split("T")[0]}
+                        {formatDate(record.date)}
                       </p>
                     </div>
                     <span className="inline-flex items-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans">

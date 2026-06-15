@@ -40,6 +40,24 @@ const formatRoleName = (roleName) => {
 
 const getStatusLabel = (enabled) => (enabled ? "active" : "inactive");
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  let s = dateStr;
+  if (typeof s !== "string") {
+    try {
+      s = new Date(s).toISOString();
+    } catch {
+      return "—";
+    }
+  }
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}-${month}-${year}`;
+  }
+  return "—";
+};
+
 function UserManagement() {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -226,14 +244,12 @@ function UserManagement() {
   };
 
   const handleAddNew = () => {
-    const defaultRoleId = roles[0]?.id ? String(roles[0].id) : "";
-
     setEditingUser(null);
     setFormErrors({});
     setShowPassword(false);
     setFormData({
       ...emptyFormData,
-      roleId: defaultRoleId,
+      roleId: "",
       enable: true,
     });
     setIsModalOpen(true);
@@ -494,12 +510,7 @@ function UserManagement() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF]">
-      {/* Title */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
-          User Management
-        </h1>
-      </div>
+
 
       {/* Stats Cards Section */}
       <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -582,8 +593,8 @@ function UserManagement() {
           className="w-full flex flex-col overflow-hidden rounded-lg min-w-0" 
           style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
         >
-          {/* Header Row: Search & Add Button */}
-          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+          {/* Header Row: Search */}
+          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
             {/* Search Input */}
             <div className="w-full sm:max-w-md relative flex items-center">
               <input
@@ -597,13 +608,12 @@ function UserManagement() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-
-            {/* Add Button */}
+            
             <button
               type="button"
               onClick={handleAddNew}
               disabled={roles.length === 0}
-              className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
+              className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2 font-sans w-full lg:w-auto shrink-0 whitespace-nowrap"
             >
               <Plus className="h-5 w-5" />
               Add User
@@ -683,7 +693,7 @@ function UserManagement() {
                       </button>
                     </td>
                     <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
-                      {user.createdOn ? new Date(user.createdOn).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'}) : "—"}
+                      {formatDate(user.createdOn)}
                     </td>
                     <td className="px-6 py-4">
                       <button
@@ -757,7 +767,7 @@ function UserManagement() {
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium text-[#3E424E] font-sans">Onboarding:</span>
-                    <span className="font-sans">{user.createdOn ? new Date(user.createdOn).toLocaleDateString() : "—"}</span>
+                    <span className="font-sans">{formatDate(user.createdOn)}</span>
                   </div>
                 </div>
 

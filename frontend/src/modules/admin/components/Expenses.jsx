@@ -15,7 +15,36 @@ import useDebounce from "../../../shared/hooks/useDebounce";
 import Pagination from "../../../shared/components/Pagination";
 import ConfirmModal from "../../../shared/components/ConfirmModal";
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  let s = dateStr;
+  if (typeof s !== "string") {
+    try {
+      s = new Date(s).toISOString();
+    } catch {
+      return "—";
+    }
+  }
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}-${month}-${year}`;
+  }
+  return "—";
+};
+
 function Expenses() {
+  const getActorName = () => {
+    const storedUser = localStorage.getItem("authUser");
+    if (!storedUser) return "system";
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      return parsedUser?.name || "system";
+    } catch {
+      return "system";
+    }
+  };
+
   const [transactions, setTransactions] = useState([]);
   const [sites, setSites] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -40,6 +69,7 @@ function Expenses() {
     paymentMode: "Cash",
     transactionId: "",
     receiptImage: "",
+    createdBy: "",
   });
 
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -138,6 +168,7 @@ function Expenses() {
                   date
                   type
                   receiptImage
+                  createdBy
                 }
                 totalCount
               }
@@ -147,6 +178,7 @@ function Expenses() {
                 title
                 category { name }
                 transactionId
+                createdBy
               }
             }
           `,
@@ -198,6 +230,7 @@ function Expenses() {
       paymentMode: "Cash",
       transactionId: "",
       receiptImage: "",
+      createdBy: "",
     });
     setIsModalOpen(true);
   };
@@ -214,6 +247,7 @@ function Expenses() {
       paymentMode: transaction.paymentMode || "Cash",
       transactionId: transaction.transactionId || "",
       receiptImage: transaction.receiptImage || "",
+      createdBy: transaction.createdBy || "",
     });
     setIsModalOpen(true);
   };
@@ -253,16 +287,32 @@ function Expenses() {
       const token = localStorage.getItem("authToken");
       const isIncome = modalType === "Income";
       const variables = {
-        input: {
-          ...formData,
-          id: editingItem ? editingItem.id : undefined,
-          siteId: formData.siteId ? parseInt(formData.siteId) : null,
-          categoryId: (!isIncome && formData.categoryId) ? parseInt(formData.categoryId) : null,
-          amount: parseFloat(formData.amount),
-          type: modalType,
-          date: new Date(formData.date).toISOString(),
-          receiptImage: formData.receiptImage || null
-        }
+        input: editingItem 
+          ? {
+              id: parseInt(editingItem.id),
+              title: formData.title,
+              siteId: formData.siteId ? parseInt(formData.siteId) : null,
+              categoryId: (!isIncome && formData.categoryId) ? parseInt(formData.categoryId) : null,
+              amount: parseFloat(formData.amount),
+              type: modalType,
+              date: new Date(formData.date).toISOString(),
+              paymentMode: formData.paymentMode,
+              transactionId: formData.paymentMode === "Cash" ? null : formData.transactionId,
+              receiptImage: formData.receiptImage || null,
+              modifiedBy: getActorName(),
+            }
+          : {
+              title: formData.title,
+              siteId: formData.siteId ? parseInt(formData.siteId) : null,
+              categoryId: (!isIncome && formData.categoryId) ? parseInt(formData.categoryId) : null,
+              amount: parseFloat(formData.amount),
+              type: modalType,
+              date: new Date(formData.date).toISOString(),
+              paymentMode: formData.paymentMode,
+              transactionId: formData.paymentMode === "Cash" ? null : formData.transactionId,
+              receiptImage: formData.receiptImage || null,
+              createdBy: getActorName(),
+            }
       };
       
       const query = editingItem
@@ -292,34 +342,6 @@ function Expenses() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
-      <div className="mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
-            Income and Expense
-          </h1>
-          <p className="text-[#4E5159] mt-1 text-base font-normal">
-            View all recorded project income and expenses across sites
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => handleAddNew("Income")}
-            className="h-11 px-8 bg-[#01B6A8] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
-          >
-            <Plus className="h-5 w-5" />
-            Add Income
-          </button>
-          <button
-            type="button"
-            onClick={() => handleAddNew("Expense")}
-            className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
-          >
-            <Plus className="h-5 w-5" />
-            Add Expense
-          </button>
-        </div>
-      </div>
 
       {/* Stats Cards Section */}
       <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
@@ -330,7 +352,7 @@ function Expenses() {
             style={{ 
               width: 56, 
               height: 56, 
-              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #01B6A8 0deg, #01B6A8 360deg)' 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
             }}
           >
             <div className="relative w-10 h-10 flex items-center justify-center">
@@ -382,7 +404,7 @@ function Expenses() {
           style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
         >
           {/* Header Row: Search & Site Filter */}
-          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
             <div className="w-full sm:max-w-md relative flex items-center">
               <input
                 type="text"
@@ -395,18 +417,38 @@ function Expenses() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <select
-              value={filterSite}
-              onChange={(e) => setFilterSite(e.target.value)}
-              className="rounded-lg border border-[#C8D9EF] bg-white px-4 py-2.5 text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans font-medium w-full sm:w-48"
-            >
-              <option value="all">All Sites</option>
-              {sites.map((site) => (
-                <option key={site.id} value={site.id}>
-                  {site.siteName}
-                </option>
-              ))}
-            </select>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
+              <select
+                value={filterSite}
+                onChange={(e) => setFilterSite(e.target.value)}
+                className="rounded-lg border border-[#C8D9EF] bg-white px-4 py-2.5 text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans font-medium w-full sm:w-48"
+              >
+                <option value="all">All Sites</option>
+                {sites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.siteName}
+                  </option>
+                ))}
+              </select>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => handleAddNew("Income")}
+                  className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans w-full sm:w-auto shrink-0 whitespace-nowrap"
+                >
+                  <Plus className="h-5 w-5" />
+                  Add Income
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddNew("Expense")}
+                  className="h-11 px-8 border border-[#3D35BE] text-[#3D35BE] bg-white text-base font-bold rounded-lg transition-colors hover:bg-[#F0EFFF] disabled:opacity-60 flex items-center justify-center gap-2 font-sans w-full sm:w-auto shrink-0 whitespace-nowrap"
+                >
+                  <Plus className="h-5 w-5 text-[#3D35BE]" />
+                  Add Expense
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Desktop Table View */}
@@ -414,26 +456,27 @@ function Expenses() {
             <table className="w-full min-w-[860px] border-collapse">
               <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
                 <tr className="h-[68px]">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Title</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Site</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Category</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Added By</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
                 {isLoading ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500 font-sans">
+                    <td colSpan="9" className="px-6 py-8 text-center text-gray-500 font-sans">
                       Loading income and expenses...
                     </td>
                   </tr>
                 ) : transactions.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500 font-sans">
+                    <td colSpan="9" className="px-6 py-8 text-center text-gray-500 font-sans">
                       No data available
                     </td>
                   </tr>
@@ -443,6 +486,9 @@ function Expenses() {
                       key={transaction.id}
                       className="h-[78px] transition-colors hover:bg-gray-50/50"
                     >
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                        {formatDate(transaction.date)}
+                      </td>
                       <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
                         {transaction.title}
                       </td>
@@ -458,9 +504,6 @@ function Expenses() {
                       <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {transaction.paymentMode}
                       </td>
-                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
-                        {transaction.date.split("T")[0]}
-                      </td>
                       <td className="px-6 py-4">
                         {transaction.type === "Income" ? (
                           <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-sm font-medium text-[#01B6A8] px-3 py-1 font-sans">
@@ -471,6 +514,9 @@ function Expenses() {
                             Expense
                           </span>
                         )}
+                      </td>
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                        {transaction.createdBy || (transaction.type === "Income" ? "Admin" : "Supervisor")}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -547,6 +593,10 @@ function Expenses() {
 
                   <div className="mb-4 space-y-2 text-sm text-[#5B6065]">
                     <div className="flex justify-between">
+                      <span className="font-medium text-[#3E424E] font-sans">Date:</span>
+                      <span className="font-sans">{formatDate(transaction.date)}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="font-medium text-[#3E424E] font-sans">Category:</span>
                       <span className="font-sans">{transaction.category?.name || "—"}</span>
                     </div>
@@ -561,8 +611,8 @@ function Expenses() {
                       <span className="font-sans">{transaction.paymentMode}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Date:</span>
-                      <span className="font-sans">{transaction.date.split("T")[0]}</span>
+                      <span className="font-medium text-[#3E424E] font-sans">Added By:</span>
+                      <span className="font-sans">{transaction.createdBy || (transaction.type === "Income" ? "Admin" : "Supervisor")}</span>
                     </div>
                   </div>
 
@@ -766,8 +816,9 @@ function Expenses() {
                     </div>
                   </>
 
+
                   {(formData.paymentMode === "Check" ||
-                    formData.paymentMode === "Online") && (
+                    formData.paymentMode === "Online") ? (
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
                         Transaction ID / Check Number <span className="text-red-500">*</span>
@@ -790,6 +841,8 @@ function Expenses() {
                         }
                       />
                     </div>
+                  ) : (
+                    <div />
                   )}
 
                   {/* Upload Receipt */}

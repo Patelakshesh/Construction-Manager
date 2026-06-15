@@ -324,24 +324,6 @@ function Category() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
-      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
-            Category Management
-          </h1>
-          <p className="text-[#4E5159] mt-1 text-base font-normal">
-            Manage available project categories
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleAddNew}
-          className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans"
-        >
-          <Plus className="h-5 w-5" />
-          Add Category
-        </button>
-      </div>
 
       {/* Stats Cards Section */}
       <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
@@ -404,7 +386,7 @@ function Category() {
           style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
         >
           {/* Header Row: Search Input */}
-          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div className="w-full bg-white p-6 border-b border-gray-100 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
             <div className="w-full sm:max-w-md relative flex items-center">
               <input
                 type="text"
@@ -417,6 +399,15 @@ function Category() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
+            
+            <button
+              type="button"
+              onClick={handleAddNew}
+              className="h-11 px-8 bg-[#3D35BE] text-white text-base font-bold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 font-sans w-full lg:w-auto shrink-0 whitespace-nowrap"
+            >
+              <Plus className="h-5 w-5" />
+              Add Category
+            </button>
           </div>
 
           {loadError && (

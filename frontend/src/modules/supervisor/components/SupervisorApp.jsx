@@ -68,7 +68,7 @@ function SupervisorApp({ user, onLogout }) {
   return (
     <div className="flex h-dvh flex-col bg-[#F6F5FF] font-sans overflow-hidden">
       {/* Top Header - White Background, Premium Border */}
-      <div className="border-b border-[#E5E9F1] bg-white p-4 shrink-0">
+      <div className="border-b border-[#E5E9F1] bg-white p-4 shrink-0 relative z-10">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-4 flex-1">
             <h2 className="truncate text-lg text-[#353535] font-bold font-sans hidden md:block">
@@ -96,7 +96,7 @@ function SupervisorApp({ user, onLogout }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-[#F6F5FF]">
+      <div className="flex-1 overflow-auto bg-[#F6F5FF] relative z-20">
         <div className="pb-28 md:pb-6">
           {activeTab === "home" && <SupervisorHome selectedSite={selectedSite} user={user} />}
           {activeTab === "expenses" && (
@@ -108,7 +108,7 @@ function SupervisorApp({ user, onLogout }) {
         </div>
       </div>
 
-      <div className="border-t border-[#E5E9F1] bg-white px-2 py-2 safe-area-bottom shrink-0 md:sticky md:bottom-auto">
+      <div className="border-t border-[#E5E9F1] bg-white px-2 py-2 safe-area-bottom shrink-0 md:sticky md:bottom-auto relative z-10">
         <div className="mx-auto flex max-w-md items-center justify-around">
           {menuItems.map((item) => {
             const Icon = item.icon;

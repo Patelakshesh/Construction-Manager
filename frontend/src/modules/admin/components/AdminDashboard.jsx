@@ -36,7 +36,7 @@ const menuItems = [
 ];
 
 function AdminDashboard({ user, onLogout }) {
-  const [activeTab, setActiveTab] = useState("users");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 

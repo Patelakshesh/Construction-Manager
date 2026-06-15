@@ -23,6 +23,69 @@ const reportTemplates = [
   },
 ];
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  let s = dateStr;
+  if (typeof s !== "string") {
+    try {
+      s = new Date(s).toISOString();
+    } catch {
+      return "—";
+    }
+  }
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}-${month}-${year}`;
+  }
+  return "—";
+};
+
+const formatDuration = (durationStr) => {
+  if (!durationStr) return "--:--";
+  const regex = /^-?PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/;
+  const match = durationStr.match(regex);
+  if (!match) {
+    if (durationStr.includes(":")) {
+      return durationStr.slice(0, 5);
+    }
+    return durationStr;
+  }
+  const hours = parseInt(match[1] || "0", 10);
+  const minutes = parseInt(match[2] || "0", 10);
+  const hh = String(hours).padStart(2, "0");
+  const mm = String(minutes).padStart(2, "0");
+  return `${hh}:${mm}`;
+};
+
+const calculateHours = (startIso, endIso) => {
+  if (!startIso || !endIso) return null;
+  const parseToMinutes = (durationStr) => {
+    const regex = /^-?PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/;
+    const match = durationStr.match(regex);
+    if (!match) {
+      if (durationStr.includes(":")) {
+        const parts = durationStr.split(":");
+        return parseInt(parts[0] || "0", 10) * 60 + parseInt(parts[1] || "0", 10);
+      }
+      return 0;
+    }
+    const hours = parseInt(match[1] || "0", 10);
+    const minutes = parseInt(match[2] || "0", 10);
+    return hours * 60 + minutes;
+  };
+  const startMins = parseToMinutes(startIso);
+  const endMins = parseToMinutes(endIso);
+  const diffMins = endMins - startMins;
+  if (diffMins <= 0) return null;
+  const h = Math.floor(diffMins / 60);
+  const m = diffMins % 60;
+  if (m === 0) {
+    return `${h} hrs`;
+  }
+  return `${h}h ${m}m`;
+};
+
 function Reports() {
   const [reports, setReports] = useState(() => {
     return reportTemplates.map(r => {
@@ -103,6 +166,7 @@ function Reports() {
                     paymentMode
                     date
                     type
+                    createdBy
                   }
                 }
               }
@@ -139,7 +203,7 @@ function Reports() {
           
           return {
             id: e.id,
-            date: e.date.split("T")[0],
+            date: formatDate(e.date),
             description: e.title,
             site: e.site?.siteName || "-",
             category: e.category?.name || "-",
@@ -147,6 +211,7 @@ function Reports() {
             credit: credit,
             debit: debit,
             balance: currentBalance,
+            createdBy: e.createdBy || (e.type === "Income" ? "Admin" : "Supervisor"),
           };
         });
 
@@ -194,19 +259,20 @@ function Reports() {
 
           autoTable(doc, {
             startY: yPos + 4,
-            head: [["Date", "Description", "Site", "Category", "Mode", "Credit (+, Rs.)", "Debit (-, Rs.)", "Balance (Rs.)"]],
+            head: [["Date", "Description", "Site", "Category", "Mode", "Added By", "Credit (+, Rs.)", "Debit (-, Rs.)", "Balance (Rs.)"]],
             body: statementData.map(e => [
               e.date, 
               e.description, 
               e.site, 
               e.category, 
               e.paymentMode, 
+              e.createdBy,
               e.credit ? formatNumber(e.credit) : "-", 
               e.debit ? formatNumber(e.debit) : "-", 
               formatNumber(e.balance)
             ]),
             foot: [[
-              { content: 'TOTAL', colSpan: 5, styles: { halign: 'right' } },
+              { content: 'TOTAL', colSpan: 6, styles: { halign: 'right' } },
               { content: formatCurrency(totalCredit), styles: { halign: 'right' } },
               { content: formatCurrency(totalDebit), styles: { halign: 'right' } },
               { content: formatCurrency(finalBalance), styles: { halign: 'right' } }
@@ -215,11 +281,11 @@ function Reports() {
             headStyles: { fillColor: [61, 54, 190] },
             footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
             showFoot: 'lastPage',
-            styles: { fontSize: 10, cellPadding: 3 },
+            styles: { fontSize: 8.5, cellPadding: 2.5 },
             columnStyles: {
-              5: { halign: 'right' },
               6: { halign: 'right' },
-              7: { halign: 'right', fontStyle: 'bold' }
+              7: { halign: 'right' },
+              8: { halign: 'right', fontStyle: 'bold' }
             }
           });
           doc.save("Credit and Debit Report.pdf");
@@ -230,6 +296,7 @@ function Reports() {
             Site: e.site,
             Category: e.category,
             "Payment Mode": e.paymentMode,
+            "Added By": e.createdBy,
             "Credit (+)": e.credit,
             "Debit (-)": e.debit,
             Balance: e.balance
@@ -241,6 +308,7 @@ function Reports() {
             Site: "",
             Category: "",
             "Payment Mode": "",
+            "Added By": "",
             "Credit (+)": totalCredit,
             "Debit (-)": totalDebit,
             Balance: finalBalance
@@ -298,6 +366,8 @@ function Reports() {
                     skilledWorkers
                     semiSkilledWorkers
                     unskilledWorkers
+                    startTime
+                    endTime
                   }
                 }
               }
@@ -319,36 +389,42 @@ function Reports() {
         }
         
         if (format === "pdf") {
-          const doc = new jsPDF();
+          const doc = new jsPDF("landscape");
+          doc.setFontSize(16);
+          doc.setTextColor(40, 40, 40);
           doc.text("Workforce Attendance Report", 14, 15);
           autoTable(doc, {
             startY: 20,
-            head: [["ID", "Date", "Site", "Contractor", "Supervisor", "Skilled", "Semi-Skilled", "Unskilled"]],
+            head: [["Date", "Site", "Contractor", "Added By", "Skilled", "Semi-Skilled", "Unskilled", "Start Time", "End Time", "Total Hours"]],
             body: data.map(a => [
-              a.id, 
-              a.date.split("T")[0], 
+              formatDate(a.date), 
               a.site?.siteName || "-", 
               a.contractor?.contractorName || "-", 
               a.supervisor?.name || "-", 
               a.skilledWorkers, 
               a.semiSkilledWorkers, 
-              a.unskilledWorkers
+              a.unskilledWorkers,
+              formatDuration(a.startTime),
+              formatDuration(a.endTime),
+              calculateHours(a.startTime, a.endTime) || "—"
             ]),
             theme: 'striped',
             headStyles: { fillColor: [61, 54, 190] },
-            styles: { fontSize: 10, cellPadding: 3 }
+            styles: { fontSize: 8.5, cellPadding: 2.5 }
           });
           doc.save("Workforce_Attendance_Report.pdf");
         } else if (format === "excel") {
           const ws = XLSX.utils.json_to_sheet(data.map(a => ({
-            ID: a.id,
-            Date: a.date.split("T")[0],
+            Date: formatDate(a.date),
             Site: a.site?.siteName || "-",
             Contractor: a.contractor?.contractorName || "-",
-            Supervisor: a.supervisor?.name || "-",
+            "Added By": a.supervisor?.name || "-",
             Skilled: a.skilledWorkers,
             "Semi-Skilled": a.semiSkilledWorkers,
-            Unskilled: a.unskilledWorkers
+            Unskilled: a.unskilledWorkers,
+            "Start Time": formatDuration(a.startTime),
+            "End Time": formatDuration(a.endTime),
+            "Total Hours": calculateHours(a.startTime, a.endTime) || "—"
           })));
           const wb = XLSX.utils.book_new();
           XLSX.utils.book_append_sheet(wb, ws, "Attendance");
@@ -369,15 +445,7 @@ function Reports() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
-      {/* Title */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
-          Reports
-        </h1>
-        <p className="text-[#4E5159] mt-1 text-base font-normal">
-          Generate and download comprehensive reports for your construction projects
-        </p>
-      </div>
+
 
       {/* Main Container Card for Filters */}
       <div 

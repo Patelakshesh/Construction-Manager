@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { createPortal } from "react-dom";
 
 export default function ConfirmModal({ 
   isOpen, 
@@ -12,7 +13,7 @@ export default function ConfirmModal({
 }) {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-sm rounded-lg bg-white p-6 text-center shadow-xl">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
@@ -40,6 +41,7 @@ export default function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

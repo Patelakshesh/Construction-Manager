@@ -101,17 +101,8 @@ function DashboardHome() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
-      {/* Title & Date Filters */}
-      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl font-sans">
-            Dashboard Overview
-          </h1>
-          <p className="text-[#4E5159] mt-1 text-base font-normal">
-            Welcome back! Here's what's happening with your construction sites.
-          </p>
-        </div>
-
+      {/* Date Filters */}
+      <div className="mb-8 flex justify-end">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <select
             value={filterSite}

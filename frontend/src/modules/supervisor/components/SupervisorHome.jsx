@@ -9,6 +9,53 @@ import {
 } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
+import { createPortal } from "react-dom";
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  let s = dateStr;
+  if (typeof s !== "string") {
+    try {
+      s = new Date(s).toISOString();
+    } catch {
+      return "—";
+    }
+  }
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}-${month}-${year}`;
+  }
+  return "—";
+};
+
+const calculateHours = (startIso, endIso) => {
+  if (!startIso || !endIso) return null;
+  const parseToMinutes = (durationStr) => {
+    const regex = /^-?PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/;
+    const match = durationStr.match(regex);
+    if (!match) {
+      if (durationStr.includes(":")) {
+        const parts = durationStr.split(":");
+        return parseInt(parts[0] || "0", 10) * 60 + parseInt(parts[1] || "0", 10);
+      }
+      return 0;
+    }
+    const hours = parseInt(match[1] || "0", 10);
+    const minutes = parseInt(match[2] || "0", 10);
+    return hours * 60 + minutes;
+  };
+  const startMins = parseToMinutes(startIso);
+  const endMins = parseToMinutes(endIso);
+  const diffMins = endMins - startMins;
+  if (diffMins <= 0) return null;
+  const h = Math.floor(diffMins / 60);
+  const m = diffMins % 60;
+  if (m === 0) {
+    return `${h} hrs`;
+  }
+  return `${h}h ${m}m`;
+};
 
 function SupervisorHome({ selectedSite, user }) {
   const [recentExpenses, setRecentExpenses] = useState([]);
@@ -81,6 +128,8 @@ function SupervisorHome({ selectedSite, user }) {
                     unskilledWorkers
                     contractor { contractorName }
                     siteId
+                    startTime
+                    endTime
                   }
                 }
               }
@@ -266,7 +315,7 @@ function SupervisorHome({ selectedSite, user }) {
                         {expense.category?.name || "Uncategorized"}
                       </span>
                       <span className="text-xs text-[#717579] font-sans">
-                        {new Date(expense.date).toLocaleDateString()}
+                        {formatDate(expense.date)}
                       </span>
                     </div>
                     {expense.receiptImage && (
@@ -315,13 +364,18 @@ function SupervisorHome({ selectedSite, user }) {
                         {record.contractor?.contractorName || "Unknown Contractor"}
                       </p>
                       <p className="text-xs text-[#717579] font-sans">
-                        {new Date(record.date).toLocaleDateString()}
+                        {formatDate(record.date)}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-base font-bold text-[#353535] font-sans">
                         {totalWorkers} workers
                       </p>
+                      {calculateHours(record.startTime, record.endTime) && (
+                        <p className="text-xs text-[#717579] font-sans font-semibold mt-0.5">
+                          {calculateHours(record.startTime, record.endTime)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -331,8 +385,8 @@ function SupervisorHome({ selectedSite, user }) {
         </div>
       </div>
 
-      {viewingImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      {viewingImage && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="relative max-w-3xl w-full overflow-hidden rounded-2xl bg-white p-3 shadow-2xl">
             <button
               type="button"
@@ -350,7 +404,8 @@ function SupervisorHome({ selectedSite, user }) {
               />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

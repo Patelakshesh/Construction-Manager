@@ -4,6 +4,7 @@ import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
 import Pagination from "../../../shared/components/Pagination";
 import ConfirmModal from "../../../shared/components/ConfirmModal";
+import { createPortal } from "react-dom";
 
 const CREATE_ATTENDANCE_MUTATION = `
   mutation CreateAttendance($input: CreateAttendanceInput!) {
@@ -79,6 +80,24 @@ const calculateHours = (startIso, endIso) => {
     return `${h} hrs`;
   }
   return `${h}h ${m}m`;
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  let s = dateStr;
+  if (typeof s !== "string") {
+    try {
+      s = new Date(s).toISOString();
+    } catch {
+      return "—";
+    }
+  }
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}-${month}-${year}`;
+  }
+  return "—";
 };
 
 
@@ -469,7 +488,7 @@ function AttendanceManagement({ selectedSite, user }) {
                         className="h-[78px] transition-colors hover:bg-gray-50/50"
                       >
                         <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
-                          {record.date.split("T")[0]}
+                          {formatDate(record.date)}
                         </td>
                         <td className="px-6 py-4 text-base text-[#5B6065] font-semibold font-sans capitalize">
                           {record.contractor?.contractorName || "—"}
@@ -535,7 +554,7 @@ function AttendanceManagement({ selectedSite, user }) {
                             {record.contractor?.contractorName || "Unknown Contractor"}
                           </p>
                           <p className="text-xs text-[#717579] font-sans mt-0.5">
-                            {record.date.split("T")[0]}
+                            {formatDate(record.date)}
                           </p>
                         </div>
                         <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] px-2.5 py-1 text-xs font-semibold text-[#01B6A8] font-sans">
@@ -601,8 +620,8 @@ function AttendanceManagement({ selectedSite, user }) {
         </div>
       </div>
 
-      {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto md:items-center">
+      {isAdding && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto md:items-center">
           <div className="my-auto w-full max-w-2xl rounded-2xl bg-white shadow-2xl p-6 md:p-8">
             <div className="p-0">
               <div className="mb-6 flex items-center justify-between">
@@ -806,7 +825,8 @@ function AttendanceManagement({ selectedSite, user }) {
               </form>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       <ConfirmModal
         isOpen={!!itemToDelete}
