@@ -666,7 +666,7 @@ function SupervisorCredit() {
             <table className="w-full min-w-[840px] border-collapse">
               <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
                 <tr className="h-[68px]">
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Supervisor</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
@@ -694,7 +694,7 @@ function SupervisorCredit() {
                     key={credit.id}
                     className="h-[78px] transition-colors hover:bg-gray-50/50"
                   >
-                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                    <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans whitespace-nowrap">
                       {formatDate(credit.date)}
                     </td>
                     <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">

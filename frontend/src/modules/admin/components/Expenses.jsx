@@ -456,7 +456,7 @@ function Expenses() {
             <table className="w-full min-w-[860px] border-collapse">
               <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
                 <tr className="h-[68px]">
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Title</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Site</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Category</th>
@@ -486,7 +486,7 @@ function Expenses() {
                       key={transaction.id}
                       className="h-[78px] transition-colors hover:bg-gray-50/50"
                     >
-                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans whitespace-nowrap">
                         {formatDate(transaction.date)}
                       </td>
                       <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
