@@ -355,11 +355,12 @@ function SiteManagement() {
   const displayStart = totalCount ? (pageNumber - 1) * pageSize + 1 : 0;
   const displayEnd = Math.min(pageNumber * pageSize, totalCount);
 
-  // Compute list of supervisors assigned to other active sites
+  // Compute list of supervisors already assigned to other active sites (single supervisor per site)
   const assignedSupervisors = new Set();
   allSitesList.forEach(site => {
     if (site.enable && (!editingSite || String(site.id) !== String(editingSite.id))) {
       if (site.contactPerson) {
+        // Support both legacy comma-separated and new single-name format
         site.contactPerson.split(",").forEach(n => {
           const name = n.trim().toLowerCase();
           if (name) {
@@ -505,7 +506,7 @@ function SiteManagement() {
                 <tr className="h-[68px]">
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Site</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Location</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Supervisor</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Assigned Supervisor</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Status</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                 </tr>
@@ -713,10 +714,10 @@ function SiteManagement() {
                   {renderFieldError(formErrors.location)}
                 </div>
 
-                {/* Assign Supervisor */}
+                {/* Assign Supervisors */}
                 <div>
                   <label className="mb-2 block text-gray-700 font-medium font-sans">
-                    Assign Supervisor
+                    Assign Supervisors
                   </label>
                   <div className="relative font-sans" ref={dropdownRef}>
                     <div
@@ -737,7 +738,7 @@ function SiteManagement() {
                       <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
                         {filteredSupervisorOptions.length === 0 && (
                           <p className="px-4 py-2 text-sm text-gray-500 font-sans">
-                            No users available
+                            No supervisors available
                           </p>
                         )}
                         {filteredSupervisorOptions.map((name) => (
@@ -746,18 +747,18 @@ function SiteManagement() {
                             className="flex cursor-pointer items-center gap-3 px-4 py-2 hover:bg-gray-50 font-sans"
                           >
                             <input
-                              type="radio"
-                              name="assignedSupervisor"
+                              type="checkbox"
                               checked={formData.supervisor.includes(name)}
-                              onChange={() => {}}
-                              onClick={() => {
+                              onChange={() => {
                                 const isSelected = formData.supervisor.includes(name);
                                 setFormData({
                                   ...formData,
-                                  supervisor: isSelected ? [] : [name],
+                                  supervisor: isSelected
+                                    ? formData.supervisor.filter((s) => s !== name)
+                                    : [...formData.supervisor, name],
                                 });
                               }}
-                              className="h-4 w-4 rounded-full border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
+                              className="h-4 w-4 rounded border-gray-300 accent-[#3D36BE]"
                             />
                             <span className="text-gray-700 font-sans">{name}</span>
                           </label>

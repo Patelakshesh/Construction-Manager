@@ -138,6 +138,7 @@ function ExpenseManagement({ selectedSite, user }) {
                   transactionId
                   date
                   type
+                  createdBy
                   receiptImage
                 }
                 totalCount
@@ -160,8 +161,10 @@ function ExpenseManagement({ selectedSite, user }) {
 
       if (response.data?.data) {
         const pageItems = response.data.data.expensesPage?.items || [];
-        setExpenses(pageItems);
-        setTotalCount(response.data.data.expensesPage?.totalCount || 0);
+        // Supervisor view: only show Expense type entries (not Income added by admin)
+        const expenseOnly = pageItems.filter((item) => item.type === "Expense");
+        setExpenses(expenseOnly);
+        setTotalCount(expenseOnly.length);
 
         const stats = response.data.data.dashboardStats;
         setTotalExpensesAmount(stats?.totalExpenses || 0);
@@ -419,7 +422,7 @@ function ExpenseManagement({ selectedSite, user }) {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Type</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Added By</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                     </tr>
                   </thead>
@@ -444,26 +447,8 @@ function ExpenseManagement({ selectedSite, user }) {
                         <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                           {formatDate(expense.date)}
                         </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className="inline-flex items-center justify-center rounded-lg px-3 py-1 font-sans text-sm font-semibold"
-                            style={{
-                              backgroundColor:
-                                expense.type === "Income"
-                                  ? "#EFFFFE"
-                                  : "#FFF1F0",
-                              border:
-                                expense.type === "Income"
-                                    ? "1px solid #A0EBE5"
-                                    : "1px solid #F5CDD5",
-                              color:
-                                expense.type === "Income"
-                                  ? "#01B6A8"
-                                  : "#F15F7F",
-                            }}
-                          >
-                            {expense.type}
-                          </span>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans capitalize">
+                          {expense.createdBy || "—"}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
@@ -513,25 +498,6 @@ function ExpenseManagement({ selectedSite, user }) {
                         <p className="font-bold text-[#353535] capitalize text-base font-sans">
                           {expense.title}
                         </p>
-                        <span
-                          className="inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-xs font-semibold font-sans mt-1"
-                          style={{
-                            backgroundColor:
-                              expense.type === "Income"
-                                ? "#EFFFFE"
-                                : "#FFF1F0",
-                            border:
-                              expense.type === "Income"
-                                  ? "1px solid #A0EBE5"
-                                  : "1px solid #F5CDD5",
-                            color:
-                              expense.type === "Income"
-                                ? "#01B6A8"
-                                : "#F15F7F",
-                          }}
-                        >
-                          {expense.type}
-                        </span>
                       </div>
                       <p className="text-[17px] text-[#353535] font-bold font-sans">
                         ₹{expense.amount.toLocaleString("en-IN")}
@@ -556,6 +522,10 @@ function ExpenseManagement({ selectedSite, user }) {
                       <div className="flex justify-between">
                         <span className="font-medium text-[#717579]">Date:</span>
                         <span>{formatDate(expense.date)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-[#717579]">Added By:</span>
+                        <span className="capitalize">{expense.createdBy || "—"}</span>
                       </div>
                     </div>
 

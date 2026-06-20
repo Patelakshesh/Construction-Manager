@@ -215,8 +215,13 @@ function Expenses() {
     return matchesSite && matchesSearch;
   });
 
-  const totalIncome = filteredAll.filter((t) => t.type === "Income").length;
-  const totalExpense = filteredAll.filter((t) => t.type === "Expense").length;
+  const totalIncomeAmount = filteredAll
+    .filter((t) => t.type === "Income")
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  const totalExpenseAmount = filteredAll
+    .filter((t) => t.type === "Expense")
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  const netBalance = totalIncomeAmount - totalExpenseAmount;
 
   const handleAddNew = (type) => {
     setModalType(type);
@@ -344,7 +349,7 @@ function Expenses() {
     <div className="p-4 md:p-8 min-h-screen bg-[#F6F5FF] font-sans">
 
       {/* Stats Cards Section */}
-      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Total Income Card */}
         <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
           <div 
@@ -359,9 +364,13 @@ function Expenses() {
               <CreditCard className="h-6 w-6 text-white" />
             </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[32px] font-bold text-[#353535] leading-none">{totalIncome}</span>
-            <span className="text-base text-[#4E5159] font-normal">Total Income Records</span>
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="text-[28px] font-bold text-[#353535] leading-none truncate">
+              ₹{totalIncomeAmount.toLocaleString("en-IN")}
+            </span>
+            <span className="text-base text-[#4E5159] font-normal">
+              Total Income{filterSite !== "all" ? " (Site)" : ""}
+            </span>
           </div>
         </div>
 
@@ -372,16 +381,51 @@ function Expenses() {
             style={{ 
               width: 56, 
               height: 56, 
-              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
+              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3C368D 0deg, #857FF4 100%)' 
             }}
           >
             <div className="relative w-10 h-10 flex items-center justify-center">
               <ReceiptIndianRupee className="h-6 w-6 text-white" />
             </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[32px] font-bold text-[#353535] leading-none">{totalExpense}</span>
-            <span className="text-base text-[#4E5159] font-normal">Total Expense Records</span>
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="text-[28px] font-bold text-[#353535] leading-none truncate">
+              ₹{totalExpenseAmount.toLocaleString("en-IN")}
+            </span>
+            <span className="text-base text-[#4E5159] font-normal">
+              Total Expense{filterSite !== "all" ? " (Site)" : ""}
+            </span>
+          </div>
+        </div>
+
+        {/* Net Balance Card */}
+        <div className="flex flex-1 gap-6 p-6 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
+          <div 
+            className="p-2 rounded-lg border flex items-center justify-center shrink-0"
+            style={{ 
+              width: 56, 
+              height: 56, 
+              backgroundColor: netBalance >= 0 ? "#EFFFFE" : "#FFF1F0",
+              borderColor: netBalance >= 0 ? "#A0EBE5" : "#F5CDD5",
+            }}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <ReceiptIndianRupee
+                className="h-6 w-6"
+                style={{ color: netBalance >= 0 ? "#01B6A8" : "#F15F7F" }}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 min-w-0">
+            <span
+              className="text-[28px] font-bold leading-none truncate"
+              style={{ color: netBalance >= 0 ? "#01B6A8" : "#F15F7F" }}
+            >
+              {netBalance < 0 ? "-" : "+"}₹{Math.abs(netBalance).toLocaleString("en-IN")}
+            </span>
+            <span className="text-base text-[#4E5159] font-normal">
+              Net Balance{filterSite !== "all" ? " (Site)" : ""}
+            </span>
           </div>
         </div>
       </div>
