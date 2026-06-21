@@ -372,9 +372,14 @@ function SiteManagement() {
   // Start with role-based supervisors + currently assigned to THIS site
   // (so they show as checked even if account role/status changed).
   // Then filter out anyone assigned to a DIFFERENT active site.
+  // CRITICAL FIX: Always show the checkbox for anyone currently in formData.supervisor
+  // so the user has the ability to unselect them, even if they are also assigned elsewhere!
   const dropdownSupervisorOptions = Array.from(
     new Set([...supervisorOptions, ...(formData.supervisor || [])])
-  ).filter(name => !assignedElsewhere.has(name.toLowerCase()));
+  ).filter(name => {
+    if (formData.supervisor.includes(name)) return true;
+    return !assignedElsewhere.has(name.toLowerCase());
+  });
 
 
   // ── Render helpers ───────────────────────────────────────────────────────────
