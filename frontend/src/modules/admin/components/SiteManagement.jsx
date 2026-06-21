@@ -189,12 +189,11 @@ function SiteManagement() {
         setOverallInactiveSiteCount(allS.filter(s => !s.enable).length);
       }
 
-      // Only use enabled users that have the supervisor role
-      setSupervisorOptions(
-        apiUsers
-          .filter((u) => u.enable && u.roleId === supervisorRoleId)
-          .map((u) => u.name)
-      );
+      // Build supervisor options: all enabled users with supervisor role
+      const roleSupervisors = apiUsers
+        .filter((u) => u.enable && u.roleId === supervisorRoleId)
+        .map((u) => u.name);
+      setSupervisorOptions(roleSupervisors);
     } catch (error) {
       const apiMessage =
         error?.response?.data?.message ||
@@ -355,25 +354,28 @@ function SiteManagement() {
   const displayStart = totalCount ? (pageNumber - 1) * pageSize + 1 : 0;
   const displayEnd = Math.min(pageNumber * pageSize, totalCount);
 
-  // Compute list of supervisors already assigned to other active sites (single supervisor per site)
-  const assignedSupervisors = new Set();
+  // Computed at render time (not in loadData) to avoid stale closure.
+  // Build set of supervisors already assigned to OTHER active sites.
+  const assignedElsewhere = new Set();
   allSitesList.forEach(site => {
-    if (site.enable && (!editingSite || String(site.id) !== String(editingSite.id))) {
-      if (site.contactPerson) {
-        // Support both legacy comma-separated and new single-name format
-        site.contactPerson.split(",").forEach(n => {
-          const name = n.trim().toLowerCase();
-          if (name) {
-            assignedSupervisors.add(name);
-          }
-        });
-      }
+    if (!site.enable) return;
+    // Skip the site currently being edited — its supervisors should show as checked
+    if (editingSite && String(site.id) === String(editingSite.id)) return;
+    if (site.contactPerson) {
+      site.contactPerson.split(",").forEach(n => {
+        const trimmed = n.trim().toLowerCase();
+        if (trimmed) assignedElsewhere.add(trimmed);
+      });
     }
   });
 
-  const filteredSupervisorOptions = supervisorOptions.filter(
-    name => !assignedSupervisors.has(name.toLowerCase())
-  );
+  // Start with role-based supervisors + currently assigned to THIS site
+  // (so they show as checked even if account role/status changed).
+  // Then filter out anyone assigned to a DIFFERENT active site.
+  const dropdownSupervisorOptions = Array.from(
+    new Set([...supervisorOptions, ...(formData.supervisor || [])])
+  ).filter(name => !assignedElsewhere.has(name.toLowerCase()));
+
 
   // ── Render helpers ───────────────────────────────────────────────────────────
 
@@ -736,12 +738,12 @@ function SiteManagement() {
 
                     {isSupervisorDropdownOpen && (
                       <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                        {filteredSupervisorOptions.length === 0 && (
+                        {dropdownSupervisorOptions.length === 0 && (
                           <p className="px-4 py-2 text-sm text-gray-500 font-sans">
                             No supervisors available
                           </p>
                         )}
-                        {filteredSupervisorOptions.map((name) => (
+                        {dropdownSupervisorOptions.map((name) => (
                           <label
                             key={name}
                             className="flex cursor-pointer items-center gap-3 px-4 py-2 hover:bg-gray-50 font-sans"
