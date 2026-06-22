@@ -148,7 +148,7 @@ function DashboardHome() {
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[28px] font-bold text-[#353535] leading-none">₹{totalBudget?.toLocaleString() || 0}</span>
-            <span className="text-sm text-[#4E5159] font-normal">Total Budget</span>
+            <span className="text-sm text-[#4E5159] font-normal">Total Income</span>
           </div>
         </div>
 
@@ -188,7 +188,7 @@ function DashboardHome() {
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[28px] font-bold text-[#353535] leading-none">₹{remainingBudget?.toLocaleString() || 0}</span>
-            <span className="text-sm text-[#4E5159] font-normal">Remaining Budget ({remainingPercentage}%)</span>
+            <span className="text-sm text-[#4E5159] font-normal">Remaining Fund ({remainingPercentage}%)</span>
           </div>
         </div>
 

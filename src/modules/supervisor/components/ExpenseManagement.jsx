@@ -139,6 +139,7 @@ function ExpenseManagement({ selectedSite, user }) {
                   date
                   type
                   receiptImage
+                  createdBy
                 }
                 totalCount
               }
@@ -419,6 +420,7 @@ function ExpenseManagement({ selectedSite, user }) {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Added By</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Type</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                     </tr>
@@ -443,6 +445,9 @@ function ExpenseManagement({ selectedSite, user }) {
                         </td>
                         <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                           {formatDate(expense.date)}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans capitalize">
+                          {expense.createdBy || "—"}
                         </td>
                         <td className="px-6 py-4">
                           <span
@@ -477,22 +482,26 @@ function ExpenseManagement({ selectedSite, user }) {
                                 <Eye className="h-5 w-5" />
                               </button>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(expense)}
-                              className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
-                              title="Edit"
-                            >
-                              <Edit className="h-5 w-5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(expense.id)}
-                              className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </button>
+                            {(expense.createdBy || "").toLowerCase() === (user?.name || "").toLowerCase() && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleEdit(expense)}
+                                  className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                                  title="Edit"
+                                >
+                                  <Edit className="h-5 w-5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(expense.id)}
+                                  className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="h-5 w-5" />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -554,6 +563,10 @@ function ExpenseManagement({ selectedSite, user }) {
                         </div>
                       )}
                       <div className="flex justify-between">
+                        <span className="font-medium text-[#717579]">Added By:</span>
+                        <span className="capitalize">{expense.createdBy || "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="font-medium text-[#717579]">Date:</span>
                         <span>{formatDate(expense.date)}</span>
                       </div>
@@ -570,22 +583,26 @@ function ExpenseManagement({ selectedSite, user }) {
                           <Eye className="h-5 w-5" />
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(expense)}
-                        className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
-                        title="Edit"
-                      >
-                        <Edit className="h-5 w-5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(expense.id)}
-                        className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
+                      {(expense.createdBy || "").toLowerCase() === (user?.name || "").toLowerCase() && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(expense)}
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                            title="Edit"
+                          >
+                            <Edit className="h-5 w-5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(expense.id)}
+                            className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}

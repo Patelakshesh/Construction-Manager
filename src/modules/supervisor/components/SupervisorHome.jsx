@@ -6,6 +6,7 @@ import {
   ReceiptIndianRupee,
   TrendingDown,
   X,
+  User,
 } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
@@ -60,8 +61,9 @@ const calculateHours = (startIso, endIso) => {
 function SupervisorHome({ selectedSite, user }) {
   const [recentExpenses, setRecentExpenses] = useState([]);
   const [recentAttendance, setRecentAttendance] = useState([]);
-  const [totalExpenses, setTotalExpenses] = useState(0);
-  const [totalBudget, setTotalBudget] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0); // This will hold Site Expenses
+  const [totalBudget, setTotalBudget] = useState(0); // This will hold Total Credit
+  const [remainingBalance, setRemainingBalance] = useState(0); // Global Remaining Balance
   const [isLoading, setIsLoading] = useState(true);
   const [viewingImage, setViewingImage] = useState(null);
 
@@ -72,18 +74,36 @@ function SupervisorHome({ selectedSite, user }) {
       try {
         const token = localStorage.getItem("authToken");
 
-        const statsPromise = apiClient.post(
+        const creditsPromise = apiClient.post(
           "/graphql",
           {
             query: `
-              query GetSiteStats($siteName: String) {
-                dashboardStats(siteName: $siteName) {
-                  totalBudget
-                  totalExpenses
+              query GetSupervisorCredits {
+              supervisorCredits {
+                amount
+                supervisorName
+              }
+            }
+          `,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const allExpensesPromise = apiClient.post(
+          "/graphql",
+          {
+            query: `
+              query GetAllExpenses {
+                expensesPage(pageNumber: 1, pageSize: 10000) {
+                  items {
+                    amount
+                    type
+                    createdBy
+                    siteId
+                  }
                 }
               }
             `,
-            variables: { siteName: selectedSite.siteName },
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -105,6 +125,7 @@ function SupervisorHome({ selectedSite, user }) {
                     paymentMode
                     transactionId
                     receiptImage
+                    createdBy
                   }
                 }
               }
@@ -139,18 +160,48 @@ function SupervisorHome({ selectedSite, user }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const [statsRes, expensesRes, attendanceRes] = await Promise.all([
-          statsPromise,
+        const [creditsRes, allExpensesRes, expensesRes, attendanceRes] = await Promise.all([
+          creditsPromise,
+          allExpensesPromise,
           expensesPromise,
           attendancePromise,
         ]);
 
-        // Process Stats
-        if (statsRes.data?.data?.dashboardStats) {
-          const stats = statsRes.data.data.dashboardStats;
-          setTotalBudget(stats.totalBudget || 0);
-          setTotalExpenses(stats.totalExpenses || 0);
+        const userLower = (user?.name || "").toLowerCase().trim();
+
+        // Process Stats for Supervisor
+        let supervisorTotalCredit = 0;
+        if (creditsRes.data?.data?.supervisorCredits) {
+          creditsRes.data.data.supervisorCredits.forEach(c => {
+            if ((c.supervisorName || "").toLowerCase().trim() === userLower) {
+              supervisorTotalCredit += (Number(c.amount) || 0);
+            }
+          });
         }
+
+        let supervisorGlobalExpenses = 0;
+        let supervisorSiteExpenses = 0;
+
+        if (allExpensesRes.data?.data?.expensesPage?.items) {
+          const allExp = allExpensesRes.data.data.expensesPage.items;
+          
+          allExp.forEach(e => {
+            if (e.type === "Expense" && (e.createdBy || "").toLowerCase().trim() === userLower) {
+              const amt = Number(e.amount) || 0;
+              supervisorGlobalExpenses += amt;
+              if (String(e.siteId) === String(selectedSite.id)) {
+                supervisorSiteExpenses += amt;
+              }
+            }
+          });
+        }
+
+        setTotalBudget(supervisorTotalCredit);
+        setTotalExpenses(supervisorSiteExpenses);
+        
+        // Let's set the global remaining balance to a new state or just reuse logic.
+        const remainingGlobal = supervisorTotalCredit - supervisorGlobalExpenses;
+        setRemainingBalance(remainingGlobal);
 
         // Process Expenses for the selected site
         if (expensesRes.data?.data?.expensesPage?.items) {
@@ -210,7 +261,7 @@ function SupervisorHome({ selectedSite, user }) {
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Site Budget Card */}
+            {/* Total Credit Card */}
             <div className="flex gap-4 p-4 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
               <div 
                 className="p-2 rounded-lg border border-[#EBE9FD] flex items-center justify-center shrink-0" 
@@ -223,7 +274,7 @@ function SupervisorHome({ selectedSite, user }) {
                 <ReceiptIndianRupee className="h-5 w-5 text-white" />
               </div>
               <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-sm text-[#717579] font-medium font-sans">Site Budget</span>
+                <span className="text-sm text-[#717579] font-medium font-sans">Total Credit</span>
                 <span className="text-xl font-bold text-[#353535] font-sans truncate">
                   ₹{totalBudget.toLocaleString("en-IN")}
                 </span>
@@ -263,7 +314,10 @@ function SupervisorHome({ selectedSite, user }) {
               <div className="flex flex-col gap-0.5 min-w-0">
                 <span className="text-sm text-[#717579] font-medium font-sans">Remaining Balance</span>
                 <span className="text-xl font-bold text-[#353535] font-sans truncate">
-                  ₹{remaining.toLocaleString("en-IN")}
+                  {remainingBalance < 0 
+                    ? `-₹${Math.abs(remainingBalance).toLocaleString("en-IN")}` 
+                    : `₹${remainingBalance.toLocaleString("en-IN")}`
+                  }
                 </span>
               </div>
             </div>
@@ -304,19 +358,28 @@ function SupervisorHome({ selectedSite, user }) {
               >
                 <div className="flex items-start justify-between min-w-0 gap-4">
                   <div className="min-w-0 flex-1">
-                    <p className="mb-1 text-[15px] font-semibold text-[#353535] font-sans truncate">
+                    <p className="text-[15px] font-bold text-[#353535] font-sans truncate">
                       {expense.title || "No description"}
                     </p>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-3 mt-1.5">
                       <span
-                        className="rounded-md px-2 py-0.5 text-xs font-semibold font-sans"
+                        className="rounded-md px-2 py-0.5 text-xs font-bold font-sans"
                         style={{ backgroundColor: "#3D35BE15", color: "#3D35BE" }}
                       >
                         {expense.category?.name || "Uncategorized"}
                       </span>
-                      <span className="text-xs text-[#717579] font-sans">
-                        {formatDate(expense.date)}
-                      </span>
+                      <div className="flex items-center gap-1.5 text-[#717579]">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span className="text-xs font-medium font-sans">
+                          {formatDate(expense.date)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[#717579]">
+                        <User className="h-3.5 w-3.5" />
+                        <span className="text-xs font-medium font-sans capitalize">
+                          {expense.createdBy || "—"}
+                        </span>
+                      </div>
                     </div>
                     {expense.receiptImage && (
                       <button

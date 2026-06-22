@@ -374,6 +374,9 @@ function SiteManagement() {
     name => !assignedSupervisors.has(name.toLowerCase())
   );
 
+  // Ensure currently selected supervisors are always in the dropdown
+  const dropdownOptions = Array.from(new Set([...filteredSupervisorOptions, ...formData.supervisor]));
+
   // ── Render helpers ───────────────────────────────────────────────────────────
 
   const renderFieldError = (message) =>
@@ -735,29 +738,30 @@ function SiteManagement() {
 
                     {isSupervisorDropdownOpen && (
                       <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                        {filteredSupervisorOptions.length === 0 && (
+                        {dropdownOptions.length === 0 && (
                           <p className="px-4 py-2 text-sm text-gray-500 font-sans">
                             No users available
                           </p>
                         )}
-                        {filteredSupervisorOptions.map((name) => (
+                        {dropdownOptions.map((name) => (
                           <label
                             key={name}
                             className="flex cursor-pointer items-center gap-3 px-4 py-2 hover:bg-gray-50 font-sans"
                           >
                             <input
-                              type="radio"
+                              type="checkbox"
                               name="assignedSupervisor"
                               checked={formData.supervisor.includes(name)}
-                              onChange={() => {}}
-                              onClick={() => {
-                                const isSelected = formData.supervisor.includes(name);
+                              onChange={(e) => {
+                                const isSelected = e.target.checked;
                                 setFormData({
                                   ...formData,
-                                  supervisor: isSelected ? [] : [name],
+                                  supervisor: isSelected 
+                                    ? [...formData.supervisor, name] 
+                                    : formData.supervisor.filter((s) => s !== name),
                                 });
                               }}
-                              className="h-4 w-4 rounded-full border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
+                              className="h-4 w-4 rounded border-gray-300 text-[#3D36BE] focus:ring-[#3D36BE]"
                             />
                             <span className="text-gray-700 font-sans">{name}</span>
                           </label>
