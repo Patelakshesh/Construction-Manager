@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, Users, Filter } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import Pagination from "../../../shared/components/Pagination";
 
@@ -78,6 +78,9 @@ function Attendance() {
   const [pageNumber, setPageNumber] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [allAttendances, setAllAttendances] = useState([]);
+  const [columnFilters, setColumnFilters] = useState({});
+  const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+  const [filterPopupState, setFilterPopupState] = useState(null);
   const pageSize = 10;
 
   useEffect(() => {
@@ -91,6 +94,8 @@ function Attendance() {
   useEffect(() => {
     setPageNumber(1);
   }, [selectedSite, startDate, endDate]);
+
+
 
   const loadMetadata = async () => {
     try {
@@ -156,11 +161,17 @@ function Attendance() {
                 totalCount
               }
               attendances {
+                id
                 date
                 siteId
+                site { siteName }
+                contractor { contractorName }
+                supervisor { name }
                 skilledWorkers
                 semiSkilledWorkers
                 unskilledWorkers
+                startTime
+                endTime
               }
             }
           `,
@@ -175,8 +186,6 @@ function Attendance() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response?.data?.data) {
-        setAttendances(response.data.data.attendancesPage?.items || []);
-        setTotalCount(response.data.data.attendancesPage?.totalCount || 0);
         setAllAttendances(response.data.data.attendances || []);
       }
     } catch (error) {
@@ -192,8 +201,71 @@ function Attendance() {
     const matchesSite = selectedSite === "all" || String(record.siteId) === String(selectedSite);
     const matchesStart = !startDate || recordDate >= startDate;
     const matchesEnd = !endDate || recordDate <= endDate;
-    return matchesSite && matchesStart && matchesEnd;
+    
+    if (!matchesSite || !matchesStart || !matchesEnd) return false;
+
+    // Apply column filters
+    for (const [col, selectedValues] of Object.entries(columnFilters)) {
+      if (selectedValues && selectedValues.length > 0) {
+        let val = record[col];
+        if (col === 'site') val = record.site?.siteName || "—";
+        if (col === 'contractor') val = record.contractor?.contractorName || "—";
+        if (col === 'supervisor') val = record.supervisor?.name || "—";
+        if (col === 'date') val = formatDate(record.date);
+        if (col === 'startTime' || col === 'endTime') val = formatDuration(record[col]);
+        if (col === 'totalHours') val = calculateHours(record.startTime, record.endTime) || "—";
+        
+        if (!selectedValues.includes(String(val))) {
+          return false;
+        }
+      }
+    }
+    return true;
   });
+
+  const currentTotalCount = filteredAll.length;
+  const startIndex = (pageNumber - 1) * pageSize;
+  const currentAttendances = filteredAll.slice(startIndex, startIndex + pageSize);
+
+  const toggleFilter = (col, value) => {
+    setColumnFilters(prev => {
+      const current = prev[col] || [];
+      if (current.includes(value)) {
+        return { ...prev, [col]: current.filter(v => v !== value) };
+      } else {
+        return { ...prev, [col]: [...current, value] };
+      }
+    });
+    setPageNumber(1); // Reset to first page when filter changes
+  };
+
+  const renderFilterHeader = (title, colKey, dataExtractor) => {
+    const allValues = Array.from(new Set(allAttendances.map(dataExtractor))).filter(Boolean);
+    const isActive = columnFilters[colKey] && columnFilters[colKey].length > 0;
+    
+    return (
+      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          {title}
+          <button 
+            onClick={(e) => {
+              if (activeFilterColumn === colKey) {
+                setActiveFilterColumn(null);
+                setFilterPopupState(null);
+              } else {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setActiveFilterColumn(colKey);
+                setFilterPopupState({ colKey, title, rect, allValues });
+              }
+            }}
+            className={`p-1 rounded transition-colors ${isActive ? 'bg-[#3D35BE] text-white' : 'text-[#717579] hover:bg-gray-200'}`}
+          >
+            <Filter className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </th>
+    );
+  };
 
   const todayStr = new Date().toISOString().split("T")[0];
   const todayRecords = filteredAll.filter(
@@ -334,16 +406,16 @@ function Attendance() {
             <table className="w-full min-w-[980px] border-collapse">
               <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
                 <tr className="h-[68px]">
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Site</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Contractor</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Supervisor</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans text-center">Skilled</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans text-center">Semi-Skilled</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans text-center">Unskilled</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">In Time</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Out Time</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Total Hours</th>
+                  {renderFilterHeader("Date", "date", r => formatDate(r.date))}
+                  {renderFilterHeader("Site", "site", r => r.site?.siteName || "—")}
+                  {renderFilterHeader("Contractor", "contractor", r => r.contractor?.contractorName || "—")}
+                  {renderFilterHeader("Supervisor", "supervisor", r => r.supervisor?.name || "—")}
+                  {renderFilterHeader("Skilled", "skilledWorkers", r => String(r.skilledWorkers))}
+                  {renderFilterHeader("Semi-Skilled", "semiSkilledWorkers", r => String(r.semiSkilledWorkers))}
+                  {renderFilterHeader("Unskilled", "unskilledWorkers", r => String(r.unskilledWorkers))}
+                  {renderFilterHeader("In Time", "startTime", r => formatDuration(r.startTime))}
+                  {renderFilterHeader("Out Time", "endTime", r => formatDuration(r.endTime))}
+                  {renderFilterHeader("Total Hours", "totalHours", r => calculateHours(r.startTime, r.endTime) || "—")}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
@@ -353,14 +425,14 @@ function Attendance() {
                       Loading attendance...
                     </td>
                   </tr>
-                ) : attendances.length === 0 ? (
+                ) : currentAttendances.length === 0 ? (
                   <tr>
                     <td colSpan="10" className="px-6 py-8 text-center text-gray-500 font-sans">
                       No data available
                     </td>
                   </tr>
                 ) : (
-                  attendances.map((record) => (
+                  currentAttendances.map((record) => (
                     <tr
                       key={record.id}
                       className="h-[78px] transition-colors hover:bg-gray-50/50"
@@ -408,12 +480,12 @@ function Attendance() {
               <div className="p-6 text-center text-gray-500 font-sans">
                 Loading attendance...
               </div>
-            ) : attendances.length === 0 ? (
+            ) : currentAttendances.length === 0 ? (
               <div className="p-6 text-center text-gray-500 font-sans">
                 No data available
               </div>
             ) : (
-              attendances.map((record) => (
+              currentAttendances.map((record) => (
                 <div
                   key={record.id}
                   className="p-4 hover:bg-gray-50/50 transition-colors"
@@ -427,35 +499,35 @@ function Attendance() {
                         {formatDate(record.date)}
                       </p>
                     </div>
-                    <span className="inline-flex items-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans">
+                    <span className="inline-flex items-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans whitespace-nowrap shrink-0">
                       {calculateHours(record.startTime, record.endTime) || "—"}
                     </span>
                   </div>
 
                   <div className="mb-4 space-y-2 text-sm text-[#5B6065]">
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Contractor:</span>
-                      <span className="font-sans">{record.contractor?.contractorName || "—"}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Contractor:</span>
+                      <span className="font-sans text-right break-words">{record.contractor?.contractorName || "—"}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Supervisor:</span>
-                      <span className="font-sans">{record.supervisor?.name || "—"}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Supervisor:</span>
+                      <span className="font-sans text-right break-words">{record.supervisor?.name || "—"}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Skilled Workers:</span>
-                      <span className="font-sans">{record.skilledWorkers}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Skilled Workers:</span>
+                      <span className="font-sans text-right break-words">{record.skilledWorkers}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Semi-Skilled Workers:</span>
-                      <span className="font-sans">{record.semiSkilledWorkers}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Semi-Skilled Workers:</span>
+                      <span className="font-sans text-right break-words">{record.semiSkilledWorkers}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Unskilled Workers:</span>
-                      <span className="font-sans">{record.unskilledWorkers}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Unskilled Workers:</span>
+                      <span className="font-sans text-right break-words">{record.unskilledWorkers}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Timing:</span>
-                      <span className="font-sans">
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Timing:</span>
+                      <span className="font-sans text-right break-words">
                         {formatDuration(record.startTime)} - {formatDuration(record.endTime)}
                       </span>
                     </div>
@@ -470,12 +542,60 @@ function Attendance() {
             <Pagination
               pageNumber={pageNumber}
               pageSize={pageSize}
-              totalCount={totalCount}
+              totalCount={currentTotalCount}
               onPageChange={(nextPage) => setPageNumber(nextPage)}
             />
           </div>
         </div>
       </div>
+
+      {/* Global Filter Popup */}
+      {filterPopupState && (
+        <>
+          <div 
+            className="fixed inset-0 z-[9998]" 
+            onClick={() => { setActiveFilterColumn(null); setFilterPopupState(null); }}
+          />
+          <div 
+            className="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-xl"
+            style={{ 
+              top: filterPopupState.rect.bottom + 4, 
+              left: filterPopupState.rect.left,
+              width: 192 
+            }}
+          >
+            <div className="p-2 border-b border-gray-100 flex justify-between items-center">
+              <span className="text-xs font-semibold text-gray-500">Filter {filterPopupState.title}</span>
+              <button 
+                onClick={() => { 
+                  setColumnFilters(p => ({...p, [filterPopupState.colKey]: []})); 
+                  setPageNumber(1); 
+                  setActiveFilterColumn(null); 
+                  setFilterPopupState(null);
+                }} 
+                className="text-xs text-[#3D35BE] hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="p-2 flex flex-col gap-1.5 max-h-48 overflow-y-auto">
+              {filterPopupState.allValues.map(val => (
+                <label key={val} className="flex items-center gap-2 text-sm text-[#353535] cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input 
+                    type="checkbox" 
+                    checked={(columnFilters[filterPopupState.colKey] || []).includes(String(val))}
+                    onChange={() => toggleFilter(filterPopupState.colKey, String(val))}
+                    className="rounded border-gray-300 text-[#3D35BE] focus:ring-[#3D35BE]"
+                  />
+                  <span className="truncate">{val}</span>
+                </label>
+              ))}
+              {filterPopupState.allValues.length === 0 && <span className="text-xs text-gray-400 p-1">No options</span>}
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   );
 }

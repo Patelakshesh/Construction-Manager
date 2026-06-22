@@ -8,6 +8,7 @@ import {
   X,
   Eye,
   Camera,
+  Filter,
 } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
@@ -55,6 +56,9 @@ function Expenses() {
   const debouncedSearch = useDebounce(searchQuery, 400);
   const [pageNumber, setPageNumber] = useState(1);
   const [viewingImage, setViewingImage] = useState(null);
+  const [columnFilters, setColumnFilters] = useState({});
+  const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+  const [filterPopupState, setFilterPopupState] = useState(null);
   const pageSize = 10;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -105,7 +109,7 @@ function Expenses() {
     reader.readAsDataURL(file);
   };
 
-  const [totalCount, setTotalCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0); // Will be computed dynamically
   const [allTransactions, setAllTransactions] = useState([]);
 
   useEffect(() => {
@@ -119,6 +123,8 @@ function Expenses() {
   useEffect(() => {
     setPageNumber(1);
   }, [filterSite, debouncedSearch]);
+
+
 
   const loadMetadata = async () => {
     try {
@@ -153,47 +159,28 @@ function Expenses() {
         "/graphql",
         {
           query: `
-            query GetExpensesPage($pageNumber: Int!, $pageSize: Int!, $search: String, $siteId: Int) {
-              expensesPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search, siteId: $siteId) {
-                items {
-                  id
-                  title
-                  siteId
-                  site { siteName }
-                  categoryId
-                  category { name }
-                  amount
-                  paymentMode
-                  transactionId
-                  date
-                  type
-                  receiptImage
-                  createdBy
-                }
-                totalCount
-              }
+            query GetAllExpenses {
               expenses {
-                type
-                siteId
+                id
                 title
+                siteId
+                site { siteName }
+                categoryId
                 category { name }
+                amount
+                paymentMode
                 transactionId
+                date
+                type
+                receiptImage
                 createdBy
               }
             }
-          `,
-          variables: {
-            pageNumber,
-            pageSize,
-            search: debouncedSearch.trim() || null,
-            siteId: filterSite === "all" ? null : parseInt(filterSite),
-          }
+          `
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response?.data?.data) {
-        setTransactions(response.data.data.expensesPage?.items || []);
-        setTotalCount(response.data.data.expensesPage?.totalCount || 0);
         setAllTransactions(response.data.data.expenses || []);
       }
     } catch (error) {
@@ -212,8 +199,68 @@ function Expenses() {
       t.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       (t.transactionId && t.transactionId.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
       catName.toLowerCase().includes(debouncedSearch.toLowerCase());
-    return matchesSite && matchesSearch;
+    
+    if (!matchesSite || !matchesSearch) return false;
+
+    // Apply column filters
+    for (const [col, selectedValues] of Object.entries(columnFilters)) {
+      if (selectedValues && selectedValues.length > 0) {
+        let val = t[col];
+        if (col === 'site') val = t.site?.siteName || "—";
+        if (col === 'category') val = t.category?.name || "—";
+        if (col === 'date') val = formatDate(t.date);
+        
+        if (!selectedValues.includes(String(val))) {
+          return false;
+        }
+      }
+    }
+    return true;
   });
+
+  const currentTotalCount = filteredAll.length;
+  const startIndex = (pageNumber - 1) * pageSize;
+  const currentTransactions = filteredAll.slice(startIndex, startIndex + pageSize);
+
+  const toggleFilter = (col, value) => {
+    setColumnFilters(prev => {
+      const current = prev[col] || [];
+      if (current.includes(value)) {
+        return { ...prev, [col]: current.filter(v => v !== value) };
+      } else {
+        return { ...prev, [col]: [...current, value] };
+      }
+    });
+    setPageNumber(1); // Reset to first page when filter changes
+  };
+
+  const renderFilterHeader = (title, colKey, dataExtractor) => {
+    const allValues = Array.from(new Set(allTransactions.map(dataExtractor))).filter(Boolean);
+    const isActive = columnFilters[colKey] && columnFilters[colKey].length > 0;
+    
+    return (
+      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          {title}
+          <button 
+            onClick={(e) => {
+              if (activeFilterColumn === colKey) {
+                setActiveFilterColumn(null);
+                setFilterPopupState(null);
+              } else {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setActiveFilterColumn(colKey);
+                setFilterPopupState({ colKey, title, rect, allValues });
+              }
+            }}
+            className={`p-1 rounded transition-colors ${isActive ? 'bg-[#3D35BE] text-white' : 'text-[#717579] hover:bg-gray-200'}`}
+          >
+            <Filter className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </th>
+    );
+  };
 
   const totalIncome = filteredAll.filter((t) => t.type === "Income").length;
   const totalExpense = filteredAll.filter((t) => t.type === "Expense").length;
@@ -456,14 +503,14 @@ function Expenses() {
             <table className="w-full min-w-[860px] border-collapse">
               <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
                 <tr className="h-[68px]">
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Title</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Site</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Category</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Type</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Added By</th>
+                  {renderFilterHeader("Date", "date", t => formatDate(t.date))}
+                  {renderFilterHeader("Title", "title", t => t.title)}
+                  {renderFilterHeader("Site", "site", t => t.site?.siteName || "—")}
+                  {renderFilterHeader("Category", "category", t => t.category?.name || "—")}
+                  {renderFilterHeader("Amount", "amount", t => String(t.amount))}
+                  {renderFilterHeader("Payment Mode", "paymentMode", t => t.paymentMode)}
+                  {renderFilterHeader("Type", "type", t => t.type)}
+                  {renderFilterHeader("Added By", "createdBy", t => t.createdBy || (t.type === "Income" ? "Admin" : "Supervisor"))}
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                 </tr>
               </thead>
@@ -474,14 +521,14 @@ function Expenses() {
                       Loading income and expenses...
                     </td>
                   </tr>
-                ) : transactions.length === 0 ? (
+                ) : currentTransactions.length === 0 ? (
                   <tr>
                     <td colSpan="9" className="px-6 py-8 text-center text-gray-500 font-sans">
                       No data available
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((transaction) => (
+                  currentTransactions.map((transaction) => (
                     <tr
                       key={transaction.id}
                       className="h-[78px] transition-colors hover:bg-gray-50/50"
@@ -561,12 +608,12 @@ function Expenses() {
               <div className="p-6 text-center text-gray-500 font-sans">
                 Loading income and expenses...
               </div>
-            ) : transactions.length === 0 ? (
+            ) : currentTransactions.length === 0 ? (
               <div className="p-6 text-center text-gray-500 font-sans">
                 No data available
               </div>
             ) : (
-              transactions.map((transaction) => (
+              currentTransactions.map((transaction) => (
                 <div
                   key={transaction.id}
                   className="p-4 hover:bg-gray-50/50 transition-colors"
@@ -581,38 +628,38 @@ function Expenses() {
                       </p>
                     </div>
                     {transaction.type === "Income" ? (
-                      <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans">
+                      <span className="inline-flex items-center justify-center rounded-lg bg-[#EFFFFE] border border-[#A0EBE5] text-xs font-semibold text-[#01B6A8] px-2.5 py-1 font-sans whitespace-nowrap shrink-0">
                         Income
                       </span>
                     ) : (
-                      <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-xs font-semibold text-[#F15F7F] px-2.5 py-1 font-sans">
+                      <span className="inline-flex items-center justify-center rounded-lg bg-[#FFF1F0] border border-[#F5CDD5] text-xs font-semibold text-[#F15F7F] px-2.5 py-1 font-sans whitespace-nowrap shrink-0">
                         Expense
                       </span>
                     )}
                   </div>
 
                   <div className="mb-4 space-y-2 text-sm text-[#5B6065]">
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Date:</span>
-                      <span className="font-sans">{formatDate(transaction.date)}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Date:</span>
+                      <span className="font-sans text-right break-words">{formatDate(transaction.date)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Category:</span>
-                      <span className="font-sans">{transaction.category?.name || "—"}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Category:</span>
+                      <span className="font-sans text-right break-words">{transaction.category?.name || "—"}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Amount:</span>
-                      <span className="font-semibold text-gray-900 font-sans">
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Amount:</span>
+                      <span className="font-semibold text-gray-900 font-sans text-right break-words">
                         ₹{Number(transaction.amount).toLocaleString("en-IN")}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Payment Mode:</span>
-                      <span className="font-sans">{transaction.paymentMode}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Payment Mode:</span>
+                      <span className="font-sans text-right break-words">{transaction.paymentMode}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-[#3E424E] font-sans">Added By:</span>
-                      <span className="font-sans">{transaction.createdBy || (transaction.type === "Income" ? "Admin" : "Supervisor")}</span>
+                    <div className="flex justify-between gap-4">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Added By:</span>
+                      <span className="font-sans text-right break-words">{transaction.createdBy || (transaction.type === "Income" ? "Admin" : "Supervisor")}</span>
                     </div>
                   </div>
 
@@ -654,7 +701,7 @@ function Expenses() {
             <Pagination
               pageNumber={pageNumber}
               pageSize={pageSize}
-              totalCount={totalCount}
+              totalCount={currentTotalCount}
               onPageChange={(nextPage) => setPageNumber(nextPage)}
             />
           </div>
@@ -943,6 +990,54 @@ function Expenses() {
         onCancel={() => setItemToDelete(null)}
         isLoading={isDeleting}
       />
+
+      {/* Global Filter Popup */}
+      {filterPopupState && (
+        <>
+          <div 
+            className="fixed inset-0 z-[9998]" 
+            onClick={() => { setActiveFilterColumn(null); setFilterPopupState(null); }}
+          />
+          <div 
+            className="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-xl"
+            style={{ 
+              top: filterPopupState.rect.bottom + 4, 
+              left: filterPopupState.rect.left,
+              width: 192 
+            }}
+          >
+            <div className="p-2 border-b border-gray-100 flex justify-between items-center">
+              <span className="text-xs font-semibold text-gray-500">Filter {filterPopupState.title}</span>
+              <button 
+                onClick={() => { 
+                  setColumnFilters(p => ({...p, [filterPopupState.colKey]: []})); 
+                  setPageNumber(1); 
+                  setActiveFilterColumn(null); 
+                  setFilterPopupState(null);
+                }} 
+                className="text-xs text-[#3D35BE] hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="p-2 flex flex-col gap-1.5 max-h-48 overflow-y-auto">
+              {filterPopupState.allValues.map(val => (
+                <label key={val} className="flex items-center gap-2 text-sm text-[#353535] cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input 
+                    type="checkbox" 
+                    checked={(columnFilters[filterPopupState.colKey] || []).includes(String(val))}
+                    onChange={() => toggleFilter(filterPopupState.colKey, String(val))}
+                    className="rounded border-gray-300 text-[#3D35BE] focus:ring-[#3D35BE]"
+                  />
+                  <span className="truncate">{val}</span>
+                </label>
+              ))}
+              {filterPopupState.allValues.length === 0 && <span className="text-xs text-gray-400 p-1">No options</span>}
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   );
 }
