@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Calendar, Users, Filter } from "lucide-react";
+import { Calendar, Users, Filter, Eye, X } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import Pagination from "../../../shared/components/Pagination";
+import { createPortal } from "react-dom";
 
 const formatDuration = (durationStr) => {
   if (!durationStr) return "--:--";
@@ -70,6 +71,8 @@ const formatDate = (dateStr) => {
 function Attendance() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [tempStartDate, setTempStartDate] = useState("");
+  const [tempEndDate, setTempEndDate] = useState("");
   const [selectedSite, setSelectedSite] = useState("all");
 
   const [attendances, setAttendances] = useState([]);
@@ -81,6 +84,7 @@ function Attendance() {
   const [columnFilters, setColumnFilters] = useState({});
   const [activeFilterColumn, setActiveFilterColumn] = useState(null);
   const [filterPopupState, setFilterPopupState] = useState(null);
+  const [viewingImage, setViewingImage] = useState(null);
   const pageSize = 10;
 
   useEffect(() => {
@@ -157,6 +161,7 @@ function Attendance() {
                   unskilledWorkers
                   startTime
                   endTime
+                  image
                 }
                 totalCount
               }
@@ -172,6 +177,7 @@ function Attendance() {
                 unskilledWorkers
                 startTime
                 endTime
+                image
               }
             }
           `,
@@ -241,7 +247,12 @@ function Attendance() {
 
   const renderFilterHeader = (title, colKey, dataExtractor) => {
     const allValues = Array.from(new Set(allAttendances.map(dataExtractor))).filter(Boolean);
-    const isActive = columnFilters[colKey] && columnFilters[colKey].length > 0;
+    let isActive = false;
+    if (colKey === "date") {
+      isActive = startDate || endDate;
+    } else {
+      isActive = columnFilters[colKey] && columnFilters[colKey].length > 0;
+    }
     
     return (
       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">
@@ -255,6 +266,10 @@ function Attendance() {
               } else {
                 const rect = e.currentTarget.getBoundingClientRect();
                 setActiveFilterColumn(colKey);
+                if (colKey === "date") {
+                  setTempStartDate(startDate);
+                  setTempEndDate(endDate);
+                }
                 setFilterPopupState({ colKey, title, rect, allValues });
               }
             }}
@@ -364,42 +379,6 @@ function Attendance() {
           className="w-full flex flex-col overflow-hidden rounded-lg min-w-0" 
           style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
         >
-          {/* Header Row: Filters */}
-          <div className="w-full bg-white p-6 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-center gap-4">
-            <div>
-              <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
-                className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">End Date</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
-                className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase font-sans">Site</label>
-              <select
-                value={selectedSite}
-                onChange={(event) => setSelectedSite(event.target.value)}
-                className="w-full h-11 px-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans font-medium"
-              >
-                <option value="all">All Sites</option>
-                {sites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.siteName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
 
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto w-full font-sans">
@@ -416,18 +395,21 @@ function Attendance() {
                   {renderFilterHeader("In Time", "startTime", r => formatDuration(r.startTime))}
                   {renderFilterHeader("Out Time", "endTime", r => formatDuration(r.endTime))}
                   {renderFilterHeader("Total Hours", "totalHours", r => calculateHours(r.startTime, r.endTime) || "—")}
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#3D35BE] font-sans">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
                 {isLoading ? (
                   <tr>
-                    <td colSpan="10" className="px-6 py-8 text-center text-gray-500 font-sans">
+                    <td colSpan="11" className="px-6 py-8 text-center text-gray-500 font-sans">
                       Loading attendance...
                     </td>
                   </tr>
                 ) : currentAttendances.length === 0 ? (
                   <tr>
-                    <td colSpan="10" className="px-6 py-8 text-center text-gray-500 font-sans">
+                    <td colSpan="11" className="px-6 py-8 text-center text-gray-500 font-sans">
                       No data available
                     </td>
                   </tr>
@@ -466,6 +448,20 @@ function Attendance() {
                       </td>
                       <td className="px-6 py-4 text-base text-[#3E424E] font-semibold font-sans">
                         {calculateHours(record.startTime, record.endTime) || "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {record.image && (
+                            <button
+                              type="button"
+                              onClick={() => setViewingImage(record.image)}
+                              className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#3D35BE]"
+                              title="View Image"
+                            >
+                              <Eye className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -532,6 +528,18 @@ function Attendance() {
                       </span>
                     </div>
                   </div>
+                  {record.image && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setViewingImage(record.image)}
+                        className="flex items-center gap-2 rounded-lg px-3 py-1.5 transition-colors hover:bg-gray-100 text-[#3D35BE] text-sm font-medium"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Image
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))
             )}
@@ -568,7 +576,14 @@ function Attendance() {
               <span className="text-xs font-semibold text-gray-500">Filter {filterPopupState.title}</span>
               <button 
                 onClick={() => { 
-                  setColumnFilters(p => ({...p, [filterPopupState.colKey]: []})); 
+                  if (filterPopupState.colKey === "date") {
+                    setStartDate("");
+                    setEndDate("");
+                    setTempStartDate("");
+                    setTempEndDate("");
+                  } else {
+                    setColumnFilters(p => ({...p, [filterPopupState.colKey]: []})); 
+                  }
                   setPageNumber(1); 
                   setActiveFilterColumn(null); 
                   setFilterPopupState(null);
@@ -578,22 +593,66 @@ function Attendance() {
                 Clear
               </button>
             </div>
-            <div className="p-2 flex flex-col gap-1.5 max-h-48 overflow-y-auto">
-              {filterPopupState.allValues.map(val => (
-                <label key={val} className="flex items-center gap-2 text-sm text-[#353535] cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input 
-                    type="checkbox" 
-                    checked={(columnFilters[filterPopupState.colKey] || []).includes(String(val))}
-                    onChange={() => toggleFilter(filterPopupState.colKey, String(val))}
-                    className="rounded border-gray-300 text-[#3D35BE] focus:ring-[#3D35BE]"
-                  />
-                  <span className="truncate">{val}</span>
-                </label>
-              ))}
-              {filterPopupState.allValues.length === 0 && <span className="text-xs text-gray-400 p-1">No options</span>}
-            </div>
+            {filterPopupState.colKey === "date" ? (
+              <div className="p-3 flex flex-col gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Start Date</label>
+                  <input type="date" value={tempStartDate} onChange={e => setTempStartDate(e.target.value)} className="w-full border rounded p-1 text-sm text-[#353535]" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">End Date</label>
+                  <input type="date" value={tempEndDate} onChange={e => setTempEndDate(e.target.value)} className="w-full border rounded p-1 text-sm text-[#353535]" />
+                </div>
+                <button 
+                  onClick={() => { 
+                    setStartDate(tempStartDate);
+                    setEndDate(tempEndDate);
+                    setActiveFilterColumn(null); 
+                    setFilterPopupState(null); 
+                  }}
+                  className="bg-[#3D35BE] text-white rounded py-1.5 text-sm font-semibold w-full mt-1 hover:bg-[#2d2794] transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+            ) : (
+              <div className="p-2 flex flex-col gap-1.5 max-h-48 overflow-y-auto">
+                {filterPopupState.allValues.map(val => (
+                  <label key={val} className="flex items-center gap-2 text-sm text-[#353535] cursor-pointer hover:bg-gray-50 p-1 rounded">
+                    <input 
+                      type="checkbox" 
+                      checked={(columnFilters[filterPopupState.colKey] || []).includes(String(val))}
+                      onChange={() => toggleFilter(filterPopupState.colKey, String(val))}
+                      className="rounded border-gray-300 text-[#3D35BE] focus:ring-[#3D35BE]"
+                    />
+                    <span className="truncate">{val}</span>
+                  </label>
+                ))}
+                {filterPopupState.allValues.length === 0 && <span className="text-xs text-gray-400 p-1">No options</span>}
+              </div>
+            )}
           </div>
         </>
+      )}
+
+      {/* Image Viewer Modal */}
+      {viewingImage && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4">
+          <div className="relative max-w-4xl w-full">
+            <button
+              onClick={() => setViewingImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+            >
+              <X className="h-8 w-8" />
+            </button>
+            <img 
+              src={viewingImage} 
+              alt="Attendance Record" 
+              className="w-full h-auto max-h-[85vh] object-contain rounded-lg shadow-2xl bg-transparent"
+            />
+          </div>
+        </div>,
+        document.body
       )}
 
     </div>

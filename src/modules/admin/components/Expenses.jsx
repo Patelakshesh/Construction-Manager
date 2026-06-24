@@ -111,6 +111,10 @@ function Expenses() {
 
   const [totalCount, setTotalCount] = useState(0); // Will be computed dynamically
   const [allTransactions, setAllTransactions] = useState([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [tempStartDate, setTempStartDate] = useState("");
+  const [tempEndDate, setTempEndDate] = useState("");
 
   useEffect(() => {
     loadMetadata();
@@ -118,11 +122,11 @@ function Expenses() {
 
   useEffect(() => {
     loadData();
-  }, [pageNumber, filterSite, debouncedSearch]);
+  }, [pageNumber, debouncedSearch, columnFilters, startDate, endDate]);
 
   useEffect(() => {
     setPageNumber(1);
-  }, [filterSite, debouncedSearch]);
+  }, [debouncedSearch, columnFilters, startDate, endDate]);
 
 
 
@@ -159,8 +163,8 @@ function Expenses() {
         "/graphql",
         {
           query: `
-            query GetAllExpenses {
-              expenses {
+            query GetAllExpenses($startDate: DateTime, $endDate: DateTime) {
+              expenses(startDate: $startDate, endDate: $endDate) {
                 id
                 title
                 siteId
@@ -176,7 +180,11 @@ function Expenses() {
                 createdBy
               }
             }
-          `
+          `,
+          variables: {
+            startDate: startDate ? new Date(startDate).toISOString() : null,
+            endDate: endDate ? (() => { const end = new Date(endDate); end.setHours(23, 59, 59, 999); return end.toISOString(); })() : null
+          }
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -235,8 +243,8 @@ function Expenses() {
   };
 
   const renderFilterHeader = (title, colKey, dataExtractor) => {
-    const allValues = Array.from(new Set(allTransactions.map(dataExtractor))).filter(Boolean);
-    const isActive = columnFilters[colKey] && columnFilters[colKey].length > 0;
+    const allValues = colKey === "date" ? [] : Array.from(new Set(allTransactions.map(dataExtractor))).filter(Boolean);
+    const isActive = (columnFilters[colKey] && columnFilters[colKey].length > 0) || (colKey === "date" && (startDate || endDate));
     
     return (
       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">
@@ -250,6 +258,10 @@ function Expenses() {
               } else {
                 const rect = e.currentTarget.getBoundingClientRect();
                 setActiveFilterColumn(colKey);
+                if (colKey === "date") {
+                  setTempStartDate(startDate);
+                  setTempEndDate(endDate);
+                }
                 setFilterPopupState({ colKey, title, rect, allValues });
               }
             }}
@@ -465,18 +477,6 @@ function Expenses() {
               </svg>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
-              <select
-                value={filterSite}
-                onChange={(e) => setFilterSite(e.target.value)}
-                className="rounded-lg border border-[#C8D9EF] bg-white px-4 py-2.5 text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans font-medium w-full sm:w-48"
-              >
-                <option value="all">All Sites</option>
-                {sites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.siteName}
-                  </option>
-                ))}
-              </select>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                 <button
                   type="button"
@@ -504,13 +504,13 @@ function Expenses() {
               <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
                 <tr className="h-[68px]">
                   {renderFilterHeader("Date", "date", t => formatDate(t.date))}
-                  {renderFilterHeader("Title", "title", t => t.title)}
                   {renderFilterHeader("Site", "site", t => t.site?.siteName || "—")}
                   {renderFilterHeader("Category", "category", t => t.category?.name || "—")}
-                  {renderFilterHeader("Amount", "amount", t => String(t.amount))}
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">Amount</th>
                   {renderFilterHeader("Payment Mode", "paymentMode", t => t.paymentMode)}
                   {renderFilterHeader("Type", "type", t => t.type)}
                   {renderFilterHeader("Added By", "createdBy", t => t.createdBy || (t.type === "Income" ? "Admin" : "Supervisor"))}
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">Title</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                 </tr>
               </thead>
@@ -535,9 +535,6 @@ function Expenses() {
                     >
                       <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans whitespace-nowrap">
                         {formatDate(transaction.date)}
-                      </td>
-                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
-                        {transaction.title}
                       </td>
                       <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {transaction.site?.siteName || "—"}
@@ -564,6 +561,9 @@ function Expenses() {
                       </td>
                       <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                         {transaction.createdBy || (transaction.type === "Income" ? "Admin" : "Supervisor")}
+                      </td>
+                      <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
+                        {transaction.title}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -1010,7 +1010,14 @@ function Expenses() {
               <span className="text-xs font-semibold text-gray-500">Filter {filterPopupState.title}</span>
               <button 
                 onClick={() => { 
-                  setColumnFilters(p => ({...p, [filterPopupState.colKey]: []})); 
+                  if (filterPopupState.colKey === "date") {
+                    setStartDate("");
+                    setEndDate("");
+                    setTempStartDate("");
+                    setTempEndDate("");
+                  } else {
+                    setColumnFilters(p => ({...p, [filterPopupState.colKey]: []})); 
+                  }
                   setPageNumber(1); 
                   setActiveFilterColumn(null); 
                   setFilterPopupState(null);
@@ -1020,20 +1027,44 @@ function Expenses() {
                 Clear
               </button>
             </div>
-            <div className="p-2 flex flex-col gap-1.5 max-h-48 overflow-y-auto">
-              {filterPopupState.allValues.map(val => (
-                <label key={val} className="flex items-center gap-2 text-sm text-[#353535] cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input 
-                    type="checkbox" 
-                    checked={(columnFilters[filterPopupState.colKey] || []).includes(String(val))}
-                    onChange={() => toggleFilter(filterPopupState.colKey, String(val))}
-                    className="rounded border-gray-300 text-[#3D35BE] focus:ring-[#3D35BE]"
-                  />
-                  <span className="truncate">{val}</span>
-                </label>
-              ))}
-              {filterPopupState.allValues.length === 0 && <span className="text-xs text-gray-400 p-1">No options</span>}
-            </div>
+            {filterPopupState.colKey === "date" ? (
+              <div className="p-3 flex flex-col gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Start Date</label>
+                  <input type="date" value={tempStartDate} onChange={e => setTempStartDate(e.target.value)} className="w-full border rounded p-1 text-sm text-[#353535]" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">End Date</label>
+                  <input type="date" value={tempEndDate} onChange={e => setTempEndDate(e.target.value)} className="w-full border rounded p-1 text-sm text-[#353535]" />
+                </div>
+                <button 
+                  onClick={() => { 
+                    setStartDate(tempStartDate);
+                    setEndDate(tempEndDate);
+                    setActiveFilterColumn(null); 
+                    setFilterPopupState(null); 
+                  }}
+                  className="bg-[#3D35BE] text-white rounded py-1.5 text-sm font-semibold w-full mt-1 hover:bg-[#2d2794] transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+            ) : (
+              <div className="p-2 flex flex-col gap-1.5 max-h-48 overflow-y-auto">
+                {filterPopupState.allValues.map(val => (
+                  <label key={val} className="flex items-center gap-2 text-sm text-[#353535] cursor-pointer hover:bg-gray-50 p-1 rounded">
+                    <input 
+                      type="checkbox" 
+                      checked={(columnFilters[filterPopupState.colKey] || []).includes(String(val))}
+                      onChange={() => toggleFilter(filterPopupState.colKey, String(val))}
+                      className="rounded border-gray-300 text-[#3D35BE] focus:ring-[#3D35BE]"
+                    />
+                    <span className="truncate">{val}</span>
+                  </label>
+                ))}
+                {filterPopupState.allValues.length === 0 && <span className="text-xs text-gray-400 p-1">No options</span>}
+              </div>
+            )}
           </div>
         </>
       )}

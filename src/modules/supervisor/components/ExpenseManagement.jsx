@@ -793,7 +793,7 @@ function ExpenseManagement({ selectedSite, user }) {
                       <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#C8D9EF] py-3 transition-colors hover:border-[#3D35BE] hover:bg-gray-50/50">
                         <Camera className="h-5 w-5 text-[#717579]" />
                         <span className="text-sm text-[#5B6065] font-semibold font-sans">
-                          {formData.receiptImage ? "Change Photo / Image" : "Take Photo / Upload Image"}
+                          {formData.receiptImage ? "Change Image" : "Upload Image"}
                         </span>
                         <input
                           type="file"

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Plus, Users as UsersIcon, X, Edit, Trash2 } from "lucide-react";
+import { Calendar, Plus, Users as UsersIcon, X, Edit, Trash2, Camera, Eye } from "lucide-react";
 import apiClient from "../../../shared/services/apiClient";
 import toast from "react-hot-toast";
 import Pagination from "../../../shared/components/Pagination";
@@ -114,6 +114,7 @@ function AttendanceManagement({ selectedSite, user }) {
   const [editingItem, setEditingItem] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [viewingImage, setViewingImage] = useState(null);
   const pageSize = 10;
 
   const [formData, setFormData] = useState({
@@ -124,7 +125,49 @@ function AttendanceManagement({ selectedSite, user }) {
     startTime: "09:00",
     endTime: "17:00",
     date: new Date().toISOString().split("T")[0],
+    image: null,
   });
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setFormErrors(prev => ({
+        ...prev,
+        image: "File must be an image (PNG, JPG, JPEG, WEBP)."
+      }));
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setFormErrors(prev => ({
+        ...prev,
+        image: "Image size exceeds the 2MB limit."
+      }));
+      toast.error("Image size must be less than 2MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({
+        ...prev,
+        image: reader.result
+      }));
+      setFormErrors(prev => {
+        const copy = { ...prev };
+        delete copy.image;
+        return copy;
+      });
+      toast.success("Image uploaded successfully!");
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read image file");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const loadData = async () => {
     if (!selectedSite) return;
@@ -150,6 +193,7 @@ function AttendanceManagement({ selectedSite, user }) {
                   unskilledWorkers
                   startTime
                   endTime
+                  image
                 }
                 totalCount
               }
@@ -250,6 +294,7 @@ function AttendanceManagement({ selectedSite, user }) {
       startTime: formatDuration(record.startTime),
       endTime: formatDuration(record.endTime),
       date: record.date.split("T")[0],
+      image: record.image || null,
     });
     setIsAdding(true);
   };
@@ -319,6 +364,7 @@ function AttendanceManagement({ selectedSite, user }) {
           unskilledWorkers: formData.unskilledWorkers === "" ? 0 : Number(formData.unskilledWorkers),
           startTime: startTimeIso,
           endTime: endTimeIso,
+          image: formData.image,
           ...(isEdit ? { modifiedBy: user.name } : { createdBy: user.name }),
         },
       };
@@ -348,6 +394,7 @@ function AttendanceManagement({ selectedSite, user }) {
         startTime: "09:00",
         endTime: "17:00",
         date: new Date().toISOString().split("T")[0],
+        image: null,
       });
       loadData();
     } catch (error) {
@@ -513,6 +560,16 @@ function AttendanceManagement({ selectedSite, user }) {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
+                            {record.image && (
+                              <button
+                                type="button"
+                                onClick={() => setViewingImage(record.image)}
+                                className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#3D35BE]"
+                                title="View Image"
+                              >
+                                <Eye className="h-5 w-5" />
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => handleEdit(record)}
@@ -584,6 +641,16 @@ function AttendanceManagement({ selectedSite, user }) {
                       </div>
                       
                       <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                        {record.image && (
+                          <button
+                            type="button"
+                            onClick={() => setViewingImage(record.image)}
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#3D35BE]"
+                            title="View Image"
+                          >
+                            <Eye className="h-5 w-5" />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleEdit(record)}
@@ -641,6 +708,7 @@ function AttendanceManagement({ selectedSite, user }) {
                       startTime: "09:00",
                       endTime: "17:00",
                       date: new Date().toISOString().split("T")[0],
+                      image: null,
                     });
                   }}
                   className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 transition-colors"
@@ -789,6 +857,49 @@ function AttendanceManagement({ selectedSite, user }) {
                     />
                     {renderFieldError(formErrors.endTime)}
                   </div>
+
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-sm font-semibold text-[#5B6065] font-sans">
+                      Site Photo / Image{" "}
+                      <span className="text-xs font-normal text-gray-400 font-sans">(Optional)</span>
+                    </label>
+                    <p className="mb-3 text-xs text-[#717579] font-sans">
+                      Supported formats: PNG, JPG, JPEG, WEBP (Max size: 2MB)
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#C8D9EF] py-3 transition-colors hover:border-[#3D35BE] hover:bg-gray-50/50">
+                        <Camera className="h-5 w-5 text-[#717579]" />
+                        <span className="text-sm text-[#5B6065] font-semibold font-sans">
+                          {formData.image ? "Change Image" : "Upload Image"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/png, image/jpeg, image/jpg, image/webp"
+                          capture="environment"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </label>
+                      {renderFieldError(formErrors.image)}
+                      {formData.image && (
+                        <div className="relative mt-2 w-full max-w-xs overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                          <img
+                            src={formData.image}
+                            alt="Site Photo preview"
+                            className="h-auto w-full max-h-48 object-contain bg-gray-50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, image: null }))}
+                            className="absolute top-2 right-2 rounded-full bg-red-600 p-1.5 text-white hover:bg-red-700 transition-colors shadow"
+                            title="Remove image"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-6">
@@ -828,6 +939,7 @@ function AttendanceManagement({ selectedSite, user }) {
         </div>,
         document.body
       )}
+
       <ConfirmModal
         isOpen={!!itemToDelete}
         title="Delete Attendance"
@@ -837,6 +949,26 @@ function AttendanceManagement({ selectedSite, user }) {
         onCancel={() => setItemToDelete(null)}
         isLoading={isDeleting}
       />
+
+      {/* Image Viewer Modal */}
+      {viewingImage && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4">
+          <div className="relative max-w-4xl w-full">
+            <button
+              onClick={() => setViewingImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+            >
+              <X className="h-8 w-8" />
+            </button>
+            <img 
+              src={viewingImage} 
+              alt="Attendance Record" 
+              className="w-full h-auto max-h-[85vh] object-contain rounded-lg shadow-2xl bg-transparent"
+            />
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
