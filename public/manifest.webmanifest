@@ -1,13 +1,4 @@
 {
-  "name": "HRL Construction Manager",
-  "short_name": "HRL",
-  "description": "HRL Construction Management App",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "theme_color": "#3D35BE",
-  "background_color": "#F6F5FF",
   "icons": [
     {
       "src": "../icons/icon-48.webp",
