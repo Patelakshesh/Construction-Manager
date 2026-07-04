@@ -201,9 +201,7 @@ function ExpenseManagement({ selectedSite, user }) {
     if (!formData.categoryId) {
       errors.categoryId = "Category is required.";
     }
-    if (!formData.title.trim()) {
-      errors.title = "Title is required.";
-    }
+    // Title/Description is optional
     if (!formData.date) {
       errors.date = "Date is required.";
     }
@@ -417,7 +415,7 @@ function ExpenseManagement({ selectedSite, user }) {
                 <table className="w-full min-w-[760px] border-collapse">
                   <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
                     <tr className="h-[68px]">
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Title</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Description</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Category</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
@@ -433,7 +431,12 @@ function ExpenseManagement({ selectedSite, user }) {
                         className="h-[78px] transition-colors hover:bg-gray-50/50"
                       >
                         <td className="px-6 py-4 text-base text-[#5B6065] font-semibold font-sans capitalize">
-                          {expense.title}
+                          <div 
+                            className="max-w-[200px] lg:max-w-[250px] truncate"
+                            title={expense.title || ""}
+                          >
+                            {expense.title || "—"}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                           {expense.category?.name || "—"}
@@ -494,9 +497,12 @@ function ExpenseManagement({ selectedSite, user }) {
                     className="p-4 hover:bg-gray-50/50 transition-colors"
                   >
                     <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-[#353535] capitalize text-base font-sans">
-                          {expense.title}
+                      <div className="min-w-0 pr-4">
+                        <p 
+                          className="font-bold text-[#353535] capitalize text-base font-sans truncate"
+                          title={expense.title || ""}
+                        >
+                          {expense.title || "—"}
                         </p>
                       </div>
                       <p className="text-[17px] text-[#353535] font-bold font-sans">
@@ -606,23 +612,6 @@ function ExpenseManagement({ selectedSite, user }) {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Col 1: Title */}
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
-                      Title <span className="text-[#EC3F3F]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(event) =>
-                        setFormData({ ...formData, title: event.target.value })
-                      }
-                      className={getFieldClassName(Boolean(formErrors.title))}
-                      placeholder="e.g. Cement Purchase"
-                      required
-                    />
-                    {renderFieldError(formErrors.title)}
-                  </div>
 
                   {/* Col 2: Amount */}
                   <div>
@@ -733,8 +722,25 @@ function ExpenseManagement({ selectedSite, user }) {
                     <div /> /* empty spacer to keep grid alignment */
                   )}
 
+                  {/* Description — full width */}
+                  <div className="col-span-full">
+                    <label className="mb-2 block text-sm font-semibold text-[#5B6065] font-sans">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(event) =>
+                        setFormData({ ...formData, title: event.target.value })
+                      }
+                      className={getFieldClassName(Boolean(formErrors.title))}
+                      placeholder="e.g. Cement Purchase"
+                    />
+                    {renderFieldError(formErrors.title)}
+                  </div>
+
                   {/* Upload Receipt — full width, always last */}
-                  <div className="md:col-span-2">
+                  <div className="col-span-full">
                     <label className="mb-1 block text-sm font-semibold text-[#5B6065] font-sans">
                       Upload Bill/Receipt{" "}
                       <span className="text-xs font-normal text-gray-400 font-sans">(Optional)</span>

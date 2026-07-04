@@ -467,7 +467,7 @@ function Expenses() {
             <div className="w-full sm:max-w-md relative flex items-center">
               <input
                 type="text"
-                placeholder="Search by title, or category..."
+                placeholder="Search by description, or category..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-12 pl-12 pr-4 bg-white rounded-lg border border-[#C8D9EF] text-sm text-[#717579] focus:outline-none focus:ring-2 focus:ring-[#3D35BE] font-sans"
@@ -510,7 +510,7 @@ function Expenses() {
                   {renderFilterHeader("Payment Mode", "paymentMode", t => t.paymentMode)}
                   {renderFilterHeader("Type", "type", t => t.type)}
                   {renderFilterHeader("Added By", "createdBy", t => t.createdBy || (t.type === "Income" ? "Admin" : "Supervisor"))}
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">Title</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans whitespace-nowrap">Description</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                 </tr>
               </thead>
@@ -563,7 +563,12 @@ function Expenses() {
                         {transaction.createdBy || (transaction.type === "Income" ? "Admin" : "Supervisor")}
                       </td>
                       <td className="px-6 py-4 text-base text-[#5B6065] font-normal capitalize font-sans">
-                        {transaction.title}
+                        <div 
+                          className="max-w-[200px] lg:max-w-[250px] truncate"
+                          title={transaction.title || ""}
+                        >
+                          {transaction.title || "—"}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -619,9 +624,12 @@ function Expenses() {
                   className="p-4 hover:bg-gray-50/50 transition-colors"
                 >
                   <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900 capitalize text-base font-sans">
-                        {transaction.title}
+                    <div className="min-w-0 pr-4">
+                      <p 
+                        className="font-semibold text-gray-900 capitalize text-base font-sans truncate"
+                        title={transaction.title || ""}
+                      >
+                        {transaction.title || "—"}
                       </p>
                       <p className="text-xs text-gray-500 font-sans">
                         {transaction.site?.siteName || "—"}
@@ -727,25 +735,7 @@ function Expenses() {
 
               <form onSubmit={handleSave} className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
-                      Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.title}
-                      onChange={(e) =>
-                        setFormData({ ...formData, title: e.target.value })
-                      }
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
-                      placeholder={
-                        modalType === "Expense"
-                          ? "e.g. Cement Purchase"
-                          : "e.g. Client Payment Advance"
-                      }
-                    />
-                  </div>
+
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
@@ -892,8 +882,27 @@ function Expenses() {
                     <div />
                   )}
 
+                  <div className="col-span-full">
+                    <label className="mb-2 block text-sm font-medium text-gray-700 font-sans">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#3D36BE] font-sans"
+                      placeholder={
+                        modalType === "Expense"
+                          ? "e.g. Cement Purchase"
+                          : "e.g. Client Payment Advance"
+                      }
+                    />
+                  </div>
+
                   {/* Upload Receipt */}
-                  <div className="md:col-span-2 font-sans">
+                  <div className="col-span-full font-sans">
                     <label className="mb-1 block text-sm font-medium text-gray-700 font-sans">
                       Upload Bill/Receipt <span className="text-gray-400 font-normal font-sans">(Optional)</span>
                     </label>
