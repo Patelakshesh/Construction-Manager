@@ -17,13 +17,13 @@ import ConfirmModal from "../../../shared/components/ConfirmModal";
 // ─── GraphQL queries ────────────────────────────────────────────────────────
 
 const LOAD_QUERY =
-  "query GetSitesAndUsers($pageNumber: Int!, $pageSize: Int!, $search: String) { sitesPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id siteName address contactPerson enable createdOn createdBy modifiedOn modifiedBy } totalCount pageNumber pageSize totalPages } users { id name enable roleId } roles { id roleName } allSites: sites { id siteName address contactPerson enable } }";
+  "query GetSitesAndUsers($pageNumber: Int!, $pageSize: Int!, $search: String) { sitesPage(pageNumber: $pageNumber, pageSize: $pageSize, search: $search) { items { id siteName address contactPerson enable } totalCount pageNumber pageSize totalPages } users { id name enable roleId } roles { id roleName } allSites: sites { id siteName address contactPerson enable } }";
 
 const CREATE_SITE_MUTATION =
-  "mutation CreateSite($input: CreateSiteInput!) { createSite(input: $input) { id siteName address contactPerson enable createdOn createdBy modifiedOn modifiedBy } }";
+  "mutation CreateSite($input: CreateSiteInput!) { createSite(input: $input) { id siteName address contactPerson enable } }";
 
 const UPDATE_SITE_MUTATION =
-  "mutation UpdateSite($input: UpdateSiteInput!) { updateSite(input: $input) { id siteName address contactPerson enable createdOn createdBy modifiedOn modifiedBy } }";
+  "mutation UpdateSite($input: UpdateSiteInput!) { updateSite(input: $input) { id siteName address contactPerson enable } }";
 
 const DELETE_SITE_MUTATION =
   "mutation DeleteSite($id: Int!) { deleteSite(id: $id) }";
@@ -47,8 +47,6 @@ function normalizeSite(raw) {
     location: raw.address || "",
     supervisor: supervisors,
     status: raw.enable ? "active" : "inactive",
-    createdBy: raw.createdBy,
-    modifiedBy: raw.modifiedBy,
   };
 }
 

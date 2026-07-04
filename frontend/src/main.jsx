@@ -11,3 +11,11 @@ createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+// This ensures that when a new version of the app is published and the service worker updates,
+// the browser will instantly reload the page to show the newest version to the user.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    window.location.reload();
+  });
+}
