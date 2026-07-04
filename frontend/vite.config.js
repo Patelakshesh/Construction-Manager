@@ -35,6 +35,8 @@ export default defineConfig({
         ]
       },
       workbox: {
+        cacheId: `hrl-app-${new Date().getTime()}`,
+        cleanupOutdatedCaches: true,
         // Cache all static assets
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
         // Don't cache API calls
