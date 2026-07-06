@@ -500,9 +500,9 @@ function ExpenseManagement({ selectedSite, user }) {
                       <div className="min-w-0 pr-4">
                         <p 
                           className="font-bold text-[#353535] capitalize text-base font-sans truncate"
-                          title={expense.title || ""}
+                          title={expense.category?.name || ""}
                         >
-                          {expense.title || "—"}
+                          {expense.category?.name || "Uncategorized"}
                         </p>
                       </div>
                       <p className="text-[17px] text-[#353535] font-bold font-sans">
@@ -511,9 +511,9 @@ function ExpenseManagement({ selectedSite, user }) {
                     </div>
 
                     <div className="mb-4 space-y-2 text-sm text-[#5B6065] font-sans">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-[#717579]">Category:</span>
-                        <span>{expense.category?.name || "Uncategorized"}</span>
+                      <div className="flex justify-between items-start gap-4">
+                        <span className="font-medium text-[#717579] shrink-0">Description:</span>
+                        <span className="capitalize text-right break-all max-w-[70%]">{expense.title || "—"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-[#717579]">Payment Mode:</span>

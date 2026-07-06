@@ -627,9 +627,9 @@ function Expenses() {
                     <div className="min-w-0 pr-4">
                       <p 
                         className="font-semibold text-gray-900 capitalize text-base font-sans truncate"
-                        title={transaction.title || ""}
+                        title={transaction.type === "Expense" ? (transaction.category?.name || "") : (transaction.title || "")}
                       >
-                        {transaction.title || "—"}
+                        {transaction.type === "Expense" ? (transaction.category?.name || "—") : (transaction.title || "—")}
                       </p>
                       <p className="text-xs text-gray-500 font-sans">
                         {transaction.site?.siteName || "—"}
@@ -651,9 +651,13 @@ function Expenses() {
                       <span className="font-medium text-[#3E424E] font-sans shrink-0">Date:</span>
                       <span className="font-sans text-right break-words">{formatDate(transaction.date)}</span>
                     </div>
-                    <div className="flex justify-between gap-4">
-                      <span className="font-medium text-[#3E424E] font-sans shrink-0">Category:</span>
-                      <span className="font-sans text-right break-words">{transaction.category?.name || "—"}</span>
+                    <div className="flex justify-between gap-4 items-start">
+                      <span className="font-medium text-[#3E424E] font-sans shrink-0">
+                        {transaction.type === "Expense" ? "Description:" : "Category:"}
+                      </span>
+                      <span className="font-sans text-right break-all capitalize max-w-[70%]">
+                        {transaction.type === "Expense" ? (transaction.title || "—") : (transaction.category?.name || "—")}
+                      </span>
                     </div>
                     <div className="flex justify-between gap-4">
                       <span className="font-medium text-[#3E424E] font-sans shrink-0">Amount:</span>
