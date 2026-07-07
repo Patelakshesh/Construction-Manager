@@ -61,9 +61,20 @@ function SupervisorHome({ selectedSite, user }) {
   const [recentExpenses, setRecentExpenses] = useState([]);
   const [recentAttendance, setRecentAttendance] = useState([]);
   const [totalExpenses, setTotalExpenses] = useState(0);
-  const [totalBudget, setTotalBudget] = useState(0);
+  const [supervisorCredit, setSupervisorCredit] = useState(0);
+  const [supervisorExpenses, setSupervisorExpenses] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [viewingImage, setViewingImage] = useState(null);
+
+  // Get the current supervisor's name from localStorage
+  const getSupervisorName = () => {
+    try {
+      const stored = localStorage.getItem("authUser");
+      if (stored) return JSON.parse(stored)?.name || null;
+    } catch { /* ignore */ }
+    return user?.name || null;
+  };
+  const supervisorName = getSupervisorName();
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -71,22 +82,6 @@ function SupervisorHome({ selectedSite, user }) {
       setIsLoading(true);
       try {
         const token = localStorage.getItem("authToken");
-
-        const statsPromise = apiClient.post(
-          "/graphql",
-          {
-            query: `
-              query GetSiteStats($siteName: String) {
-                dashboardStats(siteName: $siteName) {
-                  totalBudget
-                  totalExpenses
-                }
-              }
-            `,
-            variables: { siteName: selectedSite.siteName },
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
 
         const expensesPromise = apiClient.post(
           "/graphql",
@@ -139,29 +134,78 @@ function SupervisorHome({ selectedSite, user }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const [statsRes, expensesRes, attendanceRes] = await Promise.all([
-          statsPromise,
+        // Fetch supervisor credits for this supervisor
+        const creditsPromise = apiClient.post(
+          "/graphql",
+          {
+            query: `
+              query GetSupervisorCredits {
+                supervisorCredits {
+                  amount
+                  supervisorName
+                }
+              }
+            `
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Fetch ALL expenses to compute this supervisor's total spending
+        const allExpensesPromise = apiClient.post(
+          "/graphql",
+          {
+            query: `
+              query GetAllExpensesForBalance {
+                expensesPage(pageNumber: 1, pageSize: 10000) {
+                  items {
+                    amount
+                    type
+                    createdBy
+                  }
+                }
+              }
+            `
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const [expensesRes, attendanceRes, creditsRes, allExpensesRes] = await Promise.all([
           expensesPromise,
           attendancePromise,
+          creditsPromise,
+          allExpensesPromise,
         ]);
 
-        // Process Stats
-        if (statsRes.data?.data?.dashboardStats) {
-          const stats = statsRes.data.data.dashboardStats;
-          setTotalBudget(stats.totalBudget || 0);
-          setTotalExpenses(stats.totalExpenses || 0);
-        }
-
-        // Process Expenses for the selected site
+        // Process recent site expenses (for the list)
         if (expensesRes.data?.data?.expensesPage?.items) {
           const siteItems = expensesRes.data.data.expensesPage.items;
           const expensesList = siteItems.filter(e => e.type === "Expense");
           setRecentExpenses(expensesList);
+          setTotalExpenses(expensesList.reduce((sum, e) => sum + (Number(e.amount) || 0), 0));
         }
 
         // Process Attendance for the selected site
         if (attendanceRes.data?.data?.attendancesPage?.items) {
           setRecentAttendance(attendanceRes.data.data.attendancesPage.items);
+        }
+
+        // Compute supervisor credit total
+        if (creditsRes.data?.data?.supervisorCredits && supervisorName) {
+          const myCredits = creditsRes.data.data.supervisorCredits.filter(
+            c => c.supervisorName?.toLowerCase() === supervisorName.toLowerCase()
+          );
+          const totalCredit = myCredits.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+          setSupervisorCredit(totalCredit);
+        }
+
+        // Compute supervisor's own expenses total
+        if (allExpensesRes.data?.data?.expensesPage?.items && supervisorName) {
+          const myExpenses = allExpensesRes.data.data.expensesPage.items.filter(
+            e => e.type?.toLowerCase() === "expense" &&
+                 e.createdBy?.toLowerCase() === supervisorName.toLowerCase()
+          );
+          const totalMyExp = myExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+          setSupervisorExpenses(totalMyExp);
         }
 
       } catch (error) {
@@ -172,10 +216,9 @@ function SupervisorHome({ selectedSite, user }) {
     };
 
     loadDashboardData();
-  }, [selectedSite]);
+  }, [selectedSite, supervisorName]);
 
-  const remaining = totalBudget - totalExpenses;
-  const budgetPercentage = totalBudget > 0 ? Math.min((totalExpenses / totalBudget) * 100, 100).toFixed(1) : "0.0";
+  const remaining = supervisorCredit - supervisorExpenses;
 
   if (!selectedSite) {
     return (
@@ -244,10 +287,11 @@ function SupervisorHome({ selectedSite, user }) {
               <div className="flex flex-col gap-0.5 min-w-0">
                 <span className="text-sm text-[#717579] font-medium font-sans">Remaining Balance</span>
                 <span className="text-xl font-bold text-[#353535] font-sans truncate">
-                  ₹{remaining.toLocaleString("en-IN")}
+                  {remaining < 0 ? `-₹${Math.abs(remaining).toLocaleString("en-IN")}` : `₹${remaining.toLocaleString("en-IN")}`}
                 </span>
               </div>
             </div>
+
           </div>
 
 
