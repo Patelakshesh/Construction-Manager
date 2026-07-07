@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       includeAssets: ['logo.png', 'favicon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'apple-touch-icon-180x180.png'],
       manifest: {
         name: 'HRL Construction Manager',
@@ -35,11 +36,15 @@ export default defineConfig({
         ]
       },
       workbox: {
-        cacheId: `hrl-app-${new Date().getTime()}`,
+        // New unique cacheId on every build — forces old caches to be deleted
+        cacheId: `hrl-app-v${Date.now()}`,
         cleanupOutdatedCaches: true,
-        // Cache all static assets
+        // Activate new SW immediately without waiting for old tabs to close
+        skipWaiting: true,
+        clientsClaim: true,
+        // Cache all Vite-hashed static assets
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
-        // Don't cache API calls
+        // Never cache GraphQL API calls
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/graphql/],
         runtimeCaching: [

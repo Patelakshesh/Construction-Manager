@@ -9,22 +9,27 @@
 </IfModule>
 
 <IfModule mod_headers.c>
-  # Cache html, sw.js, and manifest files for 0 seconds (no cache)
-  <FilesMatch "\.(html|json|webmanifest)$|sw\.js$">
+  # NEVER cache index.html, service worker, or manifests
+  # This ensures browsers always fetch the latest entry point on deploy
+  <FilesMatch "(^index\.html$|sw\.js$|workbox-.*\.js$|\.(webmanifest|json)$)">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
-    Header set Expires 0
+    Header set Expires "0"
+    Header unset ETag
   </FilesMatch>
 
-  # Cache JS, CSS, and images for 1 year (these have hashes in Vite)
-  <FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
-    # Except for config.js or sw.js (we handled sw.js above, let's just make sure config.js isn't cached if you change it)
+  # Vite-hashed JS/CSS/assets can be cached long-term (their filenames change on rebuild)
+  <FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 </IfModule>
 
-# Ensure config.js is not cached
-<Files config.js>
-    Header set Cache-Control "no-cache, no-store, must-revalidate"
-    Header set Pragma "no-cache"
-    Header set Expires 0
-</Files>
+# config.js and sw.js must never be cached
+<FilesMatch "(config\.js|sw\.js|workbox-.*\.js)">
+  Header set Cache-Control "no-cache, no-store, must-revalidate"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</FilesMatch>
+
+# Disable ETags to prevent stale cache validation
+FileETag None
