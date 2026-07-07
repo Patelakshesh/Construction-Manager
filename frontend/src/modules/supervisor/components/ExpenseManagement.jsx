@@ -352,32 +352,7 @@ function ExpenseManagement({ selectedSite, user }) {
 
   return (
     <div className="space-y-6 p-6 md:p-8 font-sans">
-      {/* Current Site & Total Stats Card */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] px-6 py-5 flex-1">
-          <p className="text-xs font-bold uppercase tracking-wider text-[#717579] font-sans mb-1">
-            Current Site
-          </p>
-          <h3 className="text-lg font-bold text-[#353535] font-sans">{selectedSite.siteName}</h3>
-        </div>
-        
-        <div className="bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2] px-6 py-5 flex-1 flex items-center gap-4">
-          <div 
-            className="p-2 rounded-lg border border-[#EBE9FD] flex items-center justify-center shrink-0" 
-            style={{ 
-              width: 44, 
-              height: 44, 
-              background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
-            }}
-          >
-            <ReceiptIndianRupee className="h-5 w-5 text-white" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#717579] font-sans mb-0.5">Total Expenses for Site</p>
-            <h3 className="text-xl font-bold text-[#353535] font-sans truncate">₹{totalExpensesAmount.toLocaleString("en-IN")}</h3>
-          </div>
-        </div>
-      </div>
+
 
       {/* Add New Expense Primary Button */}
       <button
@@ -415,12 +390,12 @@ function ExpenseManagement({ selectedSite, user }) {
                 <table className="w-full min-w-[760px] border-collapse">
                   <thead className="bg-[#F0EFFF] border-b border-[#9792E7]">
                     <tr className="h-[68px]">
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Description</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Category</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Amount</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Payment Mode</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Date</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Added By</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Description</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-[#5B6065] font-sans">Actions</th>
                     </tr>
                   </thead>
@@ -430,13 +405,8 @@ function ExpenseManagement({ selectedSite, user }) {
                         key={expense.id}
                         className="h-[78px] transition-colors hover:bg-gray-50/50"
                       >
-                        <td className="px-6 py-4 text-base text-[#5B6065] font-semibold font-sans capitalize">
-                          <div 
-                            className="max-w-[200px] lg:max-w-[250px] truncate"
-                            title={expense.title || ""}
-                          >
-                            {expense.title || "—"}
-                          </div>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
+                          {formatDate(expense.date)}
                         </td>
                         <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                           {expense.category?.name || "—"}
@@ -447,11 +417,16 @@ function ExpenseManagement({ selectedSite, user }) {
                         <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
                           {expense.paymentMode} {expense.transactionId ? `(${expense.transactionId})` : ""}
                         </td>
-                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans">
-                          {formatDate(expense.date)}
-                        </td>
                         <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans capitalize">
                           {expense.createdBy || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-base text-[#5B6065] font-normal font-sans capitalize">
+                          <div 
+                            className="max-w-[200px] lg:max-w-[250px] truncate"
+                            title={expense.title || ""}
+                          >
+                            {expense.title || "—"}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">

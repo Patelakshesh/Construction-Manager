@@ -209,26 +209,7 @@ function SupervisorHome({ selectedSite, user }) {
         </div>
 
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Site Budget Card */}
-            <div className="flex gap-4 p-4 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
-              <div 
-                className="p-2 rounded-lg border border-[#EBE9FD] flex items-center justify-center shrink-0" 
-                style={{ 
-                  width: 48, 
-                  height: 48, 
-                  background: 'conic-gradient(from 134deg at 50.00% 50.00%, #3D35BE 0deg, #3C378B 360deg)' 
-                }}
-              >
-                <ReceiptIndianRupee className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-sm text-[#717579] font-medium font-sans">Site Budget</span>
-                <span className="text-xl font-bold text-[#353535] font-sans truncate">
-                  ₹{totalBudget.toLocaleString("en-IN")}
-                </span>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* Total Expenses Card */}
             <div className="flex gap-4 p-4 bg-white rounded-lg border border-[#EBE9FD] shadow-[0px_2px_10px_#D9DAE2]">
@@ -269,21 +250,7 @@ function SupervisorHome({ selectedSite, user }) {
             </div>
           </div>
 
-          <div>
-            <div className="mb-2 flex justify-between text-sm">
-              <span className="text-[#5B6065] font-sans font-medium">Budget Used</span>
-              <span className="text-[#353535] font-sans font-bold">{budgetPercentage}%</span>
-            </div>
-            <div className="h-3.5 w-full rounded-full bg-[#E5E9F1] overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${budgetPercentage}%`,
-                  backgroundColor: budgetPercentage >= 100 ? "#F15F7F" : budgetPercentage > 80 ? "#F59E0B" : "#01B6A8"
-                }}
-              />
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -304,18 +271,15 @@ function SupervisorHome({ selectedSite, user }) {
               >
                 <div className="flex items-start justify-between min-w-0 gap-4">
                   <div className="min-w-0 flex-1">
-                    <p className="mb-1 text-[15px] font-semibold text-[#353535] font-sans truncate">
-                      {expense.title || "No description"}
+                    <p className="mb-1 text-[15px] font-semibold text-[#353535] font-sans truncate capitalize">
+                      {expense.category?.name || "Uncategorized"}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className="rounded-md px-2 py-0.5 text-xs font-semibold font-sans"
-                        style={{ backgroundColor: "#3D35BE15", color: "#3D35BE" }}
-                      >
-                        {expense.category?.name || "Uncategorized"}
+                      <span className="text-xs text-[#5B6065] font-sans truncate max-w-[180px]">
+                        {expense.title || "No description"}
                       </span>
                       <span className="text-xs text-[#717579] font-sans">
-                        {formatDate(expense.date)}
+                        | {formatDate(expense.date)}
                       </span>
                     </div>
                     {expense.receiptImage && (
