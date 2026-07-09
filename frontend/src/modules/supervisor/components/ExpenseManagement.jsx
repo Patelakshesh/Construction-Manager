@@ -55,13 +55,23 @@ function ExpenseManagement({ selectedSite, user }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [pageNumber, setPageNumber] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
   const [totalExpensesAmount, setTotalExpensesAmount] = useState(0);
   const [viewingImage, setViewingImage] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [filterCategory, setFilterCategory] = useState("All");
   const pageSize = 10;
+
+  // Get the current supervisor's name from localStorage
+  const getSupervisorName = () => {
+    try {
+      const stored = localStorage.getItem("authUser");
+      if (stored) return JSON.parse(stored)?.name || null;
+    } catch { /* ignore */ }
+    return user?.name || null;
+  };
+  const supervisorName = getSupervisorName();
 
   const [formData, setFormData] = useState({
     amount: "",
@@ -150,8 +160,8 @@ function ExpenseManagement({ selectedSite, user }) {
             }
           `,
           variables: {
-            pageNumber,
-            pageSize,
+            pageNumber: 1,
+            pageSize: 1000,
             siteId: parseInt(selectedSite.id),
             siteName: selectedSite.siteName,
           },
@@ -164,7 +174,6 @@ function ExpenseManagement({ selectedSite, user }) {
         // Supervisor view: only show Expense type entries (not Income added by admin)
         const expenseOnly = pageItems.filter((item) => item.type === "Expense");
         setExpenses(expenseOnly);
-        setTotalCount(expenseOnly.length);
 
         const stats = response.data.data.dashboardStats;
         setTotalExpensesAmount(stats?.totalExpenses || 0);
@@ -185,7 +194,7 @@ function ExpenseManagement({ selectedSite, user }) {
 
   useEffect(() => {
     loadData();
-  }, [selectedSite, pageNumber]);
+  }, [selectedSite]);
 
   useEffect(() => {
     setPageNumber(1);
@@ -350,6 +359,13 @@ function ExpenseManagement({ selectedSite, user }) {
     );
   }
 
+  const filteredExpenses = filterCategory === "All" 
+    ? expenses 
+    : expenses.filter(e => String(e.categoryId) === String(filterCategory));
+
+  const startIndex = (pageNumber - 1) * pageSize;
+  const displayedExpenses = filteredExpenses.slice(startIndex, startIndex + pageSize);
+
   return (
     <div className="space-y-6 p-6 md:p-8 font-sans">
 
@@ -371,17 +387,41 @@ function ExpenseManagement({ selectedSite, user }) {
         style={{ 
           paddingLeft: 24, 
           paddingRight: 24, 
-          paddingTop: 30, 
+          paddingTop: 24, 
           paddingBottom: 30, 
         }}
       >
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <h3 className="text-lg font-bold text-[#353535] font-sans">Expense List</h3>
+          
+          {/* Filter Section */}
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="bg-[#F6F5FF] p-2.5 rounded-lg border border-[#EBE9FD]">
+              <Filter className="h-4 w-4 text-[#3D35BE]" />
+            </div>
+            <select
+              value={filterCategory}
+              onChange={(e) => {
+              setFilterCategory(e.target.value);
+              setPageNumber(1); // Reset to first page when filtering
+            }}
+              className="flex-1 md:w-[220px] rounded-lg border border-[#EBE9FD] bg-white p-2.5 text-sm text-[#353535] outline-none focus:border-[#3D35BE] focus:ring-1 focus:ring-[#3D35BE] font-medium font-sans cursor-pointer transition-all hover:border-[#D9DAE2]"
+            >
+              <option value="All">All Categories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div 
           className="w-full flex flex-col overflow-hidden rounded-lg min-w-0" 
           style={{ outline: '1px rgba(61, 53, 190, 0.26) solid' }}
         >
           {isLoading ? (
             <div className="p-8 text-center text-[#717579] font-sans bg-white">Loading expenses...</div>
-          ) : expenses.length === 0 ? (
+          ) : displayedExpenses.length === 0 ? (
             <div className="p-8 text-center text-[#717579] font-sans bg-white">No expenses found for this site.</div>
           ) : (
             <>
@@ -400,7 +440,7 @@ function ExpenseManagement({ selectedSite, user }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 bg-white">
-                    {expenses.map((expense) => (
+                    {displayedExpenses.map((expense) => (
                       <tr
                         key={expense.id}
                         className="h-[78px] transition-colors hover:bg-gray-50/50"
@@ -440,22 +480,26 @@ function ExpenseManagement({ selectedSite, user }) {
                                 <Eye className="h-5 w-5" />
                               </button>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(expense)}
-                              className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
-                              title="Edit"
-                            >
-                              <Edit className="h-5 w-5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(expense.id)}
-                              className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </button>
+                            {(!expense.createdBy || !supervisorName || expense.createdBy.toLowerCase() === supervisorName.toLowerCase()) && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleEdit(expense)}
+                                  className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                                  title="Edit"
+                                >
+                                  <Edit className="h-5 w-5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(expense.id)}
+                                  className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="h-5 w-5" />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -466,7 +510,7 @@ function ExpenseManagement({ selectedSite, user }) {
 
               {/* Mobile Card View */}
               <div className="block md:hidden bg-white divide-y divide-gray-100">
-                {expenses.map((expense) => (
+                {displayedExpenses.map((expense) => (
                   <div
                     key={expense.id}
                     className="p-4 hover:bg-gray-50/50 transition-colors"
@@ -521,22 +565,26 @@ function ExpenseManagement({ selectedSite, user }) {
                           <Eye className="h-5 w-5" />
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(expense)}
-                        className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
-                        title="Edit"
-                      >
-                        <Edit className="h-5 w-5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(expense.id)}
-                        className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
+                      {(!expense.createdBy || !supervisorName || expense.createdBy.toLowerCase() === supervisorName.toLowerCase()) && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(expense)}
+                            className="rounded-lg p-2 transition-colors hover:bg-gray-100 text-[#2945AC]"
+                            title="Edit"
+                          >
+                            <Edit className="h-5 w-5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(expense.id)}
+                            className="rounded-lg p-2 transition-colors hover:bg-red-50 text-[#F15F7F]"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -549,7 +597,7 @@ function ExpenseManagement({ selectedSite, user }) {
             <Pagination
               pageNumber={pageNumber}
               pageSize={pageSize}
-              totalCount={totalCount}
+              totalCount={filteredExpenses.length}
               onPageChange={(nextPage) => setPageNumber(nextPage)}
             />
           </div>

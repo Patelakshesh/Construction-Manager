@@ -42,8 +42,8 @@ export default defineConfig({
         // Activate new SW immediately without waiting for old tabs to close
         skipWaiting: true,
         clientsClaim: true,
-        // Cache all Vite-hashed static assets
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
+        // Cache static assets but NEVER cache index.html
+        globPatterns: ['**/*.{js,css,ico,png,svg,webp,woff,woff2}'],
         // Never cache GraphQL API calls
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/graphql/],
